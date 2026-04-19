@@ -19,9 +19,21 @@ export function Footer() {
               La première marketplace 100% gabonaise. Achetez local, soutenez les entrepreneurs gabonais.
             </p>
             <div className="flex gap-3 mt-4">
-              {["facebook", "instagram", "twitter", "whatsapp"].map((s) => (
-                <a key={s} href="#" className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-[#00A550] transition-colors text-sm">
-                  {s === "facebook" ? "f" : s === "instagram" ? "📷" : s === "twitter" ? "𝕏" : "📱"}
+              {[
+                { name: "Facebook", icon: "f", href: "https://facebook.com/brotega" },
+                { name: "Instagram", icon: "📷", href: "https://instagram.com/brotega" },
+                { name: "Twitter / X", icon: "𝕏", href: "https://twitter.com/brotega" },
+                { name: "WhatsApp", icon: "📱", href: "https://wa.me/24101234567" },
+              ].map((s) => (
+                <a
+                  key={s.name}
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={s.name}
+                  className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-[#00A550] transition-colors text-sm"
+                >
+                  {s.icon}
                 </a>
               ))}
             </div>

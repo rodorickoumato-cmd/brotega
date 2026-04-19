@@ -3,7 +3,6 @@ import { useCart } from "@/store/cart";
 import { formatXAF } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import Link from "next/link";
-import Image from "next/image";
 
 export function CartSidebar() {
   const { state, dispatch, total, count } = useCart();

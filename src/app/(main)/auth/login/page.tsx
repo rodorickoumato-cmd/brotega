@@ -96,7 +96,7 @@ export default function LoginPage() {
 
         <p className="text-center text-xs text-gray-400 mt-4">
           En vous connectant, vous acceptez nos{" "}
-          <a href="#" className="hover:underline">Conditions d'utilisation</a>
+          <Link href="/conditions" className="hover:underline">Conditions d'utilisation</Link>
         </p>
       </div>
     </div>

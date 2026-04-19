@@ -11,7 +11,7 @@ export function PromoSection() {
             <span className="bg-[#FFD100] text-[#1A202C] text-xs font-black px-3 py-1 rounded-full">OFFRE SPÉCIALE</span>
             <h3 className="text-2xl md:text-3xl font-black mt-3 mb-2">Jusqu'à -40%</h3>
             <p className="text-white/80 mb-5 text-sm">Sur les produits alimentaires et cosmétiques locaux. Offre valable cette semaine.</p>
-            <Link href="/catalogue?promo=1" className="inline-flex items-center gap-2 bg-white text-[#00A550] font-bold px-5 py-2.5 rounded-xl hover:bg-[#E8F7EE] transition-colors text-sm">
+            <Link href="/catalogue?promo=1" className="inline-flex items-center gap-2 bg-white text-[#00A550] font-bold px-5 py-2.5 rounded-xl hover:bg-[#E8F7EE] transition-colors text-sm" aria-label="Voir les promotions">
               Profiter maintenant →
             </Link>
           </div>

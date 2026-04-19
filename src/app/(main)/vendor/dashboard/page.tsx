@@ -26,7 +26,8 @@ const orders = [
   { id: "#ORD-005", client: "Alice Nkoghe", product: "Manioc frais 5kg", amount: 12500, status: "cancelled", date: "15/04/2026" },
 ];
 
-const statusColors: Record<string, string> = {
+type BadgeVariant = "green" | "yellow" | "red" | "gray" | "orange";
+const statusColors: Record<string, BadgeVariant> = {
   pending: "yellow",
   confirmed: "green",
   shipped: "orange",
@@ -128,7 +129,7 @@ export default function VendorDashboard() {
                         <td className="px-5 py-3.5 text-gray-600 truncate max-w-[150px]">{o.product}</td>
                         <td className="px-5 py-3.5 text-right font-semibold text-[#00A550]">{formatXAF(o.amount)}</td>
                         <td className="px-5 py-3.5 text-center">
-                          <Badge variant={statusColors[o.status] as "green" | "yellow" | "red" | "gray" | "orange"}>{statusLabels[o.status]}</Badge>
+                          <Badge variant={statusColors[o.status]}>{statusLabels[o.status]}</Badge>
                         </td>
                         <td className="px-5 py-3.5 text-gray-500 text-xs">{o.date}</td>
                       </tr>
@@ -209,7 +210,7 @@ export default function VendorDashboard() {
                       <td className="px-5 py-3.5 text-gray-600">{o.product}</td>
                       <td className="px-5 py-3.5 text-right font-semibold text-[#00A550]">{formatXAF(o.amount)}</td>
                       <td className="px-5 py-3.5 text-center">
-                        <Badge variant={statusColors[o.status] as "green" | "yellow" | "red" | "gray" | "orange"}>{statusLabels[o.status]}</Badge>
+                        <Badge variant={statusColors[o.status]}>{statusLabels[o.status]}</Badge>
                       </td>
                       <td className="px-5 py-3.5 text-gray-500 text-xs">{o.date}</td>
                       <td className="px-5 py-3.5 text-center">

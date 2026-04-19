@@ -42,12 +42,12 @@ export default function ComptePage() {
           </div>
           <nav className="space-y-1 mt-4">
             {[
-              ["👤", "Mon profil", "#"],
+              ["👤", "Mon profil", "/compte/profil"],
               ["📦", "Mes commandes", "/compte/commandes"],
-              ["❤️", "Mes favoris", "#"],
-              ["📍", "Mes adresses", "#"],
+              ["❤️", "Mes favoris", "/compte/favoris"],
+              ["📍", "Mes adresses", "/compte/adresses"],
               ["🏪", "Devenir vendeur", "/vendor/register"],
-              ["🔒", "Sécurité", "#"],
+              ["🔒", "Sécurité", "/compte/securite"],
             ].map(([icon, label, href]) => (
               <Link key={label as string} href={href as string}
                 className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-[#E8F7EE] hover:text-[#00A550] text-gray-600 text-sm transition-colors">

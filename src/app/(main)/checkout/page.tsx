@@ -1,11 +1,10 @@
 "use client";
 import { useState } from "react";
 import { useCart } from "@/store/cart";
-import { formatXAF } from "@/lib/utils";
+import { formatXAF, CITIES_GABON } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toaster";
 import { useRouter } from "next/navigation";
-import { CITIES_GABON } from "@/lib/utils";
 
 type Step = "address" | "payment" | "confirm";
 type PayMethod = "airtel_money" | "moov_money" | "cash" | "card";
@@ -137,7 +136,14 @@ export default function CheckoutPage() {
                 <Button
                   fullWidth
                   size="lg"
-                  onClick={() => setStep("payment")}
+                  onClick={() => {
+                    const phone = address.phone.replace(/\s/g, "");
+                    if (!/^\+?[0-9]{8,15}$/.test(phone)) {
+                      toast("Numéro de téléphone invalide", "error");
+                      return;
+                    }
+                    setStep("payment");
+                  }}
                   disabled={!address.fullName || !address.phone || !address.city || !address.district}
                 >
                   Continuer vers le paiement →

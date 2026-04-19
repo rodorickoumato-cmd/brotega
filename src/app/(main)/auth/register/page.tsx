@@ -14,7 +14,9 @@ export default function RegisterPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (form.password.length < 8) { toast("Le mot de passe doit contenir au moins 8 caractères", "error"); return; }
     if (form.password !== form.confirm) { toast("Les mots de passe ne correspondent pas", "error"); return; }
+    if (!/^\d{8,9}$/.test(form.phone.replace(/\s/g, ""))) { toast("Numéro de téléphone invalide (ex : 01234567)", "error"); return; }
     setLoading(true);
     await new Promise((r) => setTimeout(r, 1800));
     toast(role === "seller" ? "🎉 Boutique créée ! Bienvenue sur Brotega !" : "🎉 Compte créé ! Bienvenue sur Brotega !", "success");
@@ -121,6 +123,7 @@ export default function RegisterPage() {
                   type="password"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  minLength={8}
                   placeholder="Min. 8 caractères"
                   className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
                   required

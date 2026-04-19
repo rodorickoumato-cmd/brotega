@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { ProductCard } from "@/components/product/ProductCard";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { categories } from "@/data/categories";
 
 export default function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params);
@@ -36,7 +37,7 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
         <span>/</span>
         <Link href="/catalogue" className="hover:text-[#00A550]">Catalogue</Link>
         <span>/</span>
-        <Link href={`/catalogue?categorie=${product.category.toLowerCase()}`} className="hover:text-[#00A550]">{product.category}</Link>
+        <Link href={`/catalogue?categorie=${categories.find((c) => c.name === product.category)?.slug ?? ""}`} className="hover:text-[#00A550]">{product.category}</Link>
         <span>/</span>
         <span className="text-gray-800 font-medium truncate max-w-xs">{product.name}</span>
       </div>
@@ -113,9 +114,16 @@ export default function ProductPage({ params }: { params: Promise<{ slug: string
             </Button>
           </div>
 
-          <Button variant="outline" size="lg" fullWidth>
-            💬 Contacter le vendeur via WhatsApp
-          </Button>
+          {product.vendor.whatsapp && (
+            <a
+              href={`https://wa.me/${product.vendor.whatsapp}?text=${encodeURIComponent(`Bonjour, je suis intéressé par "${product.name}" sur Brotega.`)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full border-2 border-gray-200 hover:border-[#25D366] hover:bg-[#25D366]/5 text-gray-700 hover:text-[#25D366] font-semibold py-3 px-4 rounded-xl transition-all text-sm"
+            >
+              💬 Contacter le vendeur via WhatsApp
+            </a>
+          )}
 
           {/* Vendor card */}
           <Link href={`/vendeur/${product.vendor.slug}`}>

@@ -11,7 +11,7 @@ export function NewProducts() {
           <h2 className="text-2xl font-black text-gray-800">Nouveautés</h2>
           <p className="text-gray-500 text-sm mt-0.5">Les derniers ajouts sur Brotega</p>
         </div>
-        <Link href="/catalogue?nouveau=1" className="text-[#00A550] text-sm font-semibold hover:underline">
+        <Link href="/catalogue?isNew=1" className="text-[#00A550] text-sm font-semibold hover:underline">
           Voir tout →
         </Link>
       </div>
