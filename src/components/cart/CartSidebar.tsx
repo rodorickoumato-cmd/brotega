@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { useCart } from "@/store/cart";
 import { formatXAF } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
@@ -42,11 +43,13 @@ export function CartSidebar() {
           ) : (
             state.items.map((item) => (
               <div key={item.product.id} className="flex gap-3 p-3 bg-gray-50 rounded-xl">
-                <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
-                  <img
+                <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200 relative">
+                  <Image
                     src={item.product.images[0]}
                     alt={item.product.name}
-                    className="w-full h-full object-cover"
+                    fill
+                    sizes="64px"
+                    className="object-cover"
                   />
                 </div>
                 <div className="flex-1 min-w-0">

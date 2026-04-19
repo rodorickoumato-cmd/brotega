@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 import { formatXAF } from "@/lib/utils";
 import { products } from "@/data/products";
 import { vendors } from "@/data/vendors";
@@ -52,7 +53,9 @@ export default function VendorDashboard() {
         <div className="bg-gradient-to-r from-[#00A550] to-[#007A3D] rounded-3xl p-6 text-white mb-8">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
-              <img src={vendor.logo} alt={vendor.name} className="w-16 h-16 rounded-2xl border-2 border-white/30" />
+              <div className="w-16 h-16 rounded-2xl border-2 border-white/30 overflow-hidden relative flex-shrink-0">
+                <Image src={vendor.logo} alt={vendor.name} fill sizes="64px" className="object-cover" />
+              </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-xl font-black">{vendor.name}</h1>
@@ -252,7 +255,9 @@ export default function VendorDashboard() {
                 {vendorProducts.slice(0, 4).map((p, i) => (
                   <div key={p.id} className="flex items-center gap-3">
                     <span className="font-black text-gray-300 text-lg w-5">{i + 1}</span>
-                    <img src={p.images[0]} alt={p.name} className="w-10 h-10 rounded-lg object-cover" />
+                    <div className="w-10 h-10 rounded-lg overflow-hidden relative flex-shrink-0">
+                      <Image src={p.images[0]} alt={p.name} fill sizes="40px" className="object-cover" />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{p.name}</p>
                       <div className="w-full bg-gray-100 rounded-full h-1.5 mt-1">

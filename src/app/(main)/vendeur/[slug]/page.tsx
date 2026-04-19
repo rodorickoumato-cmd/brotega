@@ -1,5 +1,6 @@
 "use client";
 import { use } from "react";
+import Image from "next/image";
 import { vendors } from "@/data/vendors";
 import { products } from "@/data/products";
 import { ProductCard } from "@/components/product/ProductCard";
@@ -21,7 +22,9 @@ export default function VendorPage({ params }: { params: Promise<{ slug: string 
       <div className="bg-gradient-to-br from-[#00A550] to-[#007A3D] rounded-3xl p-8 text-white mb-8 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 text-[200px] flex items-center justify-end pr-8">🏪</div>
         <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-5">
-          <img src={vendor.logo} alt={vendor.name} className="w-20 h-20 rounded-2xl border-4 border-white/30 shadow-lg" />
+          <div className="w-20 h-20 rounded-2xl border-4 border-white/30 shadow-lg overflow-hidden relative flex-shrink-0">
+            <Image src={vendor.logo} alt={vendor.name} fill sizes="80px" className="object-cover" />
+          </div>
           <div className="flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-2xl font-black">{vendor.name}</h1>

@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { Product } from "@/types";
 import { formatXAF, getDiscount } from "@/lib/utils";
 import { useCart } from "@/store/cart";
@@ -25,10 +26,12 @@ export function ProductCard({ product }: { product: Product }) {
       <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-[#00A550]/30 hover:-translate-y-1 flex flex-col h-full">
         {/* Image */}
         <div className="relative overflow-hidden bg-gray-100 aspect-square">
-          <img
+          <Image
             src={product.images[0]}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
           />
           {/* Badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-1">

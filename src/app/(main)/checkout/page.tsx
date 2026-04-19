@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Image from "next/image";
 import { useCart } from "@/store/cart";
 import { formatXAF, CITIES_GABON } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
@@ -222,7 +223,9 @@ export default function CheckoutPage() {
               <div className="space-y-3 mb-5">
                 {state.items.map((item) => (
                   <div key={item.product.id} className="flex items-center gap-3">
-                    <img src={item.product.images[0]} alt={item.product.name} className="w-12 h-12 rounded-lg object-cover" />
+                    <div className="w-12 h-12 rounded-lg overflow-hidden relative flex-shrink-0">
+                      <Image src={item.product.images[0]} alt={item.product.name} fill sizes="48px" className="object-cover" />
+                    </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium line-clamp-1">{item.product.name}</p>
                       <p className="text-xs text-gray-500">Qté: {item.quantity}</p>
