@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+:root {
+  --background: #F7F8FA;
+  --foreground: #1A202C;
+  --brotega-green: #00A550;
+  --brotega-green-dark: #007A3D;
+  --brotega-green-light: #E8F7EE;
+  --brotega-yellow: #FFD100;
+  --brotega-orange: #FF6B00;
+  --brotega-red: #E53E3E;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--brotega-green);
+  --color-primary-dark: var(--brotega-green-dark);
+  --color-primary-light: var(--brotega-green-light);
+  --color-accent: var(--brotega-yellow);
+  --color-orange: var(--brotega-orange);
+  --font-sans: var(--font-geist-sans);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  overflow-x: hidden;
+}
+
+a { text-decoration: none; color: inherit; }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #00A550; border-radius: 4px; }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-up   { animation: fadeInUp 0.4s ease-out both; }
+.animate-slide-in  { animation: slideInRight 0.3s ease-out; }
+
+.skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f0f4f8 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
