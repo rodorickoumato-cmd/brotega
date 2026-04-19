@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toaster";
+import { souscrireAbonnement, getAbonnementActuel } from "@/app/actions/abonnements";
 
 const plans = [
   {
@@ -192,16 +193,41 @@ export default function AbonnementPage() {
   const [faqOuverte, setFaqOuverte] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Charge l'abonnement actuel depuis Supabase au montage
+  useEffect(() => {
+    getAbonnementActuel().then((abo) => {
+      if (abo) setPlanActif(abo.plan);
+    });
+  }, []);
+
   const handleChoisir = async (planId: string) => {
     if (planId === "gratuit") {
       toast("Vous utilisez déjà le plan Gratuit. Choisissez un plan payant pour débloquer plus de fonctionnalités.", "info");
       return;
     }
-    setPlanActif(planId);
+    if (planActif === planId) {
+      toast("Vous êtes déjà abonné à ce plan.", "info");
+      return;
+    }
+
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1800));
+    const result = await souscrireAbonnement(planId);
     setLoading(false);
-    toast(`🎉 Abonnement ${plans.find((p) => p.id === planId)?.nom} activé ! Bienvenue dans la famille Brotega Pro.`, "success");
+
+    if (result.erreur) {
+      if (result.erreur.includes("connecté") || result.erreur.includes("boutique")) {
+        toast(result.erreur + " → Connectez-vous d'abord.", "error");
+      } else {
+        toast(result.erreur, "error");
+      }
+      return;
+    }
+
+    setPlanActif(planId);
+    toast(
+      `🎉 Abonnement ${plans.find((p) => p.id === planId)?.nom} activé ! Bienvenue dans la famille Brotega Pro.`,
+      "success"
+    );
   };
 
   return (

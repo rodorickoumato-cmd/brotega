@@ -1,22 +1,33 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toaster";
-import { useRouter } from "next/navigation";
+import { connecter } from "@/app/actions/auth";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ phone: "", password: "" });
+  const searchParams = useSearchParams();
+  const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
+
+    const result = await connecter({ email: form.email, password: form.password });
+
+    if (result.erreur) {
+      toast(result.erreur, "error");
+      setLoading(false);
+      return;
+    }
+
     toast("Connexion réussie ! Bienvenue sur Brotega 🇬🇦", "success");
-    router.push("/");
-    setLoading(false);
+    const redirect = searchParams.get("redirect") ?? "/";
+    router.push(redirect);
+    router.refresh();
   };
 
   return (
@@ -34,32 +45,37 @@ export default function LoginPage() {
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
-              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Numéro de téléphone</label>
-              <div className="flex border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#00A550]/30">
-                <span className="bg-gray-50 px-3 flex items-center text-sm text-gray-500 border-r">🇬🇦 +241</span>
-                <input
-                  type="tel"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="01 23 45 67"
-                  className="flex-1 px-4 py-3 text-sm focus:outline-none"
-                  required
-                />
-              </div>
+              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                Adresse email
+              </label>
+              <input
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="exemple@email.com"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30 transition-all"
+                required
+                autoComplete="email"
+              />
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Mot de passe</label>
+              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                Mot de passe
+              </label>
               <input
                 type="password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder="••••••••"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30 transition-all"
                 required
+                autoComplete="current-password"
               />
-              <div className="text-right mt-1">
-                <a href="#" className="text-xs text-[#00A550] hover:underline">Mot de passe oublié ?</a>
+              <div className="text-right mt-1.5">
+                <a href="#" className="text-xs text-[#00A550] hover:underline">
+                  Mot de passe oublié ?
+                </a>
               </div>
             </div>
 
@@ -78,10 +94,20 @@ export default function LoginPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <button className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors">
+            <button
+              type="button"
+              className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors opacity-60 cursor-not-allowed"
+              title="Bientôt disponible"
+              disabled
+            >
               <span>📱</span> Airtel Money
             </button>
-            <button className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors">
+            <button
+              type="button"
+              className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors opacity-60 cursor-not-allowed"
+              title="Bientôt disponible"
+              disabled
+            >
               <span>📲</span> Moov Money
             </button>
           </div>
@@ -96,7 +122,9 @@ export default function LoginPage() {
 
         <p className="text-center text-xs text-gray-400 mt-4">
           En vous connectant, vous acceptez nos{" "}
-          <Link href="/conditions" className="hover:underline">Conditions d'utilisation</Link>
+          <Link href="/conditions" className="hover:underline">
+            Conditions d&apos;utilisation
+          </Link>
         </p>
       </div>
     </div>

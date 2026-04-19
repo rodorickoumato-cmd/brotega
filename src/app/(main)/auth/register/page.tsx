@@ -1,28 +1,71 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toaster";
-import { useRouter } from "next/navigation";
 import { CITIES_GABON } from "@/lib/utils";
+import { inscrire } from "@/app/actions/auth";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [role, setRole] = useState<"buyer" | "seller">("buyer");
+  const [role, setRole] = useState<"acheteur" | "vendeur">("acheteur");
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ name: "", phone: "", email: "", city: "Libreville", password: "", confirm: "", shopName: "" });
+  const [form, setForm] = useState({
+    nom: "", telephone: "", email: "",
+    city: "Libreville", password: "", confirm: "", nomBoutique: "",
+  });
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (form.password.length < 8) { toast("Le mot de passe doit contenir au moins 8 caractères", "error"); return; }
-    if (form.password !== form.confirm) { toast("Les mots de passe ne correspondent pas", "error"); return; }
-    if (!/^\d{8,9}$/.test(form.phone.replace(/\s/g, ""))) { toast("Numéro de téléphone invalide (ex : 01234567)", "error"); return; }
+
+    if (form.password.length < 8) {
+      toast("Le mot de passe doit contenir au moins 8 caractères.", "error");
+      return;
+    }
+    if (form.password !== form.confirm) {
+      toast("Les mots de passe ne correspondent pas.", "error");
+      return;
+    }
+    if (!form.email) {
+      toast("L'adresse email est obligatoire.", "error");
+      return;
+    }
+    if (role === "vendeur" && !form.nomBoutique.trim()) {
+      toast("Le nom de votre boutique est obligatoire.", "error");
+      return;
+    }
+
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 1800));
-    toast(role === "seller" ? "🎉 Boutique créée ! Bienvenue sur Brotega !" : "🎉 Compte créé ! Bienvenue sur Brotega !", "success");
-    router.push(role === "seller" ? "/vendor/dashboard" : "/");
+
+    const result = await inscrire({
+      email: form.email,
+      password: form.password,
+      nom: form.nom,
+      telephone: form.telephone.replace(/\s/g, ""),
+      ville: form.city,
+      role,
+      nomBoutique: form.nomBoutique || undefined,
+    });
+
     setLoading(false);
+
+    if (result?.erreur) {
+      toast(result.erreur, "error");
+      return;
+    }
+
+    toast(
+      role === "vendeur"
+        ? "🎉 Boutique créée ! Bienvenue sur Brotega !"
+        : "🎉 Compte créé ! Bienvenue sur Brotega !",
+      "success"
+    );
+    router.push(role === "vendeur" ? "/vendor/dashboard" : "/");
+    router.refresh();
   };
+
+  const input = "w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30 transition-all";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA] px-4 py-12">
@@ -36,55 +79,69 @@ export default function RegisterPage() {
         </div>
 
         <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-          {/* Role toggle */}
+          {/* Choix du rôle */}
           <div className="flex bg-gray-100 rounded-2xl p-1.5 mb-6">
             {[
-              { id: "buyer", label: "🛒 Acheteur", desc: "Je veux acheter" },
-              { id: "seller", label: "🏪 Vendeur", desc: "Je veux vendre" },
+              { id: "acheteur", label: "🛒 Acheteur", desc: "Je veux acheter" },
+              { id: "vendeur", label: "🏪 Vendeur", desc: "Je veux vendre" },
             ].map((r) => (
               <button
                 key={r.id}
+                type="button"
                 onClick={() => setRole(r.id as typeof role)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${role === r.id ? "bg-[#00A550] text-white shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                  role === r.id ? "bg-[#00A550] text-white shadow-sm" : "text-gray-500 hover:text-gray-700"
+                }`}
               >
                 {r.label}
-                <div className={`text-xs mt-0.5 font-normal ${role === r.id ? "text-white/80" : "text-gray-400"}`}>{r.desc}</div>
+                <div className={`text-xs mt-0.5 font-normal ${role === r.id ? "text-white/80" : "text-gray-400"}`}>
+                  {r.desc}
+                </div>
               </button>
             ))}
           </div>
 
           <form onSubmit={handleRegister} className="space-y-4">
-            {role === "seller" && (
+            {/* Nom boutique (vendeur uniquement) */}
+            {role === "vendeur" && (
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Nom de votre boutique *</label>
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                  Nom de votre boutique <span className="text-red-400">*</span>
+                </label>
                 <input
-                  value={form.shopName}
-                  onChange={(e) => setForm({ ...form, shopName: e.target.value })}
+                  value={form.nomBoutique}
+                  onChange={(e) => setForm({ ...form, nomBoutique: e.target.value })}
                   placeholder="Ma Super Boutique Gabon"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
-                  required={role === "seller"}
+                  className={input}
+                  required={role === "vendeur"}
                 />
               </div>
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Nom complet *</label>
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                  Nom complet <span className="text-red-400">*</span>
+                </label>
                 <input
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  value={form.nom}
+                  onChange={(e) => setForm({ ...form, nom: e.target.value })}
                   placeholder="Jean-Pierre Mbourou"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
+                  className={input}
                   required
                 />
               </div>
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Téléphone *</label>
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                  Téléphone <span className="text-red-400">*</span>
+                </label>
                 <div className="flex border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-[#00A550]/30">
-                  <span className="bg-gray-50 px-3 flex items-center text-sm text-gray-500 border-r">+241</span>
+                  <span className="bg-gray-50 px-3 flex items-center text-sm text-gray-500 border-r border-gray-200">
+                    🇬🇦 +241
+                  </span>
                   <input
-                    value={form.phone}
-                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    value={form.telephone}
+                    onChange={(e) => setForm({ ...form, telephone: e.target.value })}
                     placeholder="01 23 45 67"
                     className="flex-1 px-3 py-3 text-sm focus:outline-none"
                     required
@@ -95,21 +152,27 @@ export default function RegisterPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Email</label>
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                  Email <span className="text-red-400">*</span>
+                </label>
                 <input
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="exemple@email.com"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
+                  className={input}
+                  required
+                  autoComplete="email"
                 />
               </div>
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Ville *</label>
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                  Ville <span className="text-red-400">*</span>
+                </label>
                 <select
                   value={form.city}
                   onChange={(e) => setForm({ ...form, city: e.target.value })}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
+                  className={input}
                 >
                   {CITIES_GABON.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
@@ -118,31 +181,37 @@ export default function RegisterPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Mot de passe *</label>
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                  Mot de passe <span className="text-red-400">*</span>
+                </label>
                 <input
                   type="password"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   minLength={8}
                   placeholder="Min. 8 caractères"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
+                  className={input}
                   required
+                  autoComplete="new-password"
                 />
               </div>
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Confirmer *</label>
+                <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
+                  Confirmer <span className="text-red-400">*</span>
+                </label>
                 <input
                   type="password"
                   value={form.confirm}
                   onChange={(e) => setForm({ ...form, confirm: e.target.value })}
                   placeholder="Répéter le mot de passe"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
+                  className={input}
                   required
+                  autoComplete="new-password"
                 />
               </div>
             </div>
 
-            {role === "seller" && (
+            {role === "vendeur" && (
               <div className="bg-[#E8F7EE] rounded-xl p-4 text-sm">
                 <p className="font-semibold text-[#00A550] mb-1">✅ Avantages vendeur Brotega :</p>
                 <ul className="text-gray-600 space-y-0.5 text-xs">
@@ -155,7 +224,7 @@ export default function RegisterPage() {
             )}
 
             <Button type="submit" fullWidth size="lg" loading={loading}>
-              {role === "seller" ? "Créer ma boutique 🏪" : "Créer mon compte 🛒"}
+              {role === "vendeur" ? "Créer ma boutique 🏪" : "Créer mon compte 🛒"}
             </Button>
           </form>
 
@@ -166,6 +235,13 @@ export default function RegisterPage() {
             </Link>
           </p>
         </div>
+
+        <p className="text-center text-xs text-gray-400 mt-4">
+          En créant un compte, vous acceptez nos{" "}
+          <Link href="/conditions" className="hover:underline">Conditions d&apos;utilisation</Link>
+          {" "}et notre{" "}
+          <Link href="/confidentialite" className="hover:underline">Politique de confidentialité</Link>
+        </p>
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { formatXAF, CITIES_GABON } from "@/lib/utils";
 import { products as initialProducts } from "@/data/products";
@@ -10,6 +10,8 @@ import { toast } from "@/components/ui/Toaster";
 import { categories } from "@/data/categories";
 import { Product } from "@/types";
 import Link from "next/link";
+import { sauvegarderProduit, supprimerProduit, getMesProduits } from "@/app/actions/produits";
+import type { Produit } from "@/lib/supabase/database.types";
 
 const vendor = vendors[0];
 const vendorProducts = initialProducts.filter((p) => p.vendorId === vendor.id);
@@ -637,34 +639,85 @@ function ProductRow({ product, onEdit, onDelete }: {
 
 // ─── Dashboard principal ──────────────────────────────────────────────────────
 
+// Convertit un Produit Supabase en Product local (format du frontend)
+function supabaseProduitToProduct(p: Produit): Product {
+  return {
+    id: p.id, name: p.nom, slug: p.slug, description: p.description,
+    price: p.prix, originalPrice: p.prix_original ?? undefined,
+    images: p.images, category: p.categorie, vendorId: p.vendeur_id,
+    vendor: vendors[0], // fallback — enrichi si besoin
+    rating: p.note, reviewCount: p.nb_avis, stock: p.stock,
+    unit: p.unite ?? undefined, tags: p.tags, city: p.ville,
+    isNew: p.est_nouveau, featured: p.est_vedette,
+  };
+}
+
 export default function VendorDashboard() {
   const [tab, setTab] = useState<"overview" | "products" | "orders" | "analytics">("overview");
   const [myProducts, setMyProducts] = useState<Product[]>(vendorProducts);
+  const [chargement, setChargement] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
+  // Charge les produits réels depuis Supabase au montage
+  useEffect(() => {
+    getMesProduits().then((produits) => {
+      if (produits.length > 0) {
+        setMyProducts(produits.map(supabaseProduitToProduct));
+      }
+    }).finally(() => setChargement(false));
+  }, []);
+
   const openAdd = () => { setEditingProduct(null); setShowForm(true); };
   const openEdit = (p: Product) => { setEditingProduct(p); setShowForm(true); };
   const closeForm = () => { setShowForm(false); setEditingProduct(null); };
 
-  const handleSave = (product: Product) => {
+  const handleSave = async (product: Product) => {
+    // Optimistic update — met à jour l'UI immédiatement
     if (editingProduct) {
       setMyProducts((prev) => prev.map((p) => (p.id === product.id ? product : p)));
-      toast("Produit modifié avec succès ✓", "success");
     } else {
       setMyProducts((prev) => [product, ...prev]);
-      toast(`"${product.name}" ajouté à votre boutique ✓`, "success");
     }
     closeForm();
+
+    // Persistance Supabase en arrière-plan
+    const result = await sauvegarderProduit({
+      id: editingProduct ? product.id : undefined,
+      nom: product.name, slug: product.slug, description: product.description,
+      prix: product.price, prix_original: product.originalPrice,
+      images: product.images, categorie: product.category,
+      stock: product.stock, unite: product.unit, ville: product.city,
+      est_nouveau: product.isNew,
+    });
+
+    if (result.erreur) {
+      // En cas d'erreur Supabase, on affiche un avertissement mais l'UI est déjà mise à jour
+      toast(`Sauvegardé localement. Erreur Supabase : ${result.erreur}`, "error");
+    } else {
+      toast(
+        editingProduct ? "Produit modifié avec succès ✓" : `"${product.name}" ajouté à votre boutique ✓`,
+        "success"
+      );
+    }
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     const product = myProducts.find((p) => p.id === id);
+    // Optimistic update
     setMyProducts((prev) => prev.filter((p) => p.id !== id));
     setDeleteId(null);
-    toast(`"${product?.name}" supprimé`, "success");
+
+    const result = await supprimerProduit(id);
+    if (result.erreur) {
+      // Restaure si l'erreur vient de Supabase (ex: pas authentifié)
+      if (product) setMyProducts((prev) => [...prev, product]);
+      toast(`Erreur suppression : ${result.erreur}`, "error");
+    } else {
+      toast(`"${product?.name}" supprimé`, "success");
+    }
   };
 
   const filteredProducts = myProducts.filter(
@@ -673,6 +726,7 @@ export default function VendorDashboard() {
       p.category.toLowerCase().includes(search.toLowerCase()) ||
       p.city.toLowerCase().includes(search.toLowerCase())
   );
+
 
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
@@ -829,7 +883,12 @@ export default function VendorDashboard() {
               </button>
             </div>
 
-            {filteredProducts.length === 0 ? (
+            {chargement ? (
+              <div className="bg-white rounded-2xl p-16 text-center shadow-sm border border-gray-100">
+                <div className="w-10 h-10 border-4 border-[#00A550] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+                <p className="text-sm text-gray-500">Chargement des produits depuis Supabase...</p>
+              </div>
+            ) : filteredProducts.length === 0 ? (
               <div className="bg-white rounded-2xl p-16 text-center shadow-sm border border-gray-100">
                 <div className="text-5xl mb-4">{search ? "🔍" : "🛍️"}</div>
                 <h3 className="font-bold text-gray-800 mb-2">
