@@ -1,130 +1,176 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/Button";
-import { toast } from "@/components/ui/Toaster";
-import { connecter } from "@/app/actions/auth";
+import { OtpInput } from "@/components/auth/OtpInput";
+import { envoyerOTP, verifierOTP } from "@/app/actions/auth";
+import { formaterPhoneGabon, vers241 } from "@/lib/phone";
+
+type Etape = "telephone" | "otp";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const redirectTo = searchParams.get("redirect") ?? "/";
+
+  const [etape, setEtape] = useState<Etape>("telephone");
+  const [telephone, setTelephone] = useState("");
+  const [phoneE164, setPhoneE164] = useState("");
+  const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [erreur, setErreur] = useState("");
+  const [renvoiSec, setRenvoiSec] = useState(0);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (renvoiSec <= 0) return;
+    const t = setTimeout(() => setRenvoiSec((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [renvoiSec]);
+
+  const envoyer = async () => {
+    setErreur("");
+    const e164 = vers241(telephone);
+    if (!e164) { setErreur("Numéro invalide. Exemple : 01 23 45 67"); return; }
     setLoading(true);
+    const res = await envoyerOTP({ telephone: e164, creerSiAbsent: false });
+    setLoading(false);
+    if (res.erreur) { setErreur(res.erreur); return; }
+    setPhoneE164(e164);
+    setEtape("otp");
+    setRenvoiSec(60);
+  };
 
-    const result = await connecter({ email: form.email, password: form.password });
-
-    if (result.erreur) {
-      toast(result.erreur, "error");
-      setLoading(false);
+  const verifier = async (codeFinal: string) => {
+    setErreur("");
+    setLoading(true);
+    const res = await verifierOTP({ telephone: phoneE164, code: codeFinal });
+    setLoading(false);
+    if (res.erreur) { setErreur(res.erreur); setCode(""); return; }
+    if (!res.profilExiste) {
+      router.push("/auth/register");
       return;
     }
-
-    toast("Connexion réussie ! Bienvenue sur Brotega 🇬🇦", "success");
-    const redirect = searchParams.get("redirect") ?? "/";
-    router.push(redirect);
+    router.push(redirectTo);
     router.refresh();
   };
 
+  const renvoyer = async () => {
+    if (renvoiSec > 0) return;
+    setLoading(true);
+    const res = await envoyerOTP({ telephone: phoneE164, creerSiAbsent: false });
+    setLoading(false);
+    if (res.erreur) { setErreur(res.erreur); return; }
+    setRenvoiSec(60);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F7F8FA] px-4 py-12">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-[#00A550] rounded-2xl flex items-center justify-center mx-auto mb-3">
-            <span className="text-white font-black text-2xl">B</span>
-          </div>
-          <h1 className="text-2xl font-black text-gray-800">Connexion</h1>
-          <p className="text-gray-500 text-sm mt-1">Connectez-vous à votre compte Brotega</p>
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* Header vert */}
+      <div className="bg-[#00A550] px-6 pt-14 pb-10">
+        <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
+          <span className="text-white font-black text-2xl">B</span>
         </div>
+        <h1 className="text-2xl font-black text-white">
+          {etape === "telephone" ? "Connexion" : "Vérification"}
+        </h1>
+        <p className="text-white/70 text-sm mt-1">
+          {etape === "telephone"
+            ? "Entrez votre numéro gabonais"
+            : `Code SMS envoyé au ${formaterPhoneGabon(phoneE164)}`}
+        </p>
+      </div>
 
-        <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-          <form onSubmit={handleLogin} className="space-y-5">
+      {/* Formulaire */}
+      <div className="flex-1 px-6 py-8 -mt-4 bg-white rounded-t-3xl">
+        {etape === "telephone" && (
+          <div className="space-y-5">
             <div>
-              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
-                Adresse email
-              </label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="exemple@email.com"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30 transition-all"
-                required
-                autoComplete="email"
-              />
-            </div>
-
-            <div>
-              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">
-                Mot de passe
-              </label>
-              <input
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                placeholder="••••••••"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30 transition-all"
-                required
-                autoComplete="current-password"
-              />
-              <div className="text-right mt-1.5">
-                <a href="#" className="text-xs text-[#00A550] hover:underline">
-                  Mot de passe oublié ?
-                </a>
+              <label className="text-sm font-bold text-gray-700 mb-2 block">Téléphone</label>
+              <div className="flex border-2 border-gray-200 rounded-2xl overflow-hidden focus-within:border-[#00A550] transition-colors">
+                <span className="bg-gray-50 px-4 flex items-center text-sm text-gray-600 border-r-2 border-gray-200 font-bold whitespace-nowrap">
+                  🇬🇦 +241
+                </span>
+                <input
+                  value={telephone}
+                  onChange={(e) => setTelephone(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && envoyer()}
+                  placeholder="01 23 45 67"
+                  className="flex-1 px-4 py-4 text-base font-medium focus:outline-none bg-white"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  autoFocus
+                />
               </div>
             </div>
 
-            <Button type="submit" fullWidth size="lg" loading={loading}>
-              Se connecter
-            </Button>
-          </form>
+            {erreur && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
+                {erreur}
+              </div>
+            )}
 
-          <div className="relative my-5">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-white px-3 text-xs text-gray-400">ou continuer avec</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
             <button
-              type="button"
-              className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors opacity-60 cursor-not-allowed"
-              title="Bientôt disponible"
-              disabled
+              onClick={envoyer}
+              disabled={loading}
+              className="w-full bg-[#00A550] text-white font-black text-base py-4 rounded-2xl disabled:opacity-60 active:scale-95 transition-all"
             >
-              <span>📱</span> Airtel Money
-            </button>
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 border border-gray-200 rounded-xl py-2.5 text-sm font-medium hover:bg-gray-50 transition-colors opacity-60 cursor-not-allowed"
-              title="Bientôt disponible"
-              disabled
-            >
-              <span>📲</span> Moov Money
+              {loading ? "Envoi..." : "Recevoir le code SMS →"}
             </button>
           </div>
+        )}
 
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Pas encore de compte ?{" "}
-            <Link href="/auth/register" className="text-[#00A550] font-semibold hover:underline">
-              Créer un compte
+        {etape === "otp" && (
+          <div className="space-y-6">
+            <div>
+              <label className="text-sm font-bold text-gray-700 mb-4 block text-center">
+                Code à 6 chiffres
+              </label>
+              <OtpInput valeur={code} onChange={setCode} onComplet={verifier} />
+            </div>
+
+            {erreur && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 text-center">
+                {erreur}
+              </div>
+            )}
+
+            <button
+              onClick={() => verifier(code)}
+              disabled={loading || code.length !== 6}
+              className="w-full bg-[#00A550] text-white font-black text-base py-4 rounded-2xl disabled:opacity-40 active:scale-95 transition-all"
+            >
+              {loading ? "Vérification..." : "Confirmer"}
+            </button>
+
+            <div className="flex items-center justify-between text-sm">
+              <button
+                onClick={() => { setEtape("telephone"); setCode(""); setErreur(""); }}
+                className="text-gray-500 font-medium"
+              >
+                ← Changer de numéro
+              </button>
+              <button
+                onClick={renvoyer}
+                disabled={renvoiSec > 0 || loading}
+                className="text-[#00A550] font-bold disabled:text-gray-400"
+              >
+                {renvoiSec > 0 ? `Renvoyer (${renvoiSec}s)` : "Renvoyer"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-500">
+            Pas de compte ?{" "}
+            <Link href="/auth/register" className="text-[#00A550] font-black">
+              S&apos;inscrire gratuitement
             </Link>
           </p>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-4">
-          En vous connectant, vous acceptez nos{" "}
-          <Link href="/conditions" className="hover:underline">
-            Conditions d&apos;utilisation
-          </Link>
+        <p className="text-center text-xs text-gray-400 mt-6">
+          Pas de mot de passe — votre numéro suffit
         </p>
       </div>
     </div>

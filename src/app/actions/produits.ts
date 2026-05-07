@@ -1,66 +1,59 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { MAX_PRODUITS_GRATUIT } from "@/lib/rules";
 
 type ProduitInput = {
   id?: string;
   nom: string;
-  slug: string;
-  description: string;
   prix: number;
-  prix_original?: number;
-  images: string[];
-  categorie: string;
-  stock: number;
-  unite?: string;
-  ville: string;
-  est_nouveau?: boolean;
+  image?: string | null;
 };
 
 export async function sauvegarderProduit(produit: ProduitInput) {
   const supabase = await createClient();
-
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { erreur: "Non authentifié." };
 
-  // Récupère l'ID du vendeur lié à cet utilisateur
   const { data: vendeur } = await supabase
     .from("vendeurs")
-    .select("id")
+    .select("id, nb_produits")
     .eq("utilisateur_id", user.id)
     .single();
+  if (!vendeur) return { erreur: "Aucune boutique trouvée." };
 
-  if (!vendeur) return { erreur: "Aucune boutique trouvée pour ce compte." };
+  // Vérifie la limite du plan gratuit (uniquement à la création)
+  if (!produit.id) {
+    const { data: abo } = await supabase
+      .from("abonnements")
+      .select("max_produits")
+      .eq("vendeur_id", vendeur.id)
+      .eq("statut", "actif")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const max = abo?.max_produits ?? MAX_PRODUITS_GRATUIT;
+    if (vendeur.nb_produits >= max) {
+      return { erreur: `Limite atteinte (${max} produits). Passez à un plan supérieur.` };
+    }
+  }
 
   const payload = {
     vendeur_id: vendeur.id,
     nom: produit.nom,
-    slug: produit.slug,
-    description: produit.description,
     prix: produit.prix,
-    prix_original: produit.prix_original ?? null,
-    images: produit.images,
-    categorie: produit.categorie,
-    stock: produit.stock,
-    unite: produit.unite ?? null,
-    tags: [],
-    ville: produit.ville,
-    est_nouveau: produit.est_nouveau ?? true,
-    est_vedette: false,
-    actif: true,
+    image: produit.image ?? null,
   };
 
   if (produit.id) {
-    // Modification — vérifie que le produit appartient bien à ce vendeur
     const { error } = await supabase
       .from("produits")
-      .update({ ...payload, est_nouveau: false })
+      .update(payload)
       .eq("id", produit.id)
       .eq("vendeur_id", vendeur.id);
-
     if (error) return { erreur: error.message };
   } else {
-    // Ajout
     const { error } = await supabase.from("produits").insert(payload);
     if (error) return { erreur: error.message };
   }
@@ -70,18 +63,33 @@ export async function sauvegarderProduit(produit: ProduitInput) {
   return { succes: true };
 }
 
-export async function supprimerProduit(produitId: string) {
+export async function changerStatutProduit(produitId: string, statut: "actif" | "inactif") {
   const supabase = await createClient();
-
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { erreur: "Non authentifié." };
 
   const { data: vendeur } = await supabase
-    .from("vendeurs")
-    .select("id")
-    .eq("utilisateur_id", user.id)
-    .single();
+    .from("vendeurs").select("id").eq("utilisateur_id", user.id).single();
+  if (!vendeur) return { erreur: "Boutique introuvable." };
 
+  const { error } = await supabase
+    .from("produits")
+    .update({ statut })
+    .eq("id", produitId)
+    .eq("vendeur_id", vendeur.id);
+
+  if (error) return { erreur: error.message };
+  revalidatePath("/vendor/dashboard");
+  return { succes: true };
+}
+
+export async function supprimerProduit(produitId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { erreur: "Non authentifié." };
+
+  const { data: vendeur } = await supabase
+    .from("vendeurs").select("id").eq("utilisateur_id", user.id).single();
   if (!vendeur) return { erreur: "Boutique introuvable." };
 
   const { error } = await supabase
@@ -91,7 +99,6 @@ export async function supprimerProduit(produitId: string) {
     .eq("vendeur_id", vendeur.id);
 
   if (error) return { erreur: error.message };
-
   revalidatePath("/vendor/dashboard");
   revalidatePath("/catalogue");
   return { succes: true };
@@ -99,16 +106,11 @@ export async function supprimerProduit(produitId: string) {
 
 export async function getMesProduits() {
   const supabase = await createClient();
-
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
   const { data: vendeur } = await supabase
-    .from("vendeurs")
-    .select("id")
-    .eq("utilisateur_id", user.id)
-    .single();
-
+    .from("vendeurs").select("id").eq("utilisateur_id", user.id).single();
   if (!vendeur) return [];
 
   const { data } = await supabase

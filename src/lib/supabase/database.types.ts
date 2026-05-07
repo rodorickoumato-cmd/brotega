@@ -1,21 +1,28 @@
 export type Database = {
   public: {
     Tables: {
+
+      // ── UTILISATEURS ───────────────────────────────────────
       utilisateurs: {
         Row: {
           id: string;
           nom: string;
-          email: string;
           telephone: string | null;
-          ville: string | null;
-          avatar_url: string | null;
-          role: "acheteur" | "vendeur" | "admin";
+          role: "acheteur" | "vendeur" | "livreur" | "admin";
           created_at: string;
-          updated_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["utilisateurs"]["Row"], "created_at" | "updated_at">;
+        Insert: {
+          id: string;
+          nom: string;
+          telephone?: string | null;
+          role?: "acheteur" | "vendeur" | "livreur" | "admin";
+          created_at?: string;
+        };
         Update: Partial<Database["public"]["Tables"]["utilisateurs"]["Insert"]>;
+        Relationships: [];
       };
+
+      // ── VENDEURS ───────────────────────────────────────────
       vendeurs: {
         Row: {
           id: string;
@@ -35,75 +42,323 @@ export type Database = {
           created_at: string;
           updated_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["vendeurs"]["Row"], "id" | "note" | "nb_avis" | "nb_produits" | "created_at" | "updated_at">;
-        Update: Partial<Database["public"]["Tables"]["vendeurs"]["Insert"]>;
-      };
-      produits: {
-        Row: {
-          id: string;
-          vendeur_id: string;
+        Insert: {
+          id?: string;
+          utilisateur_id: string;
           nom: string;
           slug: string;
-          description: string;
-          prix: number;
-          prix_original: number | null;
-          images: string[];
-          categorie: string;
-          sous_categorie: string | null;
-          stock: number;
-          unite: string | null;
-          tags: string[];
+          description?: string | null;
+          logo_url?: string | null;
           ville: string;
-          est_nouveau: boolean;
-          est_vedette: boolean;
-          actif: boolean;
-          note: number;
-          nb_avis: number;
-          created_at: string;
-          updated_at: string;
+          telephone?: string | null;
+          whatsapp?: string | null;
+          categories?: string[];
+          statut?: "en_attente" | "verifie" | "suspendu";
+          note?: number;
+          nb_avis?: number;
+          nb_produits?: number;
+          created_at?: string;
+          updated_at?: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["produits"]["Row"], "id" | "note" | "nb_avis" | "created_at" | "updated_at">;
-        Update: Partial<Database["public"]["Tables"]["produits"]["Insert"]>;
+        Update: Partial<Database["public"]["Tables"]["vendeurs"]["Insert"]>;
+        Relationships: [];
       };
-      commandes: {
-        Row: {
-          id: string;
-          utilisateur_id: string | null;
-          vendeur_id: string | null;
-          articles: unknown;
-          total: number;
-          statut: "en_attente" | "confirme" | "expedie" | "livre" | "annule";
-          mode_paiement: "airtel_money" | "moov_money" | "especes" | "carte" | null;
-          statut_paiement: "en_attente" | "paye" | "echec";
-          adresse: unknown;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: Omit<Database["public"]["Tables"]["commandes"]["Row"], "id" | "created_at" | "updated_at">;
-        Update: Partial<Database["public"]["Tables"]["commandes"]["Insert"]>;
-      };
+
+      // ── ABONNEMENTS ────────────────────────────────────────
       abonnements: {
         Row: {
           id: string;
           vendeur_id: string;
           plan: "gratuit" | "mensuel" | "trimestriel" | "semestriel" | "annuel";
-          prix: number;
-          statut: "actif" | "expire" | "annule";
+          prix_xaf: number;
+          statut: "en_attente_paiement" | "actif" | "expire" | "annule";
+          max_produits: number;
           date_debut: string;
           date_fin: string | null;
-          max_produits: number;
           created_at: string;
         };
-        Insert: Omit<Database["public"]["Tables"]["abonnements"]["Row"], "id" | "created_at">;
+        Insert: {
+          id?: string;
+          vendeur_id: string;
+          plan: "gratuit" | "mensuel" | "trimestriel" | "semestriel" | "annuel";
+          prix_xaf?: number;
+          statut?: "en_attente_paiement" | "actif" | "expire" | "annule";
+          max_produits?: number;
+          date_debut?: string;
+          date_fin?: string | null;
+          created_at?: string;
+        };
         Update: Partial<Database["public"]["Tables"]["abonnements"]["Insert"]>;
+        Relationships: [];
+      };
+
+      // ── PRODUITS ───────────────────────────────────────────
+      produits: {
+        Row: {
+          id: string;
+          vendeur_id: string;
+          nom: string;
+          prix: number;
+          image: string | null;
+          statut: "actif" | "inactif";
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          vendeur_id: string;
+          nom: string;
+          prix: number;
+          image?: string | null;
+          statut?: "actif" | "inactif";
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["produits"]["Insert"]>;
+        Relationships: [];
+      };
+
+      // ── COMMANDES ──────────────────────────────────────────
+      commandes: {
+        Row: {
+          id: string;
+          code_court: string | null;
+          utilisateur_id: string | null;
+          vendeur_id: string | null;
+          livreur_id: string | null;
+          articles: unknown;
+          total: number;
+          frais_livraison: number;
+          commission_xaf: number;
+          statut: "en_attente_paiement" | "payee_escrow" | "confirmee_vendeur" | "en_livraison" | "livree" | "litige" | "remboursee" | "annulee";
+          mode_paiement: "airtel_money" | "moov_money" | "especes" | null;
+          statut_paiement: "en_attente" | "paye" | "echec";
+          telephone_paiement: string | null;
+          adresse: unknown;
+          paye_at: string | null;
+          livree_at: string | null;
+          escrow_libere_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code_court?: string | null;
+          utilisateur_id?: string | null;
+          vendeur_id?: string | null;
+          livreur_id?: string | null;
+          articles: unknown;
+          total: number;
+          frais_livraison?: number;
+          commission_xaf?: number;
+          statut?: "en_attente_paiement" | "payee_escrow" | "confirmee_vendeur" | "en_livraison" | "livree" | "litige" | "remboursee" | "annulee";
+          mode_paiement?: "airtel_money" | "moov_money" | "especes" | null;
+          statut_paiement?: "en_attente" | "paye" | "echec";
+          telephone_paiement?: string | null;
+          adresse: unknown;
+          paye_at?: string | null;
+          livree_at?: string | null;
+          escrow_libere_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["commandes"]["Insert"]>;
+        Relationships: [];
+      };
+
+      // ── PAIEMENTS ──────────────────────────────────────────
+      paiements: {
+        Row: {
+          id: string;
+          commande_id: string | null;
+          abonnement_id: string | null;
+          provider: "airtel" | "moov" | "cash" | "mock";
+          provider_ref: string | null;
+          idempotency_key: string;
+          montant_xaf: number;
+          telephone: string | null;
+          statut: "initie" | "en_attente" | "reussi" | "echec" | "rembourse";
+          message_erreur: string | null;
+          raw_callback: unknown;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          commande_id?: string | null;
+          abonnement_id?: string | null;
+          provider: "airtel" | "moov" | "cash" | "mock";
+          provider_ref?: string | null;
+          idempotency_key: string;
+          montant_xaf: number;
+          telephone?: string | null;
+          statut?: "initie" | "en_attente" | "reussi" | "echec" | "rembourse";
+          message_erreur?: string | null;
+          raw_callback?: unknown;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["paiements"]["Insert"]>;
+        Relationships: [];
+      };
+
+      // ── LIVRAISONS ─────────────────────────────────────────
+      livraisons: {
+        Row: {
+          id: string;
+          commande_id: string;
+          livreur_id: string | null;
+          statut: "en_attente" | "assignee" | "en_route" | "livree" | "echec";
+          note_livreur: string | null;
+          assignee_at: string | null;
+          livree_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          commande_id: string;
+          livreur_id?: string | null;
+          statut?: "en_attente" | "assignee" | "en_route" | "livree" | "echec";
+          note_livreur?: string | null;
+          assignee_at?: string | null;
+          livree_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["livraisons"]["Insert"]>;
+        Relationships: [];
+      };
+
+      // ── MESSAGES ───────────────────────────────────────────
+      messages: {
+        Row: {
+          id: string;
+          commande_id: string;
+          expediteur_id: string;
+          contenu: string;
+          lu: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          commande_id: string;
+          expediteur_id: string;
+          contenu: string;
+          lu?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["messages"]["Insert"]>;
+        Relationships: [];
+      };
+
+      // ── RÉCLAMATIONS ───────────────────────────────────────
+      reclamations: {
+        Row: {
+          id: string;
+          commande_id: string;
+          utilisateur_id: string;
+          motif: string;
+          statut: "ouverte" | "en_cours" | "resolue_acheteur" | "resolue_vendeur" | "fermee";
+          resolution: string | null;
+          admin_id: string | null;
+          resolue_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          commande_id: string;
+          utilisateur_id: string;
+          motif: string;
+          statut?: "ouverte" | "en_cours" | "resolue_acheteur" | "resolue_vendeur" | "fermee";
+          resolution?: string | null;
+          admin_id?: string | null;
+          resolue_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["reclamations"]["Insert"]>;
+        Relationships: [];
+      };
+
+      // ── WALLETS ────────────────────────────────────────────
+      wallets: {
+        Row: {
+          vendeur_id: string;
+          balance_pending_xaf: number;
+          balance_available_xaf: number;
+          updated_at: string;
+        };
+        Insert: {
+          vendeur_id: string;
+          balance_pending_xaf?: number;
+          balance_available_xaf?: number;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["wallets"]["Insert"]>;
+        Relationships: [];
+      };
+
+      // ── WALLET_TRANSACTIONS ────────────────────────────────
+      wallet_transactions: {
+        Row: {
+          id: string;
+          vendeur_id: string;
+          type: "credit_escrow" | "liberation" | "commission" | "retrait" | "remboursement" | "ajustement";
+          montant_xaf: number;
+          solde_pending_apres: number;
+          solde_available_apres: number;
+          commande_id: string | null;
+          paiement_id: string | null;
+          description: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          vendeur_id: string;
+          type: "credit_escrow" | "liberation" | "commission" | "retrait" | "remboursement" | "ajustement";
+          montant_xaf: number;
+          solde_pending_apres: number;
+          solde_available_apres: number;
+          commande_id?: string | null;
+          paiement_id?: string | null;
+          description?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["wallet_transactions"]["Insert"]>;
+        Relationships: [];
+      };
+
+    };
+
+    Views: { [_ in never]: never };
+
+    Functions: {
+      crediter_wallet_escrow: {
+        Args: { p_vendeur_id: string; p_montant: number; p_commande_id: string; p_paiement_id: string };
+        Returns: void;
+      };
+      liberer_escrow: {
+        Args: { p_vendeur_id: string; p_montant: number; p_commission: number; p_commande_id: string };
+        Returns: void;
       };
     };
+
+    Enums: { [_ in never]: never };
+    CompositeTypes: { [_ in never]: never };
   };
 };
 
-// Raccourcis utiles
-export type Utilisateur = Database["public"]["Tables"]["utilisateurs"]["Row"];
-export type Vendeur = Database["public"]["Tables"]["vendeurs"]["Row"];
-export type Produit = Database["public"]["Tables"]["produits"]["Row"];
-export type Commande = Database["public"]["Tables"]["commandes"]["Row"];
-export type Abonnement = Database["public"]["Tables"]["abonnements"]["Row"];
+// ── Raccourcis ─────────────────────────────────────────────────
+export type Utilisateur     = Database["public"]["Tables"]["utilisateurs"]["Row"];
+export type Vendeur         = Database["public"]["Tables"]["vendeurs"]["Row"];
+export type Abonnement      = Database["public"]["Tables"]["abonnements"]["Row"];
+export type Produit         = Database["public"]["Tables"]["produits"]["Row"];
+export type Commande        = Database["public"]["Tables"]["commandes"]["Row"];
+export type Paiement        = Database["public"]["Tables"]["paiements"]["Row"];
+export type Livraison       = Database["public"]["Tables"]["livraisons"]["Row"];
+export type Message         = Database["public"]["Tables"]["messages"]["Row"];
+export type Reclamation     = Database["public"]["Tables"]["reclamations"]["Row"];
+export type Wallet          = Database["public"]["Tables"]["wallets"]["Row"];
+export type WalletTransaction = Database["public"]["Tables"]["wallet_transactions"]["Row"];

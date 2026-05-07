@@ -6,9 +6,11 @@ import { formatXAF, CITIES_GABON } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toaster";
 import { useRouter } from "next/navigation";
+import { creerCommande } from "@/app/actions/commandes";
+import { vers241 } from "@/lib/phone";
 
 type Step = "address" | "payment" | "confirm";
-type PayMethod = "airtel_money" | "moov_money" | "cash" | "card";
+type PayMethod = "airtel_money" | "moov_money" | "especes";
 
 export default function CheckoutPage() {
   const { state, total, dispatch } = useCart();
@@ -23,18 +25,55 @@ export default function CheckoutPage() {
     district: "",
     details: "",
   });
+
+  const validerAdresse = () => {
+    if (!address.fullName.trim()) { toast("Entrez votre nom complet.", "error"); return false; }
+    const phone = address.phone.replace(/\s/g, "");
+    if (!phone) { toast("Entrez votre numéro de téléphone.", "error"); return false; }
+    if (!/^\+?[0-9]{8,15}$/.test(phone)) { toast("Numéro de téléphone invalide. Exemple : 01 23 45 67", "error"); return false; }
+    return true;
+  };
   const [payMethod, setPayMethod] = useState<PayMethod>("airtel_money");
 
   const delivery = 2500;
   const grandTotal = total + delivery;
 
   const handleOrder = async () => {
+    const phoneAdresse = vers241(address.phone);
+    if (!phoneAdresse) { toast("Numéro de livraison invalide.", "error"); return; }
+
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 2000));
-    dispatch({ type: "CLEAR" });
-    toast("🎉 Commande confirmée ! Vous allez recevoir un SMS de confirmation.", "success");
-    router.push("/");
+    const res = await creerCommande({
+      items: state.items.map((item) => ({
+        produit_id: item.product.id,
+        nom: item.product.name,
+        prix_xaf: item.product.price,
+        quantite: item.quantity,
+        image: item.product.images[0] ?? null,
+        vendeur_id: item.product.vendorId,
+      })),
+      adresse: {
+        nom_complet: address.fullName,
+        telephone: phoneAdresse,
+        ville: address.city,
+        quartier: address.district || undefined,
+        details: address.details || undefined,
+      },
+      mode_paiement: payMethod,
+      telephone_paiement: payMethod === "especes" ? undefined : phoneAdresse,
+    });
     setLoading(false);
+
+    if (res.erreur) { toast(res.erreur, "error"); return; }
+
+    dispatch({ type: "CLEAR" });
+    toast(
+      payMethod === "especes"
+        ? "🎉 Commande créée ! Préparez l'argent pour la livraison."
+        : "📲 Validez le paiement sur votre téléphone",
+      "success"
+    );
+    router.push(`/commande/${res.code}`);
   };
 
   if (state.items.length === 0) {
@@ -49,10 +88,9 @@ export default function CheckoutPage() {
   }
 
   const payMethods = [
-    { id: "airtel_money" as PayMethod, name: "Airtel Money", icon: "📱", desc: "Paiement via votre numéro Airtel", color: "red" },
-    { id: "moov_money" as PayMethod, name: "Moov Money", icon: "📲", desc: "Paiement via votre numéro Moov", color: "blue" },
-    { id: "cash" as PayMethod, name: "Espèces à la livraison", icon: "💵", desc: "Payez cash lors de la réception", color: "green" },
-    { id: "card" as PayMethod, name: "Carte bancaire", icon: "💳", desc: "Visa / Mastercard sécurisé", color: "yellow" },
+    { id: "airtel_money" as PayMethod, name: "Airtel Money", icon: "📱", desc: "Validation USSD sur votre téléphone" },
+    { id: "moov_money" as PayMethod, name: "Moov Money", icon: "📲", desc: "Validation USSD sur votre téléphone" },
+    { id: "especes" as PayMethod, name: "Espèces à la livraison", icon: "💵", desc: "Vous payez cash au livreur" },
   ];
 
   return (
@@ -83,69 +121,78 @@ export default function CheckoutPage() {
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
               <h2 className="font-bold text-lg mb-5">Adresse de livraison</h2>
               <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">Nom complet *</label>
-                    <input
-                      value={address.fullName}
-                      onChange={(e) => setAddress({ ...address, fullName: e.target.value })}
-                      placeholder="Jean-Pierre Mbourou"
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">Téléphone *</label>
+                {/* Nom */}
+                <div>
+                  <label className="text-sm font-bold text-gray-700 mb-1.5 block">Votre nom complet <span className="text-red-500">*</span></label>
+                  <input
+                    value={address.fullName}
+                    onChange={(e) => setAddress({ ...address, fullName: e.target.value })}
+                    placeholder="Jean-Pierre Mbourou"
+                    autoComplete="name"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-[#00A550] focus:ring-2 focus:ring-[#00A550]/20 transition-all"
+                  />
+                </div>
+
+                {/* Téléphone avec préfixe */}
+                <div>
+                  <label className="text-sm font-bold text-gray-700 mb-1.5 block">Téléphone <span className="text-red-500">*</span></label>
+                  <div className="flex border border-gray-200 rounded-xl overflow-hidden focus-within:border-[#00A550] focus-within:ring-2 focus-within:ring-[#00A550]/20 transition-all">
+                    <span className="bg-gray-50 px-3 flex items-center text-sm text-gray-600 border-r border-gray-200 font-medium whitespace-nowrap">🇬🇦 +241</span>
                     <input
                       value={address.phone}
                       onChange={(e) => setAddress({ ...address, phone: e.target.value })}
-                      placeholder="+241 01 23 45 67"
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
+                      placeholder="01 23 45 67"
+                      inputMode="tel"
+                      autoComplete="tel"
+                      className="flex-1 px-3 py-3.5 text-sm focus:outline-none"
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">Ville *</label>
-                    <select
-                      value={address.city}
-                      onChange={(e) => setAddress({ ...address, city: e.target.value })}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
-                    >
-                      {CITIES_GABON.map((c) => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">Quartier *</label>
-                    <input
-                      value={address.district}
-                      onChange={(e) => setAddress({ ...address, district: e.target.value })}
-                      placeholder="Nombakélé, PK5, Akanda..."
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
-                    />
-                  </div>
-                </div>
+
+                {/* Ville */}
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Détails / Indication</label>
+                  <label className="text-sm font-bold text-gray-700 mb-1.5 block">Ville <span className="text-red-500">*</span></label>
+                  <select
+                    value={address.city}
+                    onChange={(e) => setAddress({ ...address, city: e.target.value })}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-[#00A550] focus:ring-2 focus:ring-[#00A550]/20 transition-all"
+                  >
+                    {CITIES_GABON.map((c) => <option key={c} value={c}>📍 {c}</option>)}
+                  </select>
+                </div>
+
+                {/* Quartier — optionnel */}
+                <div>
+                  <label className="text-sm font-bold text-gray-700 mb-1.5 block">
+                    Quartier <span className="text-gray-400 font-normal text-xs">(facultatif)</span>
+                  </label>
+                  <input
+                    value={address.district}
+                    onChange={(e) => setAddress({ ...address, district: e.target.value })}
+                    placeholder="Nombakélé, PK5, Akanda..."
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-[#00A550] focus:ring-2 focus:ring-[#00A550]/20 transition-all"
+                  />
+                </div>
+
+                {/* Détails */}
+                <div>
+                  <label className="text-sm font-bold text-gray-700 mb-1.5 block">
+                    Indication pour trouver votre adresse <span className="text-gray-400 font-normal text-xs">(facultatif)</span>
+                  </label>
                   <textarea
                     value={address.details}
                     onChange={(e) => setAddress({ ...address, details: e.target.value })}
                     placeholder="Près de la boulangerie, maison bleue, 2ème étage..."
-                    rows={3}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30 resize-none"
+                    rows={2}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00A550] focus:ring-2 focus:ring-[#00A550]/20 transition-all resize-none"
                   />
                 </div>
+
                 <Button
                   fullWidth
                   size="lg"
-                  onClick={() => {
-                    const phone = address.phone.replace(/\s/g, "");
-                    if (!/^\+?[0-9]{8,15}$/.test(phone)) {
-                      toast("Numéro de téléphone invalide", "error");
-                      return;
-                    }
-                    setStep("payment");
-                  }}
-                  disabled={!address.fullName || !address.phone || !address.city || !address.district}
+                  onClick={() => { if (validerAdresse()) setStep("payment"); }}
+                  className="py-4 text-base"
                 >
                   Continuer vers le paiement →
                 </Button>
@@ -177,14 +224,25 @@ export default function CheckoutPage() {
 
               {(payMethod === "airtel_money" || payMethod === "moov_money") && (
                 <div className="bg-blue-50 rounded-xl p-4 mb-4 text-sm">
-                  <p className="font-semibold text-blue-800 mb-1">Comment payer avec {payMethod === "airtel_money" ? "Airtel Money" : "Moov Money"}</p>
+                  <p className="font-semibold text-blue-800 mb-1">📲 Comment ça marche</p>
                   <ol className="text-blue-700 space-y-1 text-xs list-decimal list-inside">
-                    <li>Composez {payMethod === "airtel_money" ? "*555#" : "*111#"} sur votre téléphone</li>
-                    <li>Sélectionnez "Paiement de facture"</li>
-                    <li>Entrez le code marchand : <strong>BROTEGA</strong></li>
-                    <li>Montant : {formatXAF(grandTotal)}</li>
-                    <li>Validez avec votre code secret</li>
+                    <li>Vous validez la commande</li>
+                    <li>Vous recevez une notification USSD sur votre téléphone</li>
+                    <li>Saisissez votre code PIN {payMethod === "airtel_money" ? "Airtel" : "Moov"} Money</li>
+                    <li>Montant débité : <strong>{formatXAF(grandTotal)}</strong></li>
                   </ol>
+                  <p className="text-blue-700 text-xs mt-2 italic">
+                    🛡️ L&apos;argent est bloqué chez Brotega. Le vendeur le reçoit après confirmation de livraison.
+                  </p>
+                </div>
+              )}
+
+              {payMethod === "especes" && (
+                <div className="bg-amber-50 rounded-xl p-4 mb-4 text-sm">
+                  <p className="font-semibold text-amber-900 mb-1">💵 Paiement à la livraison</p>
+                  <p className="text-amber-800 text-xs">
+                    Préparez exactement <strong>{formatXAF(grandTotal)}</strong>. Le livreur ne fera pas la monnaie.
+                  </p>
                 </div>
               )}
 
@@ -204,7 +262,7 @@ export default function CheckoutPage() {
               <div className="bg-gray-50 rounded-xl p-4 mb-5 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Livraison vers</span>
-                  <span className="font-medium">{address.city}, {address.district}</span>
+                  <span className="font-medium">{address.city}{address.district ? `, ${address.district}` : ""}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Destinataire</span>
@@ -223,8 +281,12 @@ export default function CheckoutPage() {
               <div className="space-y-3 mb-5">
                 {state.items.map((item) => (
                   <div key={item.product.id} className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-lg overflow-hidden relative flex-shrink-0">
-                      <Image src={item.product.images[0]} alt={item.product.name} fill sizes="48px" className="object-cover" />
+                    <div className="w-12 h-12 rounded-lg overflow-hidden relative flex-shrink-0 bg-gray-100">
+                      {item.product.images[0] ? (
+                        <Image src={item.product.images[0]} alt={item.product.name} fill sizes="48px" className="object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xl">🛍️</div>
+                      )}
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium line-clamp-1">{item.product.name}</p>

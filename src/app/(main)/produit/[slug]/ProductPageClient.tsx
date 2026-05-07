@@ -144,7 +144,7 @@ export function ProductPageClient({ product, related }: { product: Product; rela
 
           {/* Tags */}
           <div className="flex flex-wrap gap-2 mb-6">
-            {product.tags.map((tag) => (
+            {(product.tags ?? []).map((tag) => (
               <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full hover:bg-[#E8F7EE] hover:text-[#00A550] transition-colors cursor-default">
                 #{tag}
               </span>

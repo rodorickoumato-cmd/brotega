@@ -14,7 +14,7 @@ export interface Product {
   reviewCount: number;
   stock: number;
   unit?: string;
-  tags: string[];
+  tags?: string[];
   featured?: boolean;
   isNew?: boolean;
   city: string;
@@ -72,14 +72,14 @@ export interface DeliveryAddress {
   details: string;
 }
 
+export type UserRole = "acheteur" | "vendeur" | "livreur" | "admin";
+
 export interface User {
   id: string;
-  name: string;
-  email: string;
-  phone: string;
-  avatar?: string;
-  city: string;
-  role: "buyer" | "seller" | "admin";
+  nom: string;
+  telephone: string | null;
+  role: UserRole;
+  created_at: string;
 }
 
 export interface Review {
