@@ -13,6 +13,7 @@ function slugifier(str: string): string {
 
 // Mapping erreurs Supabase → messages français simples
 function traduireErreurAuth(msg: string): string {
+  if (!msg) return "Erreur inconnue.";
   const map: Record<string, string> = {
     "Invalid phone number": "Numéro de téléphone invalide.",
     "Phone not confirmed": "Numéro non confirmé. Vérifiez le code SMS.",
@@ -20,9 +21,17 @@ function traduireErreurAuth(msg: string): string {
     "SMS rate limit exceeded": "Trop de demandes. Patientez quelques minutes.",
     "Too many requests": "Trop de tentatives. Réessayez dans quelques minutes.",
     "User already registered": "Ce numéro est déjà utilisé.",
+    "Phone provider": "SMS non configuré. Contactez le support.",
+    "phone_provider": "SMS non configuré. Contactez le support.",
+    "provider is not enabled": "Envoi SMS non activé sur le serveur.",
+    "Signups not allowed": "Inscription désactivée. Connectez-vous plutôt.",
+    "signups_disabled": "Inscription désactivée.",
+    "not found": "Service introuvable. Vérifiez la configuration.",
+    "Twilio": "Erreur Twilio : " + msg,
   };
-  for (const [k, v] of Object.entries(map)) if (msg.includes(k)) return v;
-  return "Une erreur est survenue. Réessayez.";
+  for (const [k, v] of Object.entries(map)) if (msg.toLowerCase().includes(k.toLowerCase())) return v;
+  // Retourne l'erreur brute pour faciliter le diagnostic
+  return "Erreur : " + msg;
 }
 
 // 1a) Envoi OTP par email — login ET register
@@ -79,7 +88,7 @@ export async function verifierEmailOTP(input: { email: string; code: string }) {
 //     `creerSiAbsent` = true pour register
 export async function envoyerOTP(input: { telephone: string; creerSiAbsent: boolean }) {
   const phone = vers241(input.telephone);
-  if (!phone) return { erreur: "Numéro invalide. Format attendu : 01 23 45 67" };
+  if (!phone) return { erreur: "Numéro invalide. Format attendu : 66 03 08 48" };
 
   const supabase = await createClient();
 
