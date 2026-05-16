@@ -35,7 +35,7 @@ export function SupabaseProduitClient({
       id: produit.id,
       name: produit.nom,
       slug: produit.id,
-      description: "",
+      description: produit.description ?? "",
       price: produit.prix,
       images: produit.image ? [produit.image] : [],
       category: "",
@@ -75,8 +75,21 @@ export function SupabaseProduitClient({
           {/* Nom + Prix */}
           <div>
             <h1 className="text-xl font-black text-gray-800">{produit.nom}</h1>
-            <p className="text-3xl font-black text-[#00A550] mt-1">{formatXAF(produit.prix)}</p>
+            <p className="text-3xl font-black text-[#E63946] mt-1">{formatXAF(produit.prix)}</p>
+            {produit.categorie && (
+              <span className="inline-block text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full mt-2">
+                {produit.categorie}
+              </span>
+            )}
           </div>
+
+          {/* Description */}
+          {produit.description && (
+            <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <p className="text-sm font-bold text-gray-700 mb-1">Description</p>
+              <p className="text-sm text-gray-600 leading-relaxed">{produit.description}</p>
+            </div>
+          )}
 
           {/* Vendeur */}
           {vendeur && (
@@ -84,7 +97,7 @@ export function SupabaseProduitClient({
               href={`/vendeur/${vendeur.slug}`}
               className="flex items-center gap-3 bg-white rounded-2xl p-3 shadow-sm active:scale-95 transition-all"
             >
-              <div className="w-10 h-10 bg-[#E8F7EE] rounded-full flex items-center justify-center text-lg flex-shrink-0">
+              <div className="w-10 h-10 bg-[#FEF2F2] rounded-full flex items-center justify-center text-lg flex-shrink-0">
                 🏪
               </div>
               <div className="min-w-0 flex-1">
@@ -98,7 +111,7 @@ export function SupabaseProduitClient({
           {/* Ajouter au panier */}
           <button
             onClick={handleAdd}
-            className="w-full bg-[#00A550] text-white font-black py-4 rounded-2xl text-lg active:scale-95 transition-all shadow-lg"
+            className="w-full bg-[#E63946] text-white font-black py-4 rounded-2xl text-lg active:scale-95 transition-all shadow-lg"
           >
             🛒 Ajouter au panier
           </button>

@@ -28,19 +28,19 @@ export default function AdressesPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/compte" className="text-gray-400 hover:text-[#00A550] transition-colors">← Mon compte</Link>
+        <Link href="/compte" className="text-gray-400 hover:text-[#E63946] transition-colors">← Mon compte</Link>
         <span className="text-gray-300">/</span>
         <h1 className="text-2xl font-black text-gray-800">Mes adresses</h1>
       </div>
 
       <div className="space-y-4 mb-5">
         {addresses.map((addr) => (
-          <div key={addr.id} className={`bg-white rounded-2xl p-5 shadow-sm border ${addr.isDefault ? "border-[#00A550]" : "border-gray-100"}`}>
+          <div key={addr.id} className={`bg-white rounded-2xl p-5 shadow-sm border ${addr.isDefault ? "border-[#E63946]" : "border-gray-100"}`}>
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-bold text-gray-800">📍 {addr.label || "Adresse"}</span>
-                  {addr.isDefault && <span className="text-xs bg-[#E8F7EE] text-[#00A550] px-2 py-0.5 rounded-full font-semibold">Par défaut</span>}
+                  {addr.isDefault && <span className="text-xs bg-[#FEF2F2] text-[#E63946] px-2 py-0.5 rounded-full font-semibold">Par défaut</span>}
                 </div>
                 <p className="text-sm font-medium text-gray-700">{addr.fullName}</p>
                 <p className="text-sm text-gray-500">{addr.phone}</p>
@@ -68,31 +68,31 @@ export default function AdressesPage() {
           <form onSubmit={handleAdd} className="space-y-4">
             <div>
               <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Libellé (ex : Domicile, Bureau)</label>
-              <input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Domicile" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30" />
+              <input value={form.label} onChange={(e) => setForm({ ...form, label: e.target.value })} placeholder="Domicile" className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E63946]/30" />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Nom complet *</label>
-                <input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} required className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30" />
+                <input value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} required className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E63946]/30" />
               </div>
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Téléphone *</label>
-                <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+241 01 23 45 67" required className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30" />
+                <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+241 01 23 45 67" required className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E63946]/30" />
               </div>
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Ville *</label>
-                <select value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30">
+                <select value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E63946]/30">
                   {CITIES_GABON.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Quartier *</label>
-                <input value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })} placeholder="Nombakélé, PK5..." required className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30" />
+                <input value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })} placeholder="Nombakélé, PK5..." required className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E63946]/30" />
               </div>
             </div>
             <div>
               <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Indications complémentaires</label>
-              <input value={form.details} onChange={(e) => setForm({ ...form, details: e.target.value })} placeholder="Maison rouge, 2ème rue à gauche..." className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30" />
+              <input value={form.details} onChange={(e) => setForm({ ...form, details: e.target.value })} placeholder="Maison rouge, 2ème rue à gauche..." className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E63946]/30" />
             </div>
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setShowForm(false)} type="button">Annuler</Button>

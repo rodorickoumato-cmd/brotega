@@ -38,7 +38,7 @@ export default function CommandesPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
-      <div className="bg-[#00A550] px-5 pt-12 pb-8">
+      <div className="bg-[#E63946] px-5 pt-12 pb-8">
         <Link href="/compte" className="text-white/70 text-sm">← Mon compte</Link>
         <h1 className="text-2xl font-black text-white mt-2">Mes commandes</h1>
         {!chargement && (
@@ -60,7 +60,7 @@ export default function CommandesPage() {
             <p className="font-black text-gray-700 mb-1">Aucune commande</p>
             <p className="text-sm text-gray-400 mb-5">Vous n'avez pas encore passé de commande.</p>
             <Link href="/catalogue"
-              className="inline-block bg-[#00A550] text-white font-bold px-6 py-3 rounded-2xl text-sm active:scale-95 transition-all">
+              className="inline-block bg-[#E63946] text-white font-bold px-6 py-3 rounded-2xl text-sm active:scale-95 transition-all">
               Parcourir le catalogue
             </Link>
           </div>
@@ -81,7 +81,7 @@ export default function CommandesPage() {
                 </p>
               </div>
               <div className="text-right flex-shrink-0">
-                <p className="font-black text-[#00A550]">{formatXAF(c.total)}</p>
+                <p className="font-black text-[#E63946]">{formatXAF(c.total)}</p>
                 <p className="text-gray-300 text-lg">›</p>
               </div>
             </Link>

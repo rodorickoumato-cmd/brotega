@@ -15,10 +15,10 @@ export default function NotFound() {
             Cette page n'existe pas ou a été déplacée. Retournez à l'accueil pour continuer vos achats.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/" className="bg-[#00A550] hover:bg-[#007A3D] text-white font-bold px-8 py-3 rounded-xl transition-colors">
+            <Link href="/" className="bg-[#E63946] hover:bg-[#C1121F] text-white font-bold px-8 py-3 rounded-xl transition-colors">
               🏠 Retour à l'accueil
             </Link>
-            <Link href="/catalogue" className="border-2 border-[#00A550] text-[#00A550] hover:bg-[#E8F7EE] font-bold px-8 py-3 rounded-xl transition-colors">
+            <Link href="/catalogue" className="border-2 border-[#E63946] text-[#E63946] hover:bg-[#FEF2F2] font-bold px-8 py-3 rounded-xl transition-colors">
               🛍️ Voir le catalogue
             </Link>
           </div>

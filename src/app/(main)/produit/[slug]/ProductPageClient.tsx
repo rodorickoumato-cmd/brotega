@@ -35,7 +35,7 @@ function ShareButton({ product }: { product: Product }) {
     <button
       onClick={handleShare}
       aria-label="Partager ce produit"
-      className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#00A550] transition-colors px-3 py-1.5 border border-gray-200 hover:border-[#00A550]/40 rounded-lg"
+      className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#E63946] transition-colors px-3 py-1.5 border border-gray-200 hover:border-[#E63946]/40 rounded-lg"
     >
       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -70,11 +70,11 @@ export function ProductPageClient({ product, related }: { product: Product; rela
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-sm text-gray-500 mb-6 flex-wrap">
-        <Link href="/" className="hover:text-[#00A550] transition-colors">Accueil</Link>
+        <Link href="/" className="hover:text-[#E63946] transition-colors">Accueil</Link>
         <span>/</span>
-        <Link href="/catalogue" className="hover:text-[#00A550] transition-colors">Catalogue</Link>
+        <Link href="/catalogue" className="hover:text-[#E63946] transition-colors">Catalogue</Link>
         <span>/</span>
-        <Link href={`/catalogue?categorie=${catSlug}`} className="hover:text-[#00A550] transition-colors">{product.category}</Link>
+        <Link href={`/catalogue?categorie=${catSlug}`} className="hover:text-[#E63946] transition-colors">{product.category}</Link>
         <span>/</span>
         <span className="text-gray-800 font-medium truncate max-w-[200px]">{product.name}</span>
       </div>
@@ -99,7 +99,7 @@ export function ProductPageClient({ product, related }: { product: Product; rela
                   key={i}
                   onClick={() => setActiveImg(i)}
                   aria-label={`Voir la photo ${i + 1}`}
-                  className={`w-16 h-16 rounded-xl overflow-hidden border-2 relative transition-all flex-shrink-0 ${i === activeImg ? "border-[#00A550]" : "border-gray-200 hover:border-gray-300"}`}
+                  className={`w-16 h-16 rounded-xl overflow-hidden border-2 relative transition-all flex-shrink-0 ${i === activeImg ? "border-[#E63946]" : "border-gray-200 hover:border-gray-300"}`}
                 >
                   <Image src={img} alt="" fill sizes="64px" className="object-cover" />
                 </button>
@@ -129,9 +129,9 @@ export function ProductPageClient({ product, related }: { product: Product; rela
           </div>
 
           {/* Prix */}
-          <div className="bg-[#E8F7EE] rounded-2xl p-4 mb-5">
+          <div className="bg-[#FEF2F2] rounded-2xl p-4 mb-5">
             <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-black text-[#00A550]">{formatXAF(product.price)}</span>
+              <span className="text-3xl font-black text-[#E63946]">{formatXAF(product.price)}</span>
               {product.unit && <span className="text-gray-500 text-sm">/ {product.unit}</span>}
             </div>
             {product.originalPrice && (
@@ -145,7 +145,7 @@ export function ProductPageClient({ product, related }: { product: Product; rela
           {/* Tags */}
           <div className="flex flex-wrap gap-2 mb-6">
             {(product.tags ?? []).map((tag) => (
-              <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full hover:bg-[#E8F7EE] hover:text-[#00A550] transition-colors cursor-default">
+              <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full hover:bg-[#FEF2F2] hover:text-[#E63946] transition-colors cursor-default">
                 #{tag}
               </span>
             ))}
@@ -157,13 +157,13 @@ export function ProductPageClient({ product, related }: { product: Product; rela
               <button
                 onClick={() => setQty(Math.max(1, qty - 1))}
                 aria-label="Diminuer la quantité"
-                className="text-lg font-bold hover:text-[#00A550] w-6 text-center transition-colors"
+                className="text-lg font-bold hover:text-[#E63946] w-6 text-center transition-colors"
               >−</button>
               <span className="text-base font-bold w-8 text-center">{qty}</span>
               <button
                 onClick={() => setQty(Math.min(product.stock, qty + 1))}
                 aria-label="Augmenter la quantité"
-                className="text-lg font-bold hover:text-[#00A550] w-6 text-center transition-colors"
+                className="text-lg font-bold hover:text-[#E63946] w-6 text-center transition-colors"
               >+</button>
             </div>
             <Button
@@ -183,7 +183,7 @@ export function ProductPageClient({ product, related }: { product: Product; rela
           {/* WhatsApp */}
           {product.vendor.whatsapp && (
             <a
-              href={`https://wa.me/${product.vendor.whatsapp}?text=${encodeURIComponent(`Bonjour, je suis intéressé par "${product.name}" sur Brotega.`)}`}
+              href={`https://wa.me/${product.vendor.whatsapp}?text=${encodeURIComponent(`Bonjour, je suis intéressé par "${product.name}" sur J'adore la Famille.`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full border-2 border-gray-200 hover:border-[#25D366] hover:bg-[#25D366]/5 text-gray-700 hover:text-[#25D366] font-semibold py-3 px-4 rounded-xl transition-all text-sm mb-5"
@@ -194,7 +194,7 @@ export function ProductPageClient({ product, related }: { product: Product; rela
 
           {/* Carte vendeur */}
           <Link href={`/vendeur/${product.vendor.slug}`}>
-            <div className="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-2xl hover:border-[#00A550]/40 hover:shadow-sm transition-all">
+            <div className="flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-2xl hover:border-[#E63946]/40 hover:shadow-sm transition-all">
               <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0">
                 <Image src={product.vendor.logo} alt={product.vendor.name} fill sizes="48px" className="object-cover" />
               </div>
@@ -208,7 +208,7 @@ export function ProductPageClient({ product, related }: { product: Product; rela
                   <span className="text-xs text-gray-400">📍 {product.vendor.city}</span>
                 </div>
               </div>
-              <span className="text-[#00A550] text-sm font-semibold flex-shrink-0">Voir boutique →</span>
+              <span className="text-[#E63946] text-sm font-semibold flex-shrink-0">Voir boutique →</span>
             </div>
           </Link>
 

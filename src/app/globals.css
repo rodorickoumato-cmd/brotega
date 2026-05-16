@@ -3,9 +3,9 @@
 :root {
   --background: #F7F8FA;
   --foreground: #1A202C;
-  --brotega-green: #00A550;
+  --brotega-green: #E63946;
   --brotega-green-dark: #007A3D;
-  --brotega-green-light: #E8F7EE;
+  --brotega-green-light: #FEF2F2;
   --brotega-yellow: #FFD100;
   --brotega-orange: #FF6B00;
   --brotega-red: #E53E3E;
@@ -41,7 +41,7 @@ a { text-decoration: none; color: inherit; }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: #f1f1f1; }
-::-webkit-scrollbar-thumb { background: #00A550; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: #E63946; border-radius: 4px; }
 
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(16px); }

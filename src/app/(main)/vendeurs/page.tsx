@@ -1,4 +1,4 @@
-import { vendors } from "@/data/vendors";
+﻿import { vendors } from "@/data/vendors";
 import { StarRating } from "@/components/ui/StarRating";
 import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
@@ -9,7 +9,7 @@ export default function VendeursPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-black text-gray-800 mb-2">Tous les Vendeurs</h1>
-        <p className="text-gray-500">Découvrez les boutiques de confiance sur Brotega</p>
+        <p className="text-gray-500">Découvrez les boutiques de confiance sur J'adore la Famille</p>
       </div>
 
       {/* Filters */}
@@ -17,7 +17,7 @@ export default function VendeursPage() {
         {["Tous", "Vérifiés", "Alimentation", "Mode", "Électronique", "Beauté", "Artisanat"].map((f) => (
           <button
             key={f}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${f === "Tous" ? "bg-[#00A550] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#00A550] hover:text-[#00A550]"}`}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${f === "Tous" ? "bg-[#E63946] text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-[#E63946] hover:text-[#E63946]"}`}
           >
             {f}
           </button>
@@ -28,9 +28,9 @@ export default function VendeursPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {vendors.map((vendor) => (
           <Link key={vendor.id} href={`/vendeur/${vendor.slug}`}>
-            <div className="bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100 hover:border-[#00A550]/30">
+            <div className="bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border border-gray-100 hover:border-[#E63946]/30">
               {/* Cover gradient */}
-              <div className="h-24 bg-gradient-to-br from-[#00A550] to-[#007A3D] relative">
+              <div className="h-24 bg-gradient-to-br from-[#E63946] to-[#C1121F] relative">
                 <div className="absolute inset-0 opacity-20 text-8xl flex items-center justify-end pr-4">🏪</div>
               </div>
               <div className="px-5 pb-5">
@@ -58,7 +58,7 @@ export default function VendeursPage() {
 
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   {vendor.categories.slice(0, 2).map((c) => (
-                    <span key={c} className="text-xs bg-[#E8F7EE] text-[#00A550] px-2 py-0.5 rounded-full">{c}</span>
+                    <span key={c} className="text-xs bg-[#FEF2F2] text-[#E63946] px-2 py-0.5 rounded-full">{c}</span>
                   ))}
                 </div>
 
@@ -73,7 +73,7 @@ export default function VendeursPage() {
       </div>
 
       {/* CTA Become vendor */}
-      <div className="mt-12 bg-gradient-to-br from-[#00A550] to-[#007A3D] rounded-3xl p-8 text-white text-center">
+      <div className="mt-12 bg-gradient-to-br from-[#E63946] to-[#C1121F] rounded-3xl p-8 text-white text-center">
         <h2 className="text-2xl font-black mb-2">Rejoignez nos vendeurs</h2>
         <p className="text-white/80 mb-6 max-w-md mx-auto">
           Créez votre boutique gratuitement et commencez à vendre dans tout le Gabon dès aujourd'hui.

@@ -72,7 +72,7 @@ export default function ReclamationPage() {
   if (chargement) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin w-10 h-10 rounded-full border-4 border-[#00A550] border-t-transparent" />
+        <div className="animate-spin w-10 h-10 rounded-full border-4 border-[#E63946] border-t-transparent" />
       </div>
     );
   }
@@ -110,7 +110,7 @@ export default function ReclamationPage() {
             )}
             {!reclamation.resolution && (
               <p className="text-xs text-center mt-3 opacity-70">
-                L&apos;équipe Brotega examine votre réclamation. Vous serez notifié(e) de la décision.
+                L&apos;équipe J'adore la Famille examine votre réclamation. Vous serez notifié(e) de la décision.
               </p>
             )}
           </div>
@@ -137,7 +137,7 @@ export default function ReclamationPage() {
                 placeholder="Ex : Je n'ai pas reçu ma commande, le produit est endommagé, le colis est incomplet..."
                 rows={5}
                 className={`w-full border-2 rounded-2xl px-4 py-3 text-sm focus:outline-none transition-colors resize-none ${
-                  erreur ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-[#00A550]"
+                  erreur ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-[#E63946]"
                 }`}
               />
               <p className="text-xs text-gray-400 mt-1">{motif.length} / 10 min</p>
@@ -158,7 +158,7 @@ export default function ReclamationPage() {
             </button>
 
             <p className="text-xs text-center text-gray-400">
-              🛡️ L&apos;équipe Brotega traitera votre réclamation sous 48h
+              🛡️ L&apos;équipe J'adore la Famille traitera votre réclamation sous 48h
             </p>
           </div>
         )}
@@ -169,7 +169,7 @@ export default function ReclamationPage() {
             <div className="text-5xl mb-3">✅</div>
             <h2 className="font-black text-gray-800 text-xl mb-2">Réclamation soumise</h2>
             <p className="text-sm text-gray-500 mb-6">
-              Votre réclamation a été enregistrée. L&apos;équipe Brotega vous contactera sous 48h.
+              Votre réclamation a été enregistrée. L&apos;équipe J'adore la Famille vous contactera sous 48h.
             </p>
           </div>
         )}

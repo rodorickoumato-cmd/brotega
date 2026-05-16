@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toaster";
@@ -30,7 +30,7 @@ export default function ContactPage() {
           {[
             { icon: "📱", label: "WhatsApp", value: "+241 01 23 45 67", href: "https://wa.me/24101234567" },
             { icon: "📞", label: "Téléphone", value: "+241 01 23 45 67", href: "tel:+24101234567" },
-            { icon: "📧", label: "Email", value: "support@brotega.ga", href: "mailto:support@brotega.ga" },
+            { icon: "📧", label: "Email", value: "support@J'adore la Famille.ga", href: "mailto:support@J'adore la Famille.ga" },
             { icon: "📍", label: "Adresse", value: "Libreville, Gabon", href: undefined },
           ].map((c) => (
             <div key={c.label} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
@@ -39,7 +39,7 @@ export default function ContactPage() {
                 <div>
                   <p className="text-xs text-gray-400 font-medium">{c.label}</p>
                   {c.href ? (
-                    <a href={c.href} target={c.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer" className="text-sm font-semibold text-[#00A550] hover:underline">{c.value}</a>
+                    <a href={c.href} target={c.href.startsWith("http") ? "_blank" : undefined} rel="noopener noreferrer" className="text-sm font-semibold text-[#E63946] hover:underline">{c.value}</a>
                   ) : (
                     <p className="text-sm font-semibold text-gray-700">{c.value}</p>
                   )}
@@ -47,8 +47,8 @@ export default function ContactPage() {
               </div>
             </div>
           ))}
-          <div className="bg-[#E8F7EE] rounded-2xl p-4 text-sm">
-            <p className="font-semibold text-[#00A550] mb-1">Horaires d'ouverture</p>
+          <div className="bg-[#FEF2F2] rounded-2xl p-4 text-sm">
+            <p className="font-semibold text-[#E63946] mb-1">Horaires d'ouverture</p>
             <p className="text-gray-600">Lundi – Samedi : 8h – 20h</p>
             <p className="text-gray-500 text-xs mt-1">Fermé les dimanches et jours fériés</p>
           </div>
@@ -66,7 +66,7 @@ export default function ContactPage() {
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="Jean-Pierre Mbourou"
                   required
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E63946]/30"
                 />
               </div>
               <div>
@@ -76,7 +76,7 @@ export default function ContactPage() {
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="+241 01 23 45 67"
                   type="tel"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E63946]/30"
                 />
               </div>
             </div>
@@ -87,7 +87,7 @@ export default function ContactPage() {
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 placeholder="exemple@email.com"
                 type="email"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E63946]/30"
               />
             </div>
             <div>
@@ -95,7 +95,7 @@ export default function ContactPage() {
               <select
                 value={form.subject}
                 onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E63946]/30"
               >
                 <option value="">Sélectionnez un sujet</option>
                 <option value="commande">Problème de commande</option>
@@ -114,7 +114,7 @@ export default function ContactPage() {
                 rows={5}
                 required
                 maxLength={2000}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30 resize-none"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#E63946]/30 resize-none"
               />
               <p className="text-xs text-gray-400 text-right mt-1">{form.message.length}/2000</p>
             </div>

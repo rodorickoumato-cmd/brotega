@@ -4,6 +4,7 @@ import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
 import { ServiceWorkerRegister } from "@/components/sw/ServiceWorkerRegister";
 import { AiChat } from "@/components/ai/AiChat";
+import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 
 export default function StoreLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,6 +16,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
       <Footer />
       <ScrollToTop />
       <AiChat />
+      <WhatsAppButton />
     </>
   );
 }

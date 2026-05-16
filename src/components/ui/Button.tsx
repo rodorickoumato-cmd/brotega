@@ -9,9 +9,9 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants = {
-  primary: "bg-[#00A550] hover:bg-[#007A3D] text-white shadow-sm",
+  primary: "bg-[#E63946] hover:bg-[#C1121F] text-white shadow-sm",
   secondary: "bg-[#FFD100] hover:bg-[#E6BC00] text-[#1A202C] shadow-sm",
-  outline: "border-2 border-[#00A550] text-[#00A550] hover:bg-[#E8F7EE]",
+  outline: "border-2 border-[#E63946] text-[#E63946] hover:bg-[#FEF2F2]",
   ghost: "text-gray-600 hover:bg-gray-100",
   danger: "bg-red-500 hover:bg-red-600 text-white",
 };
@@ -37,7 +37,7 @@ export function Button({
       {...props}
       disabled={disabled || loading}
       className={cn(
-        "inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#00A550]/40 disabled:opacity-50 disabled:cursor-not-allowed",
+        "inline-flex items-center justify-center gap-2 font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#E63946]/40 disabled:opacity-50 disabled:cursor-not-allowed",
         variants[variant],
         sizes[size],
         fullWidth && "w-full",

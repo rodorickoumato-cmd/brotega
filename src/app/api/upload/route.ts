@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       (resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           {
-            folder: "brotega/produits",
+            folder: "jadore-famille/produits",
             transformation: [{ width: 1200, height: 1200, crop: "limit", quality: "auto:good", fetch_format: "auto" }],
           },
           (error, result) => {

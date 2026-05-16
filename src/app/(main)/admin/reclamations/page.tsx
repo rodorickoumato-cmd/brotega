@@ -88,7 +88,7 @@ export default function AdminReclamationsPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
-      <div className="bg-[#00A550] px-5 pt-12 pb-6">
+      <div className="bg-[#E63946] px-5 pt-12 pb-6">
         <p className="text-white/70 text-sm">Admin</p>
         <h1 className="text-2xl font-black text-white">Réclamations ⚠️</h1>
         <p className="text-white/70 text-sm mt-1">Gérer les litiges acheteurs</p>
@@ -98,7 +98,7 @@ export default function AdminReclamationsPage() {
         {(["ouvertes", "traitees"] as const).map((o) => (
           <button key={o} onClick={() => setOnglet(o)}
             className={`flex-1 py-3.5 text-sm font-bold transition-all ${
-              onglet === o ? "text-[#00A550] border-b-2 border-[#00A550]" : "text-gray-400"
+              onglet === o ? "text-[#E63946] border-b-2 border-[#E63946]" : "text-gray-400"
             }`}>
             {o === "ouvertes" ? `Ouvertes (${ouvertes.length})` : `Traitées (${traitees.length})`}
           </button>
@@ -144,7 +144,7 @@ export default function AdminReclamationsPage() {
                       {r.acheteur?.nom ?? "Acheteur"}{" "}
                       <span className="font-normal text-gray-400 text-sm">→</span>{" "}
                       <Link href={`/commande/${r.commande?.code_court}`}
-                        className="text-[#00A550] text-sm font-bold">
+                        className="text-[#E63946] text-sm font-bold">
                         {r.commande?.code_court ?? r.commande_id.slice(0, 8)}
                       </Link>
                     </p>
@@ -168,8 +168,8 @@ export default function AdminReclamationsPage() {
                 </div>
 
                 {r.resolution && (
-                  <div className="bg-[#E8F7EE] rounded-xl p-3">
-                    <p className="text-xs font-bold text-[#00A550] mb-1">Décision</p>
+                  <div className="bg-[#FEF2F2] rounded-xl p-3">
+                    <p className="text-xs font-bold text-[#E63946] mb-1">Décision</p>
                     <p className="text-sm text-gray-800">{r.resolution}</p>
                   </div>
                 )}
@@ -179,7 +179,7 @@ export default function AdminReclamationsPage() {
                 <div className="px-4 pb-4">
                   <button
                     onClick={() => setFormsOuverts((prev) => new Set([...prev, r.id]))}
-                    className="w-full border-2 border-[#00A550] text-[#00A550] font-bold py-2.5 rounded-xl text-sm active:scale-95 transition-all"
+                    className="w-full border-2 border-[#E63946] text-[#E63946] font-bold py-2.5 rounded-xl text-sm active:scale-95 transition-all"
                   >
                     Résoudre ce litige
                   </button>
@@ -197,7 +197,7 @@ export default function AdminReclamationsPage() {
                       onChange={(e) => setResolutions((p) => ({ ...p, [r.id]: e.target.value }))}
                       placeholder="Expliquez la décision prise..."
                       rows={3}
-                      className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#00A550] transition-colors resize-none"
+                      className="w-full border-2 border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#E63946] transition-colors resize-none"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-2">

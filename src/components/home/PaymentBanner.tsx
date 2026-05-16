@@ -11,7 +11,7 @@ export function PaymentBanner() {
             {[
               { name: "Airtel Money", color: "#FF0000", icon: "📱", sub: "Paiement mobile" },
               { name: "Moov Money", color: "#0066CC", icon: "📲", sub: "Paiement mobile" },
-              { name: "Espèces", color: "#00A550", icon: "💵", sub: "À la livraison" },
+              { name: "Espèces", color: "#E63946", icon: "💵", sub: "À la livraison" },
               { name: "Carte bancaire", color: "#FFD100", icon: "💳", sub: "Visa / Mastercard" },
             ].map((p) => (
               <div key={p.name} className="flex items-center gap-3 bg-white/10 rounded-xl px-4 py-2.5">

@@ -28,7 +28,7 @@ export default function VendorRegisterPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
-      <div className="bg-[#00A550] px-6 pt-14 pb-10">
+      <div className="bg-[#E63946] px-6 pt-14 pb-10">
         <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
           <span className="text-white font-black text-2xl">🏪</span>
         </div>
@@ -49,7 +49,7 @@ export default function VendorRegisterPage() {
             placeholder="Ex : Épicerie Centrale, Mode Gabonaise..."
             autoFocus
             maxLength={60}
-            className="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 text-base font-medium focus:outline-none focus:border-[#00A550] transition-colors"
+            className="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 text-base font-medium focus:outline-none focus:border-[#E63946] transition-colors"
           />
         </div>
 
@@ -58,7 +58,7 @@ export default function VendorRegisterPage() {
           <select
             value={ville}
             onChange={(e) => setVille(e.target.value)}
-            className="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 text-base focus:outline-none focus:border-[#00A550] transition-colors"
+            className="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 text-base focus:outline-none focus:border-[#E63946] transition-colors"
           >
             {CITIES_GABON.map((c) => (
               <option key={c} value={c}>📍 {c}</option>
@@ -75,7 +75,7 @@ export default function VendorRegisterPage() {
         <button
           onClick={soumettre}
           disabled={loading}
-          className="w-full bg-[#00A550] text-white font-black text-base py-4 rounded-2xl disabled:opacity-60 active:scale-95 transition-all"
+          className="w-full bg-[#E63946] text-white font-black text-base py-4 rounded-2xl disabled:opacity-60 active:scale-95 transition-all"
         >
           {loading ? "Création..." : "Créer ma boutique →"}
         </button>

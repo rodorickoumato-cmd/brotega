@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 const faqs = [
   {
@@ -11,14 +11,14 @@ const faqs = [
   },
   {
     q: "Dans quelles villes livrez-vous ?",
-    a: "Brotega livre dans toutes les grandes villes du Gabon : Libreville, Port-Gentil, Franceville, Oyem, Moanda, Mouila, Lambaréné, Tchibanga, Koulamoutou, Makokou, Bitam et Gamba.",
+    a: "J'adore la Famille livre dans toutes les grandes villes du Gabon : Libreville, Port-Gentil, Franceville, Oyem, Moanda, Mouila, Lambaréné, Tchibanga, Koulamoutou, Makokou, Bitam et Gamba.",
   },
   {
     q: "Quel est le délai de livraison ?",
     a: "À Libreville, comptez 24 à 48h. Pour les autres villes du Gabon, le délai est de 2 à 5 jours ouvrés selon votre localisation.",
   },
   {
-    q: "Comment devenir vendeur sur Brotega ?",
+    q: "Comment devenir vendeur sur J'adore la Famille ?",
     a: "Cliquez sur « Vendre » dans la barre de navigation, puis suivez les 4 étapes d'inscription. Votre boutique est créée gratuitement en moins de 5 minutes.",
   },
   {
@@ -39,20 +39,20 @@ export default function AidePage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <div className="mb-8">
-        <Link href="/" className="text-sm text-gray-400 hover:text-[#00A550] transition-colors">← Retour à l'accueil</Link>
+        <Link href="/" className="text-sm text-gray-400 hover:text-[#E63946] transition-colors">← Retour à l'accueil</Link>
         <h1 className="text-3xl font-black text-gray-800 mt-3 mb-2">Centre d'aide</h1>
-        <p className="text-gray-500">Trouvez les réponses à vos questions sur Brotega.</p>
+        <p className="text-gray-500">Trouvez les réponses à vos questions sur J'adore la Famille.</p>
       </div>
 
       {/* Contact rapide */}
-      <div className="bg-[#E8F7EE] border border-[#00A550]/20 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+      <div className="bg-[#FEF2F2] border border-[#E63946]/20 rounded-2xl p-5 mb-8 flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div className="text-3xl">💬</div>
         <div className="flex-1">
-          <p className="font-bold text-[#00A550]">Besoin d'aide immédiate ?</p>
+          <p className="font-bold text-[#E63946]">Besoin d'aide immédiate ?</p>
           <p className="text-sm text-gray-600">Notre équipe répond sur WhatsApp du lundi au samedi de 8h à 20h.</p>
         </div>
         <a
-          href="https://wa.me/24101234567?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20sur%20Brotega."
+          href="https://wa.me/24101234567?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20sur%20J'adore la Famille."
           target="_blank"
           rel="noopener noreferrer"
           className="bg-[#25D366] text-white font-semibold px-4 py-2 rounded-xl text-sm hover:bg-[#1da851] transition-colors whitespace-nowrap"
@@ -74,7 +74,7 @@ export default function AidePage() {
 
       <div className="mt-8 text-center">
         <p className="text-gray-500 text-sm mb-3">Vous n'avez pas trouvé votre réponse ?</p>
-        <Link href="/contact" className="bg-[#00A550] text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-[#007A3D] transition-colors inline-block">
+        <Link href="/contact" className="bg-[#E63946] text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-[#C1121F] transition-colors inline-block">
           Nous contacter
         </Link>
       </div>

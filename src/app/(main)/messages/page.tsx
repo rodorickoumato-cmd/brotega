@@ -143,7 +143,7 @@ export default function MessagesPage() {
           <p className="font-bold text-gray-700 mb-1">Aucun message</p>
           <p className="text-sm text-gray-400">Vos conversations apparaîtront ici après une commande</p>
           <Link href="/catalogue"
-            className="inline-block mt-5 bg-[#00A550] text-white font-bold px-6 py-3 rounded-2xl text-sm">
+            className="inline-block mt-5 bg-[#E63946] text-white font-bold px-6 py-3 rounded-2xl text-sm">
             Parcourir le catalogue
           </Link>
         </div>
@@ -154,7 +154,7 @@ export default function MessagesPage() {
           {conversations.map((c) => (
             <Link key={c.commande_id} href={`/messages/${c.commande_id}`}
               className="bg-white rounded-2xl p-4 flex items-center gap-3 active:scale-98 transition-all shadow-sm">
-              <div className="w-12 h-12 rounded-full bg-[#E8F7EE] flex items-center justify-center text-xl flex-shrink-0">
+              <div className="w-12 h-12 rounded-full bg-[#FEF2F2] flex items-center justify-center text-xl flex-shrink-0">
                 🏪
               </div>
               <div className="flex-1 min-w-0">
@@ -166,7 +166,7 @@ export default function MessagesPage() {
                 <p className="text-sm text-gray-500 truncate">{c.dernier_message}</p>
               </div>
               {c.non_lus > 0 && (
-                <div className="w-5 h-5 bg-[#00A550] rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="w-5 h-5 bg-[#E63946] rounded-full flex items-center justify-center flex-shrink-0">
                   <span className="text-white text-xs font-black">{c.non_lus}</span>
                 </div>
               )}

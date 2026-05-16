@@ -60,7 +60,7 @@ export function CartSidebar() {
                   <p className="text-sm font-semibold text-gray-800 line-clamp-2">{item.product.name}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{item.product.vendor.name}</p>
                   <div className="flex items-center justify-between mt-2">
-                    <span className="font-bold text-[#00A550] text-sm">{formatXAF(item.product.price)}</span>
+                    <span className="font-bold text-[#E63946] text-sm">{formatXAF(item.product.price)}</span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => dispatch({ type: "UPDATE_QTY", id: item.product.id, qty: item.quantity - 1 })}
@@ -71,7 +71,7 @@ export function CartSidebar() {
                       <span className="text-sm font-semibold w-5 text-center">{item.quantity}</span>
                       <button
                         onClick={() => dispatch({ type: "UPDATE_QTY", id: item.product.id, qty: item.quantity + 1 })}
-                        className="w-6 h-6 rounded-full bg-[#00A550] hover:bg-[#007A3D] text-white flex items-center justify-center text-sm font-bold transition-colors"
+                        className="w-6 h-6 rounded-full bg-[#E63946] hover:bg-[#C1121F] text-white flex items-center justify-center text-sm font-bold transition-colors"
                       >
                         +
                       </button>
@@ -100,7 +100,7 @@ export function CartSidebar() {
             </div>
             <div className="flex justify-between items-center text-xs text-gray-500">
               <span>Livraison</span>
-              <span className="text-[#00A550] font-medium">Calculée au checkout</span>
+              <span className="text-[#E63946] font-medium">Calculée au checkout</span>
             </div>
             <Link href="/checkout" onClick={() => dispatch({ type: "CLOSE" })}>
               <Button fullWidth size="lg" className="mt-2">

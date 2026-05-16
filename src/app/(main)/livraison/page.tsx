@@ -19,17 +19,17 @@ export default function LivraisonPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
       <div className="mb-8">
-        <Link href="/" className="text-sm text-gray-400 hover:text-[#00A550] transition-colors">← Retour à l'accueil</Link>
+        <Link href="/" className="text-sm text-gray-400 hover:text-[#E63946] transition-colors">← Retour à l'accueil</Link>
         <h1 className="text-3xl font-black text-gray-800 mt-3 mb-2">Livraison & Retours</h1>
         <p className="text-gray-500">Tout savoir sur nos livraisons dans toutes les villes du Gabon.</p>
       </div>
 
       <div className="space-y-6">
         {/* Livraison gratuite */}
-        <div className="bg-[#E8F7EE] border border-[#00A550]/20 rounded-2xl p-5">
+        <div className="bg-[#FEF2F2] border border-[#E63946]/20 rounded-2xl p-5">
           <div className="flex items-center gap-3 mb-2">
             <span className="text-2xl">🎉</span>
-            <h2 className="font-bold text-[#00A550] text-lg">Livraison gratuite dès 50 000 FCFA</h2>
+            <h2 className="font-bold text-[#E63946] text-lg">Livraison gratuite dès 50 000 FCFA</h2>
           </div>
           <p className="text-sm text-gray-600">Pour toute commande supérieure à 50 000 FCFA, la livraison est offerte à Libreville.</p>
         </div>
@@ -55,7 +55,7 @@ export default function LivraisonPage() {
                     <td className="px-5 py-3.5 font-semibold text-gray-800">📍 {v.ville}</td>
                     <td className="px-5 py-3.5 text-gray-500">{v.zone}</td>
                     <td className="px-5 py-3.5 text-gray-600">{v.delai}</td>
-                    <td className="px-5 py-3.5 text-right font-bold text-[#00A550]">{v.frais}</td>
+                    <td className="px-5 py-3.5 text-right font-bold text-[#E63946]">{v.frais}</td>
                   </tr>
                 ))}
               </tbody>
@@ -68,15 +68,15 @@ export default function LivraisonPage() {
           <h2 className="font-bold text-gray-800 text-lg mb-4">↩️ Politique de retour</h2>
           <div className="space-y-3 text-sm text-gray-600">
             <div className="flex items-start gap-3">
-              <span className="text-[#00A550] font-bold mt-0.5">✓</span>
+              <span className="text-[#E63946] font-bold mt-0.5">✓</span>
               <p><strong>7 jours</strong> pour signaler un produit non conforme ou défectueux après réception.</p>
             </div>
             <div className="flex items-start gap-3">
-              <span className="text-[#00A550] font-bold mt-0.5">✓</span>
+              <span className="text-[#E63946] font-bold mt-0.5">✓</span>
               <p>Contactez notre service client via WhatsApp avec des photos du produit.</p>
             </div>
             <div className="flex items-start gap-3">
-              <span className="text-[#00A550] font-bold mt-0.5">✓</span>
+              <span className="text-[#E63946] font-bold mt-0.5">✓</span>
               <p>En cas de litige avéré, remboursement intégral sous 48 à 72 heures.</p>
             </div>
             <div className="flex items-start gap-3">

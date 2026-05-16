@@ -12,7 +12,7 @@ export function VendorsSection() {
             <h2 className="text-2xl font-black text-gray-800">Vendeurs Top</h2>
             <p className="text-gray-500 text-sm mt-0.5">Les boutiques les mieux notées</p>
           </div>
-          <Link href="/vendeurs" className="text-[#00A550] text-sm font-semibold hover:underline">
+          <Link href="/vendeurs" className="text-[#E63946] text-sm font-semibold hover:underline">
             Tous les vendeurs →
           </Link>
         </div>

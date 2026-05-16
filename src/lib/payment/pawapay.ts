@@ -12,7 +12,7 @@ const BASE_URL = process.env.PAWAPAY_BASE_URL ?? "https://api.sandbox.pawapay.io
 const API_KEY = process.env.PAWAPAY_API_KEY ?? "";
 const WEBHOOK_SECRET = process.env.PAWAPAY_WEBHOOK_SECRET ?? "";
 
-// Mapping Brotega → correspondant Pawapay
+// Mapping J'adore la Famille → correspondant Pawapay
 const PROVIDER_MAP: Record<ProviderId, string> = {
   airtel: "AIRTEL_OAPI_GAB",
   moov: "MOOV_GAB",
@@ -42,7 +42,7 @@ export class PawapayProvider implements PaiementProvider {
       correspondent: correspondant,
       payer: { type: "MSISDN", address: { value: phone } },
       customerTimestamp: new Date().toISOString(),
-      statementDescription: `Brotega ${p.commandeCode}`.slice(0, 22),
+      statementDescription: `J'adore la Famille ${p.commandeCode}`.slice(0, 22),
       metadata: [
         { fieldName: "commande_id", fieldValue: p.commandeId },
         { fieldName: "code_court", fieldValue: p.commandeCode },

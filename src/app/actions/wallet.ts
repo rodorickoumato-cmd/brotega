@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -122,7 +122,7 @@ export async function demanderRetrait(input: {
   });
 
   // TODO : déclencher le payout via provider Mobile Money (API payout Pawapay)
-  // Pour l'instant : trace seulement, l'admin Brotega traitera manuellement.
+  // Pour l'instant : trace seulement, l'admin J'adore la Famille traitera manuellement.
 
   return {
     succes: true,

@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/Button";
 
 const slides = [
   {
-    title: "Bienvenue sur Brotega",
+    title: "Bienvenue sur J'adore la Famille",
     subtitle: "La Marketplace du Gabon 🇬🇦",
     description: "Achetez et vendez en toute confiance. Produits locaux et internationaux livrés partout au Gabon.",
     cta: "Découvrir les produits",
     ctaLink: "/catalogue",
-    bg: "from-[#00A550] to-[#007A3D]",
+    bg: "from-[#E63946] to-[#C1121F]",
     image: "🛒",
   },
   {
@@ -25,7 +25,7 @@ const slides = [
   {
     title: "Devenez Vendeur",
     subtitle: "Développez votre business",
-    description: "Rejoignez plus de 500 vendeurs sur Brotega. Créez votre boutique gratuitement et vendez dans tout le Gabon.",
+    description: "Rejoignez plus de 500 vendeurs sur J'adore la Famille. Créez votre boutique gratuitement et vendez dans tout le Gabon.",
     cta: "Commencer à vendre",
     ctaLink: "/vendor/register",
     bg: "from-[#FFD100] to-[#E6A800]",
@@ -67,7 +67,7 @@ export function HeroSection() {
                   size="lg"
                   className={slide.dark ? "" : "text-white border-white/40 hover:bg-white/20 hover:text-white"}
                 >
-                  Vendre sur Brotega
+                  Vendre sur J'adore la Famille
                 </Button>
               </Link>
             </div>
@@ -76,7 +76,7 @@ export function HeroSection() {
             <div className={`flex gap-6 mt-8 pt-8 border-t ${slide.dark ? "border-black/10" : "border-white/20"}`}>
               {[["500+", "Vendeurs"], ["15k+", "Produits"], ["12", "Villes"]].map(([n, l]) => (
                 <div key={l}>
-                  <div className={`text-2xl font-black ${slide.dark ? "text-[#00A550]" : "text-white"}`}>{n}</div>
+                  <div className={`text-2xl font-black ${slide.dark ? "text-[#E63946]" : "text-white"}`}>{n}</div>
                   <div className={`text-xs ${slide.dark ? "text-gray-600" : "text-white/70"}`}>{l}</div>
                 </div>
               ))}
@@ -112,7 +112,7 @@ export function HeroSection() {
             <button
               key={i}
               onClick={() => setCurrent(i)}
-              className={`h-2 rounded-full transition-all duration-300 ${i === current ? (slide.dark ? "bg-[#00A550] w-8" : "bg-white w-8") : (slide.dark ? "bg-black/20 w-2" : "bg-white/40 w-2")}`}
+              className={`h-2 rounded-full transition-all duration-300 ${i === current ? (slide.dark ? "bg-[#E63946] w-8" : "bg-white w-8") : (slide.dark ? "bg-black/20 w-2" : "bg-white/40 w-2")}`}
             />
           ))}
         </div>

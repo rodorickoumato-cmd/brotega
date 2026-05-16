@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState, useRef, useEffect } from "react";
 
 type Message = { role: "user" | "assistant"; content: string };
@@ -23,7 +23,7 @@ export function AiChat() {
     if (ouvert && messages.length === 0) {
       setMessages([{
         role: "assistant",
-        content: "Bonjour ! Je suis Broto, l'assistant Brotega 🇬🇦\n\nComment puis-je vous aider aujourd'hui ?",
+        content: "Bonjour ! Je suis Broto, l'assistant J'adore la Famille 🇬🇦\n\nComment puis-je vous aider aujourd'hui ?",
       }]);
     }
     if (ouvert) setTimeout(() => inputRef.current?.focus(), 300);
@@ -87,8 +87,8 @@ export function AiChat() {
       {/* Bouton flottant */}
       <button
         onClick={() => setOuvert((o) => !o)}
-        className="fixed bottom-20 right-4 z-40 w-14 h-14 bg-[#00A550] rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-all"
-        aria-label="Assistant IA Brotega"
+        className="fixed bottom-20 right-4 z-40 w-14 h-14 bg-[#E63946] rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-all"
+        aria-label="Assistant IA J'adore la Famille"
       >
         {ouvert ? (
           <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,13 +105,13 @@ export function AiChat() {
           style={{ maxHeight: "70vh" }}>
 
           {/* Header */}
-          <div className="bg-[#00A550] px-4 py-3 flex items-center gap-3 flex-shrink-0">
+          <div className="bg-[#E63946] px-4 py-3 flex items-center gap-3 flex-shrink-0">
             <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center text-lg flex-shrink-0">
               🤖
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white font-black text-sm">Broto</p>
-              <p className="text-white/70 text-xs">Assistant Brotega · Toujours disponible</p>
+              <p className="text-white/70 text-xs">Assistant J'adore la Famille · Toujours disponible</p>
             </div>
             <button
               onClick={effacer}
@@ -128,7 +128,7 @@ export function AiChat() {
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap ${
                   m.role === "user"
-                    ? "bg-[#00A550] text-white rounded-br-sm"
+                    ? "bg-[#E63946] text-white rounded-br-sm"
                     : "bg-gray-100 text-gray-800 rounded-bl-sm"
                 }`}>
                   {m.content || (
@@ -147,7 +147,7 @@ export function AiChat() {
               <div className="space-y-2 pt-1">
                 {QUESTIONS_RAPIDES.map((q) => (
                   <button key={q} onClick={() => envoyer(q)}
-                    className="w-full text-left text-xs text-[#00A550] font-medium bg-[#E8F7EE] px-3 py-2.5 rounded-xl active:scale-98 transition-all">
+                    className="w-full text-left text-xs text-[#E63946] font-medium bg-[#FEF2F2] px-3 py-2.5 rounded-xl active:scale-98 transition-all">
                     {q}
                   </button>
                 ))}
@@ -173,12 +173,12 @@ export function AiChat() {
                 onChange={(e) => setSaisie(e.target.value)}
                 placeholder="Posez votre question..."
                 disabled={chargement}
-                className="flex-1 bg-gray-100 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30 disabled:opacity-50 transition-all"
+                className="flex-1 bg-gray-100 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#E63946]/30 disabled:opacity-50 transition-all"
               />
               <button
                 type="submit"
                 disabled={!saisie.trim() || chargement}
-                className="w-10 h-10 bg-[#00A550] rounded-xl flex items-center justify-center disabled:opacity-40 active:scale-90 transition-all flex-shrink-0"
+                className="w-10 h-10 bg-[#E63946] rounded-xl flex items-center justify-center disabled:opacity-40 active:scale-90 transition-all flex-shrink-0"
               >
                 <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

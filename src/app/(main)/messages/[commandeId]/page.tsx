@@ -123,7 +123,7 @@ export default function ChatPage() {
       {/* Header */}
       <div className="bg-white px-4 py-4 border-b border-gray-100 flex items-center gap-3 flex-shrink-0">
         <Link href="/messages" className="text-gray-500 text-xl flex-shrink-0">←</Link>
-        <div className="w-9 h-9 bg-[#E8F7EE] rounded-full flex items-center justify-center text-lg flex-shrink-0">🏪</div>
+        <div className="w-9 h-9 bg-[#FEF2F2] rounded-full flex items-center justify-center text-lg flex-shrink-0">🏪</div>
         <div className="min-w-0">
           <p className="font-black text-sm text-gray-800 truncate">{interlocuteur}</p>
           <p className="text-xs text-gray-400">Commande {codeCommande ?? commandeId.slice(0, 8)}</p>
@@ -150,7 +150,7 @@ export default function ChatPage() {
             <div key={m.id} className={`flex ${estMoi ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${
                 estMoi
-                  ? "bg-[#00A550] text-white rounded-br-sm"
+                  ? "bg-[#E63946] text-white rounded-br-sm"
                   : "bg-white text-gray-800 shadow-sm rounded-bl-sm"
               }`}>
                 <p className="leading-relaxed">{m.contenu}</p>
@@ -181,7 +181,7 @@ export default function ChatPage() {
             <button
               onClick={envoyer}
               disabled={!texte.trim() || envoi}
-              className="w-11 h-11 bg-[#00A550] rounded-full flex items-center justify-center disabled:opacity-40 active:scale-95 transition-all flex-shrink-0"
+              className="w-11 h-11 bg-[#E63946] rounded-full flex items-center justify-center disabled:opacity-40 active:scale-95 transition-all flex-shrink-0"
             >
               <span className="text-white text-lg">↑</span>
             </button>

@@ -49,23 +49,28 @@ export default function ComptePage() {
   if (chargement) {
     return (
       <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center">
-        <div className="animate-spin w-10 h-10 rounded-full border-4 border-[#00A550] border-t-transparent" />
+        <div className="animate-spin w-10 h-10 rounded-full border-4 border-[#E63946] border-t-transparent" />
       </div>
     );
   }
 
+  const profilIncomplet = !profil?.email || !profil?.whatsapp;
+
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
-      {/* Header profil */}
-      <div className="bg-[#00A550] px-5 pt-12 pb-10">
+      {/* Header */}
+      <div className="bg-[#E63946] px-5 pt-12 pb-10">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-white font-black text-xl flex-shrink-0">
             {initiales}
           </div>
-          <div>
-            <p className="text-white font-black text-lg leading-tight">{profil?.nom ?? "—"}</p>
+          <div className="min-w-0">
+            <p className="text-white font-black text-lg leading-tight truncate">{profil?.nom ?? "—"}</p>
             <p className="text-white/70 text-sm">{profil?.telephone ?? "—"}</p>
-            <span className={`mt-1 inline-block text-xs font-bold px-2.5 py-0.5 rounded-full ${
+            {profil?.email && (
+              <p className="text-white/60 text-xs truncate">{profil.email}</p>
+            )}
+            <span className={`mt-1.5 inline-block text-xs font-bold px-2.5 py-0.5 rounded-full ${
               profil?.role === "vendeur" ? "bg-yellow-400 text-yellow-900"
               : profil?.role === "admin" ? "bg-red-400 text-white"
               : "bg-white/20 text-white"
@@ -80,13 +85,33 @@ export default function ComptePage() {
       </div>
 
       <div className="px-4 -mt-4 space-y-4 pb-10">
-        {/* Menu */}
+
+        {/* Alerte profil incomplet */}
+        {profilIncomplet && (
+          <Link href="/compte/profil"
+            className="flex items-center gap-3 bg-yellow-50 border border-yellow-200 rounded-2xl px-4 py-3">
+            <span className="text-xl">⚠️</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-yellow-800">Profil incomplet</p>
+              <p className="text-xs text-yellow-600">
+                {!profil?.email && !profil?.whatsapp
+                  ? "Ajoutez votre email et WhatsApp"
+                  : !profil?.email
+                  ? "Ajoutez votre email"
+                  : "Ajoutez votre WhatsApp"}
+              </p>
+            </div>
+            <span className="text-yellow-400 text-lg flex-shrink-0">›</span>
+          </Link>
+        )}
+
+        {/* Menu principal */}
         <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
           {[
             { icon: "👤", label: "Modifier mon profil", href: "/compte/profil" },
             { icon: "📦", label: "Mes commandes", href: "/compte/commandes" },
             ...(profil?.role === "vendeur"
-              ? [{ icon: "🏪", label: "Mon dashboard vendeur", href: "/vendor/dashboard" }]
+              ? [{ icon: "🏪", label: "Dashboard vendeur", href: "/vendor/dashboard" }]
               : [{ icon: "🏪", label: "Devenir vendeur", href: "/vendor/register" }]),
           ].map((item, i, arr) => (
             <Link key={item.href} href={item.href}
@@ -105,7 +130,7 @@ export default function ComptePage() {
           <div className="bg-white rounded-3xl shadow-sm p-4">
             <div className="flex items-center justify-between mb-3">
               <p className="font-black text-gray-800">Commandes récentes</p>
-              <Link href="/compte/commandes" className="text-xs text-[#00A550] font-bold">Tout voir</Link>
+              <Link href="/compte/commandes" className="text-xs text-[#E63946] font-bold">Tout voir</Link>
             </div>
             <div className="space-y-2">
               {commandes.map((c) => {
@@ -121,7 +146,7 @@ export default function ComptePage() {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${s.cls}`}>{s.label}</span>
-                      <span className="font-black text-sm text-[#00A550]">{formatXAF(c.total)}</span>
+                      <span className="font-black text-sm text-[#E63946]">{formatXAF(c.total)}</span>
                     </div>
                   </Link>
                 );

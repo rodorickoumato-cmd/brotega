@@ -11,6 +11,7 @@ import {
   getMesProduits,
   changerStatutProduit,
 } from "@/app/actions/produits";
+import { categories } from "@/data/categories";
 import { confirmerCommandeVendeur } from "@/app/actions/commandes";
 import type { Produit, Vendeur, Commande } from "@/lib/supabase/database.types";
 import { MAX_PRODUITS_GRATUIT } from "@/lib/rules";
@@ -23,9 +24,9 @@ type UploadState =
   | { status: "done"; url: string }
   | { status: "error"; message: string };
 
-type FormData = { nom: string; prix: string; imagePreview: string; imageUrl: string };
+type FormData = { nom: string; description: string; prix: string; categorie: string; imagePreview: string; imageUrl: string };
 
-const emptyForm: FormData = { nom: "", prix: "", imagePreview: "", imageUrl: "" };
+const emptyForm: FormData = { nom: "", description: "", prix: "", categorie: "", imagePreview: "", imageUrl: "" };
 
 // ─── Statuts commandes ────────────────────────────────────────────────────────
 
@@ -50,13 +51,13 @@ function ProductFormModal({
 }: {
   produit: Produit | null;
   nomBoutique: string;
-  onSave: (nom: string, prix: number, image: string | null) => Promise<void>;
+  onSave: (nom: string, description: string | null, prix: number, categorie: string | null, image: string | null) => Promise<void>;
   onClose: () => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<FormData>(() =>
     produit
-      ? { nom: produit.nom, prix: produit.prix.toString(), imagePreview: produit.image ?? "", imageUrl: produit.image ?? "" }
+      ? { nom: produit.nom, description: produit.description ?? "", prix: produit.prix.toString(), categorie: produit.categorie ?? "", imagePreview: produit.image ?? "", imageUrl: produit.image ?? "" }
       : emptyForm
   );
   const [errors, setErrors] = useState<{ nom?: string; prix?: string; image?: string }>({});
@@ -129,7 +130,13 @@ function ProductFormModal({
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
     setSubmitting(true);
-    await onSave(form.nom.trim(), Number(form.prix), form.imageUrl || null);
+    await onSave(
+      form.nom.trim(),
+      form.description.trim() || null,
+      Number(form.prix),
+      form.categorie || null,
+      form.imageUrl || null,
+    );
     setSubmitting(false);
   };
 
@@ -163,7 +170,7 @@ function ProductFormModal({
             {!form.imagePreview && (
               <button type="button" onClick={() => fileRef.current?.click()}
                 disabled={upload.status === "uploading"}
-                className="w-full py-6 bg-[#00A550] text-white rounded-2xl font-bold flex flex-col items-center gap-2 disabled:opacity-60 active:scale-95 transition-all">
+                className="w-full py-6 bg-[#E63946] text-white rounded-2xl font-bold flex flex-col items-center gap-2 disabled:opacity-60 active:scale-95 transition-all">
                 <span className="text-3xl">📷</span>
                 <span>Choisir une photo</span>
                 <span className="text-white/70 text-xs font-normal">Depuis votre téléphone ou galerie</span>
@@ -171,19 +178,19 @@ function ProductFormModal({
             )}
 
             {form.imagePreview && (
-              <div className="relative rounded-2xl overflow-hidden border-2 border-[#00A550]">
+              <div className="relative rounded-2xl overflow-hidden border-2 border-[#E63946]">
                 <img src={form.imagePreview} alt="Aperçu" className="w-full h-44 object-cover" />
                 {upload.status === "uploading" && (
                   <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center gap-3 p-4">
                     <p className="text-white font-bold text-sm">Envoi en cours...</p>
                     <div className="w-full bg-white/30 rounded-full h-3 overflow-hidden">
-                      <div className="bg-[#00A550] h-full rounded-full transition-all"
+                      <div className="bg-[#E63946] h-full rounded-full transition-all"
                         style={{ width: `${Math.max((upload as { status: "uploading"; progress: number }).progress, 5)}%` }} />
                     </div>
                   </div>
                 )}
                 {upload.status === "done" && (
-                  <div className="absolute top-2 right-2 bg-[#00A550] text-white text-xs font-bold px-3 py-1 rounded-full">✓ Enregistrée</div>
+                  <div className="absolute top-2 right-2 bg-[#E63946] text-white text-xs font-bold px-3 py-1 rounded-full">✓ Enregistrée</div>
                 )}
                 <button type="button" onClick={() => fileRef.current?.click()}
                   disabled={upload.status === "uploading"}
@@ -194,7 +201,7 @@ function ProductFormModal({
             )}
 
             {upload.status === "done" && infoCompression && (
-              <p className="text-xs text-[#00A550] mt-2 bg-[#E8F7EE] rounded-xl px-3 py-2">
+              <p className="text-xs text-[#E63946] mt-2 bg-[#FEF2F2] rounded-xl px-3 py-2">
                 ⚡ Compressée : {formatTaille(infoCompression.avant)} → {formatTaille(infoCompression.apres)}
               </p>
             )}
@@ -220,10 +227,42 @@ function ProductFormModal({
               placeholder="Ex : Manioc frais 2 kg, Pagne wax..."
               maxLength={100}
               className={`w-full border-2 rounded-2xl px-4 py-4 text-base focus:outline-none transition-colors ${
-                errors.nom ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-[#00A550]"
+                errors.nom ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-[#E63946]"
               }`}
             />
             {errors.nom && <p className="text-xs text-red-500 mt-1">{errors.nom}</p>}
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="text-sm font-bold text-gray-700 mb-2 block">
+              Description <span className="text-gray-400 font-normal text-xs">(optionnel)</span>
+            </label>
+            <textarea
+              value={form.description}
+              onChange={(e) => set("description", e.target.value)}
+              placeholder="Décrivez votre produit : taille, matière, couleur..."
+              maxLength={500}
+              rows={3}
+              className="w-full border-2 border-gray-200 focus:border-[#E63946] rounded-2xl px-4 py-3 text-base focus:outline-none transition-colors resize-none"
+            />
+            <p className="text-xs text-gray-400 mt-1 text-right">{form.description.length}/500</p>
+          </div>
+
+          {/* Catégorie */}
+          <div>
+            <label className="text-sm font-bold text-gray-700 mb-2 block">
+              Catégorie <span className="text-gray-400 font-normal text-xs">(optionnel)</span>
+            </label>
+            <select
+              value={form.categorie}
+              onChange={(e) => set("categorie", e.target.value)}
+              className="w-full border-2 border-gray-200 focus:border-[#E63946] rounded-2xl px-4 py-4 text-base focus:outline-none transition-colors bg-white appearance-none">
+              <option value="">— Choisir une catégorie —</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.slug}>{c.icon} {c.name}</option>
+              ))}
+            </select>
           </div>
 
           {/* Prix */}
@@ -239,14 +278,14 @@ function ProductFormModal({
                 onChange={(e) => set("prix", e.target.value)}
                 placeholder="0"
                 className={`w-full border-2 rounded-2xl px-4 py-4 pr-16 text-base focus:outline-none transition-colors ${
-                  errors.prix ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-[#00A550]"
+                  errors.prix ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-[#E63946]"
                 }`}
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-medium pointer-events-none">FCFA</span>
             </div>
             {errors.prix && <p className="text-xs text-red-500 mt-1">{errors.prix}</p>}
             {form.prix && Number(form.prix) > 0 && (
-              <p className="text-sm font-black text-[#00A550] mt-2">{formatXAF(Number(form.prix))}</p>
+              <p className="text-sm font-black text-[#E63946] mt-2">{formatXAF(Number(form.prix))}</p>
             )}
           </div>
         </div>
@@ -259,7 +298,7 @@ function ProductFormModal({
           </button>
           <button onClick={handleSubmit}
             disabled={submitting || upload.status === "uploading"}
-            className="flex-[2] py-3.5 bg-[#00A550] text-white rounded-2xl text-sm font-black disabled:opacity-50 active:scale-95 transition-all">
+            className="flex-[2] py-3.5 bg-[#E63946] text-white rounded-2xl text-sm font-black disabled:opacity-50 active:scale-95 transition-all">
             {submitting ? "Enregistrement..." : upload.status === "uploading" ? "⏳ Photo en cours..." : produit ? "Enregistrer" : "Ajouter le produit"}
           </button>
         </div>
@@ -293,6 +332,28 @@ function DeleteConfirm({ nom, onConfirm, onCancel }: {
         </div>
       </div>
     </div>
+  );
+}
+
+// ─── Code boutique copiable ───────────────────────────────────────────────────
+
+function CodeBoutique({ vendeurId }: { vendeurId: string }) {
+  const code = vendeurId.replace(/-/g, "").slice(0, 8).toUpperCase();
+  const [copie, setCopie] = useState(false);
+
+  const copier = async () => {
+    await navigator.clipboard.writeText(code).catch(() => {});
+    setCopie(true);
+    setTimeout(() => setCopie(false), 2000);
+  };
+
+  return (
+    <button onClick={copier}
+      className="flex items-center gap-1.5 bg-white/15 rounded-xl px-3 py-1.5 active:scale-95 transition-all">
+      <span className="text-white/70 text-xs">Code :</span>
+      <span className="text-white font-black text-xs tracking-widest">{code}</span>
+      <span className="text-white/60 text-xs">{copie ? "✓" : "⎘"}</span>
+    </button>
   );
 }
 
@@ -345,8 +406,8 @@ export default function VendorDashboard() {
   const openEdit = (p: Produit) => { setEditing(p); setShowForm(true); setErreurGlobale(""); };
   const closeForm = () => { setShowForm(false); setEditing(null); };
 
-  const handleSave = async (nom: string, prix: number, image: string | null) => {
-    const res = await sauvegarderProduit({ id: editing?.id, nom, prix, image });
+  const handleSave = async (nom: string, description: string | null, prix: number, categorie: string | null, image: string | null) => {
+    const res = await sauvegarderProduit({ id: editing?.id, nom, description, prix, categorie, image });
     if (res.erreur) { setErreurGlobale(res.erreur); return; }
     closeForm();
     const updated = await getMesProduits();
@@ -388,7 +449,7 @@ export default function VendorDashboard() {
   if (chargement) {
     return (
       <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center">
-        <div className="animate-spin w-10 h-10 rounded-full border-4 border-[#00A550] border-t-transparent" />
+        <div className="animate-spin w-10 h-10 rounded-full border-4 border-[#E63946] border-t-transparent" />
       </div>
     );
   }
@@ -412,7 +473,7 @@ export default function VendorDashboard() {
       )}
 
       {/* Header */}
-      <div className="bg-[#00A550] px-5 pt-12 pb-10">
+      <div className="bg-[#E63946] px-5 pt-12 pb-10">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-white font-black text-xl flex-shrink-0">
             {initiales}
@@ -420,9 +481,9 @@ export default function VendorDashboard() {
           <div className="flex-1 min-w-0">
             <p className="text-white font-black text-lg leading-tight truncate">{vendeur?.nom}</p>
             <p className="text-white/70 text-sm">📍 {vendeur?.ville}</p>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
               <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                vendeur?.statut === "verifie" ? "bg-white text-[#00A550]"
+                vendeur?.statut === "verifie" ? "bg-white text-[#E63946]"
                 : vendeur?.statut === "suspendu" ? "bg-red-400 text-white"
                 : "bg-white/20 text-white"
               }`}>
@@ -432,6 +493,7 @@ export default function VendorDashboard() {
               </span>
               <span className="text-xs text-white/60">Plan {planActif}</span>
             </div>
+            {vendeur && <div className="mt-2"><CodeBoutique vendeurId={vendeur.id} /></div>}
           </div>
           <Link href="/vendor/wallet"
             className="flex-shrink-0 bg-white/20 text-white font-bold text-xs px-3 py-2 rounded-xl active:scale-95 transition-all">
@@ -480,7 +542,7 @@ export default function VendorDashboard() {
             </div>
             {limiteAtteinte && (
               <Link href="/vendor/abonnement"
-                className="flex-shrink-0 bg-[#00A550] text-white text-xs font-black px-3 py-2 rounded-xl active:scale-95 transition-all">
+                className="flex-shrink-0 bg-[#E63946] text-white text-xs font-black px-3 py-2 rounded-xl active:scale-95 transition-all">
                 Upgrader
               </Link>
             )}
@@ -495,7 +557,7 @@ export default function VendorDashboard() {
           ].map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)}
               className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                tab === t.id ? "bg-[#00A550] text-white shadow-sm" : "text-gray-500"
+                tab === t.id ? "bg-[#E63946] text-white shadow-sm" : "text-gray-500"
               }`}>
               {t.label}
             </button>
@@ -514,13 +576,13 @@ export default function VendorDashboard() {
                   placeholder="Rechercher..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-8 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-[#00A550] transition-colors"
+                  className="w-full pl-8 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-[#E63946] transition-colors"
                 />
               </div>
               <button
                 onClick={openAdd}
                 disabled={limiteAtteinte}
-                className="bg-[#00A550] text-white font-black px-4 py-3 rounded-2xl text-sm disabled:opacity-40 active:scale-95 transition-all whitespace-nowrap flex items-center gap-1">
+                className="bg-[#E63946] text-white font-black px-4 py-3 rounded-2xl text-sm disabled:opacity-40 active:scale-95 transition-all whitespace-nowrap flex items-center gap-1">
                 + Ajouter
               </button>
             </div>
@@ -537,7 +599,7 @@ export default function VendorDashboard() {
                 </p>
                 {!search && !limiteAtteinte && (
                   <button onClick={openAdd}
-                    className="bg-[#00A550] text-white font-black px-6 py-3 rounded-2xl text-sm active:scale-95 transition-all">
+                    className="bg-[#E63946] text-white font-black px-6 py-3 rounded-2xl text-sm active:scale-95 transition-all">
                     + Ajouter un produit
                   </button>
                 )}
@@ -557,18 +619,26 @@ export default function VendorDashboard() {
                   {/* Infos */}
                   <div className="flex-1 min-w-0">
                     <p className="font-black text-gray-800 truncate">{p.nom}</p>
-                    <p className="text-[#00A550] font-bold text-sm">{formatXAF(p.prix)}</p>
-                    <span className={`inline-block text-xs font-bold px-2 py-0.5 rounded-full mt-1 ${
-                      p.statut === "actif" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
-                    }`}>
-                      {p.statut === "actif" ? "Actif" : "Inactif"}
-                    </span>
+                    {p.description && <p className="text-xs text-gray-400 truncate mt-0.5">{p.description}</p>}
+                    <p className="text-[#E63946] font-bold text-sm mt-0.5">{formatXAF(p.prix)}</p>
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                        p.statut === "actif" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                      }`}>
+                        {p.statut === "actif" ? "Actif" : "Inactif"}
+                      </span>
+                      {p.categorie && (
+                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                          {categories.find((c) => c.slug === p.categorie)?.icon} {categories.find((c) => c.slug === p.categorie)?.name ?? p.categorie}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Actions — 3 max */}
                   <div className="flex flex-col gap-2 flex-shrink-0">
                     <button onClick={() => openEdit(p)}
-                      className="text-xs font-bold text-[#00A550] bg-[#E8F7EE] px-3 py-1.5 rounded-xl active:scale-95 transition-all">
+                      className="text-xs font-bold text-[#E63946] bg-[#FEF2F2] px-3 py-1.5 rounded-xl active:scale-95 transition-all">
                       Modifier
                     </button>
                     <button onClick={() => handleToggleStatut(p)}
@@ -611,14 +681,14 @@ export default function VendorDashboard() {
                         </p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="font-black text-[#00A550]">{formatXAF(c.total)}</p>
+                        <p className="font-black text-[#E63946]">{formatXAF(c.total)}</p>
                         <p className="text-gray-300 text-lg">›</p>
                       </div>
                     </Link>
                     {c.statut === "payee_escrow" && (
                       <button
                         onClick={() => handleConfirmerCommande(c.id)}
-                        className="w-full bg-[#00A550] text-white font-black py-3 rounded-xl text-sm active:scale-95 transition-all">
+                        className="w-full bg-[#E63946] text-white font-black py-3 rounded-xl text-sm active:scale-95 transition-all">
                         ✅ Confirmer la commande
                       </button>
                     )}
@@ -632,7 +702,7 @@ export default function VendorDashboard() {
         {/* Voir ma boutique */}
         {vendeur && (
           <Link href={`/vendeur/${vendeur.slug}`}
-            className="block w-full text-center bg-white rounded-2xl py-4 text-[#00A550] font-bold text-sm shadow-sm active:scale-95 transition-all border border-[#00A550]/20">
+            className="block w-full text-center bg-white rounded-2xl py-4 text-[#E63946] font-bold text-sm shadow-sm active:scale-95 transition-all border border-[#E63946]/20">
             Voir ma boutique publique →
           </Link>
         )}

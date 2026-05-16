@@ -1,4 +1,4 @@
-// Webhook Mobile Money — reçoit les notifications PawaPay pour commandes et abonnements.
+﻿// Webhook Mobile Money — reçoit les notifications PawaPay pour commandes et abonnements.
 // Idempotent — peut être rappelé plusieurs fois sans effet secondaire.
 
 import { NextRequest, NextResponse } from "next/server";
@@ -157,5 +157,5 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  return NextResponse.json({ webhook: "Brotega Paiements", ok: true });
+  return NextResponse.json({ webhook: "J'adore la Famille Paiements", ok: true });
 }

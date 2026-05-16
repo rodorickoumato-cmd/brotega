@@ -1,15 +1,15 @@
-// ─── RÈGLES BUSINESS BROTEGA V1 ───────────────────────────────
+// ─── RÈGLES BUSINESS J'ADORE LA FAMILLE V1 ───────────────────────────────
 // Ce fichier est la loi interne. Toute logique métier s'appuie ici.
 // Ne jamais hardcoder ces valeurs ailleurs dans le code.
 
 // ─── ABONNEMENTS ──────────────────────────────────────────────
 
 export const PLANS = {
-  gratuit:      { label: "Gratuit",      prix_xaf: 0,      max_produits: 3,         duree_jours: null },
-  mensuel:      { label: "Mensuel",      prix_xaf: 5_000,  max_produits: Infinity,  duree_jours: 30   },
-  trimestriel:  { label: "Trimestriel",  prix_xaf: 12_000, max_produits: Infinity,  duree_jours: 90   },
-  semestriel:   { label: "Semestriel",   prix_xaf: 20_000, max_produits: Infinity,  duree_jours: 180  },
-  annuel:       { label: "Annuel",       prix_xaf: 35_000, max_produits: Infinity,  duree_jours: 365  },
+  gratuit:      { label: "Découverte",         prix_xaf: 0,      max_produits: 3,         duree_jours: null },
+  mensuel:      { label: "Business Mensuel",   prix_xaf: 2_000,  max_produits: Infinity,  duree_jours: 30   },
+  trimestriel:  { label: "Business Trimestriel", prix_xaf: 5_000, max_produits: Infinity, duree_jours: 90   },
+  semestriel:   { label: "Business Semestriel", prix_xaf: 8_000, max_produits: Infinity,  duree_jours: 180  },
+  annuel:       { label: "Business Annuel",    prix_xaf: 15_000, max_produits: Infinity,  duree_jours: 365  },
 } as const;
 
 export type PlanId = keyof typeof PLANS;
@@ -46,7 +46,7 @@ export const MAX_VENDEURS_PAR_COMMANDE = 1;
 // Règle : frais de livraison fixes (V1 — pas de zones)
 export const FRAIS_LIVRAISON_XAF = 2_500;
 
-// Règle : commission Brotega prélevée sur le sous-total à la libération de l'escrow
+// Règle : commission J'adore la Famille prélevée sur le sous-total à la libération de l'escrow
 export const TAUX_COMMISSION = 0.05; // 5 %
 
 // Règle : statuts possibles d'une commande (dans l'ordre chronologique)

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -12,7 +12,7 @@ import type { Wallet, WalletTransaction } from "@/lib/supabase/database.types";
 const TYPE_AFFICHAGE: Record<WalletTransaction["type"], { label: string; couleur: string; emoji: string }> = {
   credit_escrow:  { label: "Vente reçue (escrow)",     couleur: "blue",   emoji: "🔒" },
   liberation:     { label: "Libération après livraison", couleur: "green", emoji: "💰" },
-  commission:     { label: "Commission Brotega",       couleur: "gray",   emoji: "🏷️" },
+  commission:     { label: "Commission J'adore la Famille",       couleur: "gray",   emoji: "🏷️" },
   retrait:        { label: "Retrait Mobile Money",     couleur: "amber",  emoji: "📤" },
   remboursement:  { label: "Remboursement",            couleur: "red",    emoji: "↩️" },
   ajustement:     { label: "Ajustement",                couleur: "gray",   emoji: "⚙️" },
@@ -47,7 +47,7 @@ export default function PageWallet() {
   if (chargement) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00A550] mx-auto" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E63946] mx-auto" />
         <p className="text-gray-500 mt-4">Chargement de votre wallet...</p>
       </div>
     );
@@ -71,7 +71,7 @@ export default function PageWallet() {
       </div>
 
       {/* Solde TOTAL — gros chiffre rassurant */}
-      <div className="bg-gradient-to-br from-[#00A550] to-[#008F47] rounded-3xl p-6 text-white shadow-lg">
+      <div className="bg-gradient-to-br from-[#E63946] to-[#008F47] rounded-3xl p-6 text-white shadow-lg">
         <p className="text-sm text-white/80 mb-1">Total dans votre wallet</p>
         <p className="text-4xl font-black">{formatXAF(total)}</p>
       </div>
@@ -89,11 +89,11 @@ export default function PageWallet() {
         </div>
 
         {/* Available */}
-        <div className="bg-[#E8F7EE] border border-[#00A550]/30 rounded-2xl p-5">
+        <div className="bg-[#FEF2F2] border border-[#E63946]/30 rounded-2xl p-5">
           <div className="text-2xl mb-1">💰</div>
-          <p className="text-xs text-[#00A550] font-semibold mb-1">DISPONIBLE À RETIRER</p>
-          <p className="text-2xl font-black text-[#00A550]">{formatXAF(available)}</p>
-          <p className="text-xs text-[#00A550] mt-2">
+          <p className="text-xs text-[#E63946] font-semibold mb-1">DISPONIBLE À RETIRER</p>
+          <p className="text-2xl font-black text-[#E63946]">{formatXAF(available)}</p>
+          <p className="text-xs text-[#E63946] mt-2">
             Vous pouvez retirer ce montant maintenant
           </p>
         </div>
@@ -141,7 +141,7 @@ export default function PageWallet() {
                       })}
                     </p>
                   </div>
-                  <p className={`font-black text-sm flex-shrink-0 ${positif ? "text-[#00A550]" : "text-red-500"}`}>
+                  <p className={`font-black text-sm flex-shrink-0 ${positif ? "text-[#E63946]" : "text-red-500"}`}>
                     {positif ? "+" : ""}{formatXAF(tx.montant_xaf)}
                   </p>
                 </div>
@@ -157,7 +157,7 @@ export default function PageWallet() {
         <ol className="text-xs space-y-1 list-decimal list-inside">
           <li>Un client paye → l&apos;argent va dans &quot;En attente livraison&quot;</li>
           <li>Le client confirme la réception (ou auto-confirmé après 7 jours)</li>
-          <li>L&apos;argent passe dans &quot;Disponible&quot; (- 5% de commission Brotega)</li>
+          <li>L&apos;argent passe dans &quot;Disponible&quot; (- 5% de commission J'adore la Famille)</li>
           <li>Vous retirez vers Airtel Money ou Moov Money en 24h max</li>
         </ol>
       </div>
@@ -219,7 +219,7 @@ function ModaleRetrait({
                   type="button"
                   onClick={() => setProvider(p)}
                   className={`p-3 rounded-xl border-2 font-semibold transition-all text-sm ${
-                    provider === p ? "border-[#00A550] bg-[#E8F7EE] text-[#00A550]" : "border-gray-200 text-gray-500"
+                    provider === p ? "border-[#E63946] bg-[#FEF2F2] text-[#E63946]" : "border-gray-200 text-gray-500"
                   }`}
                 >
                   <div className="text-xl mb-1">{p === "airtel" ? "📱" : "📲"}</div>
@@ -241,7 +241,7 @@ function ModaleRetrait({
                 value={montant}
                 onChange={(e) => setMontant(e.target.value.replace(/\D/g, ""))}
                 placeholder="10000"
-                className="w-full border border-gray-200 rounded-xl px-4 py-3.5 pr-16 text-base font-semibold focus:outline-none focus:border-[#00A550] focus:ring-2 focus:ring-[#00A550]/20"
+                className="w-full border border-gray-200 rounded-xl px-4 py-3.5 pr-16 text-base font-semibold focus:outline-none focus:border-[#E63946] focus:ring-2 focus:ring-[#E63946]/20"
                 autoFocus
               />
               <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-gray-500">XAF</span>
@@ -249,7 +249,7 @@ function ModaleRetrait({
             <button
               type="button"
               onClick={() => setMontant(String(available))}
-              className="text-xs text-[#00A550] font-bold hover:underline mt-1.5"
+              className="text-xs text-[#E63946] font-bold hover:underline mt-1.5"
             >
               Tout retirer ({formatXAF(available)})
             </button>
@@ -260,7 +260,7 @@ function ModaleRetrait({
             <label className="text-sm font-bold text-gray-700 mb-1.5 block">
               Votre numéro {provider === "airtel" ? "Airtel" : "Moov"} Money
             </label>
-            <div className="flex border border-gray-200 rounded-xl overflow-hidden focus-within:border-[#00A550] focus-within:ring-2 focus-within:ring-[#00A550]/20">
+            <div className="flex border border-gray-200 rounded-xl overflow-hidden focus-within:border-[#E63946] focus-within:ring-2 focus-within:ring-[#E63946]/20">
               <span className="bg-gray-50 px-3 flex items-center text-sm text-gray-600 border-r border-gray-200 font-medium">
                 🇬🇦 +241
               </span>

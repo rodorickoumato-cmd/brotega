@@ -7,14 +7,22 @@ export type Database = {
         Row: {
           id: string;
           nom: string;
+          email: string | null;
+          email_verifie: boolean;
           telephone: string | null;
+          whatsapp: string | null;
+          marketing_opt_in: boolean;
           role: "acheteur" | "vendeur" | "livreur" | "admin";
           created_at: string;
         };
         Insert: {
           id: string;
           nom: string;
+          email?: string | null;
+          email_verifie?: boolean;
           telephone?: string | null;
+          whatsapp?: string | null;
+          marketing_opt_in?: boolean;
           role?: "acheteur" | "vendeur" | "livreur" | "admin";
           created_at?: string;
         };
@@ -34,6 +42,8 @@ export type Database = {
           ville: string;
           telephone: string | null;
           whatsapp: string | null;
+          mobile_money_numero: string | null;
+          mobile_money_verifie: boolean;
           categories: string[];
           statut: "en_attente" | "verifie" | "suspendu";
           note: number;
@@ -52,6 +62,8 @@ export type Database = {
           ville: string;
           telephone?: string | null;
           whatsapp?: string | null;
+          mobile_money_numero?: string | null;
+          mobile_money_verifie?: boolean;
           categories?: string[];
           statut?: "en_attente" | "verifie" | "suspendu";
           note?: number;
@@ -96,9 +108,11 @@ export type Database = {
       produits: {
         Row: {
           id: string;
-          vendeur_id: string;
+          vendeur_id: string;  // FK → vendeurs.id
           nom: string;
+          description: string | null;
           prix: number;
+          categorie: string | null;
           image: string | null;
           statut: "actif" | "inactif";
           created_at: string;
@@ -108,7 +122,9 @@ export type Database = {
           id?: string;
           vendeur_id: string;
           nom: string;
+          description?: string | null;
           prix: number;
+          categorie?: string | null;
           image?: string | null;
           statut?: "actif" | "inactif";
           created_at?: string;

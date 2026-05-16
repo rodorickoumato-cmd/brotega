@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { vers241 } from "@/lib/phone";
+import type { Database } from "@/lib/supabase/database.types";
 
 function slugifier(str: string): string {
   return str.toLowerCase()
@@ -24,9 +25,58 @@ function traduireErreurAuth(msg: string): string {
   return "Une erreur est survenue. Réessayez.";
 }
 
-// 1) Envoi OTP par SMS — utilisé pour login ET register
-//    `creerSiAbsent` = false pour login (l'utilisateur doit exister)
-//    `creerSiAbsent` = true pour register
+// 1a) Envoi OTP par email — login ET register
+export async function envoyerEmailOTP(input: { email: string; creerSiAbsent: boolean }) {
+  const email = input.email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { erreur: "Adresse email invalide." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: { shouldCreateUser: input.creerSiAbsent },
+  });
+
+  if (error) return { erreur: traduireErreurAuth(error.message) };
+  return { succes: true, email };
+}
+
+// 1b) Vérification OTP email
+export async function verifierEmailOTP(input: { email: string; code: string }) {
+  const email = input.email.trim().toLowerCase();
+  if (!/^\d{6}$/.test(input.code)) return { erreur: "Le code doit avoir 6 chiffres." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.verifyOtp({
+    email,
+    token: input.code,
+    type: "email",
+  });
+
+  if (error || !data.user) return { erreur: traduireErreurAuth(error?.message ?? "") };
+
+  const { data: profil } = await supabase
+    .from("utilisateurs")
+    .select("id, role")
+    .eq("id", data.user.id)
+    .single();
+
+  // Si le profil existe déjà, marque l'email comme vérifié
+  if (profil) {
+    await supabase
+      .from("utilisateurs")
+      .update({ email, email_verifie: true })
+      .eq("id", data.user.id);
+    revalidatePath("/compte/profil");
+    revalidatePath("/compte");
+  }
+
+  revalidatePath("/");
+  return { succes: true, userId: data.user.id, profilExiste: !!profil, role: profil?.role ?? null };
+}
+
+// 1c) Envoi OTP par SMS — utilisé pour login ET register
+//     `creerSiAbsent` = false pour login (l'utilisateur doit exister)
+//     `creerSiAbsent` = true pour register
 export async function envoyerOTP(input: { telephone: string; creerSiAbsent: boolean }) {
   const phone = vers241(input.telephone);
   if (!phone) return { erreur: "Numéro invalide. Format attendu : 01 23 45 67" };
@@ -83,17 +133,25 @@ export async function creerProfil(data: {
   role: "acheteur" | "vendeur";
   ville?: string;
   nomBoutique?: string;
+  email?: string;
+  telephone?: string;
+  marketingOptIn?: boolean;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { erreur: "Session expirée. Reconnectez-vous." };
 
-  const telephone = user.phone ? "+" + user.phone : null;
+  const authEmail = user.email ?? null;
+  const telephone = data.telephone ?? (user.phone ? "+" + user.phone : null);
 
   const { error: profilError } = await supabase.from("utilisateurs").insert({
     id: user.id,
     nom: data.nom,
     telephone,
+    whatsapp: telephone,
+    email: data.email ?? authEmail,
+    email_verifie: true,
+    marketing_opt_in: data.marketingOptIn ?? false,
     role: data.role,
   });
   if (profilError) return { erreur: "Erreur création profil : " + profilError.message };
@@ -105,8 +163,8 @@ export async function creerProfil(data: {
       nom: data.nomBoutique,
       slug,
       ville: data.ville ?? "Libreville",
-      telephone,
-      whatsapp: telephone,
+      telephone: telephone ?? null,
+      whatsapp: telephone ?? null,
       statut: "en_attente",
       categories: [],
     });
@@ -163,19 +221,31 @@ export async function devenirVendeur(data: { nomBoutique: string; ville: string 
   return { succes: true };
 }
 
-export async function modifierProfil(data: { nom: string }) {
+export async function modifierProfil(data: {
+  nom?: string;
+  email?: string;
+  whatsapp?: string;
+  marketing_opt_in?: boolean;
+}) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { erreur: "Non connecté." };
-  if (!data.nom.trim()) return { erreur: "Le nom ne peut pas être vide." };
+  if (data.nom !== undefined && !data.nom.trim()) return { erreur: "Le nom ne peut pas être vide." };
+  if (data.email !== undefined && data.email !== "" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+    return { erreur: "Adresse email invalide." };
+  }
 
-  const { error } = await supabase
-    .from("utilisateurs")
-    .update({ nom: data.nom.trim() })
-    .eq("id", user.id);
+  type UtilisateurUpdate = Database["public"]["Tables"]["utilisateurs"]["Update"];
+  const champs: UtilisateurUpdate = {};
+  if (data.nom !== undefined) champs.nom = data.nom.trim();
+  if (data.email !== undefined) champs.email = data.email.trim() || null;
+  if (data.whatsapp !== undefined) champs.whatsapp = data.whatsapp.trim() || null;
+  if (data.marketing_opt_in !== undefined) champs.marketing_opt_in = data.marketing_opt_in;
 
+  const { error } = await supabase.from("utilisateurs").update(champs).eq("id", user.id);
   if (error) return { erreur: error.message };
   revalidatePath("/compte");
+  revalidatePath("/compte/profil");
   return { succes: true };
 }
 

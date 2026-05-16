@@ -10,19 +10,19 @@ export function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-[#00A550] rounded-lg flex items-center justify-center">
-                <span className="text-white font-black">B</span>
+              <div className="w-8 h-8 bg-[#E63946] rounded-lg flex items-center justify-center">
+                <span className="text-lg">❤️</span>
               </div>
-              <span className="font-black text-xl text-white">Brotega</span>
+              <span className="font-black text-xl text-white">J&apos;adore la Famille</span>
             </div>
             <p className="text-sm leading-relaxed text-gray-400">
-              La première marketplace 100% gabonaise. Achetez local, soutenez les entrepreneurs gabonais.
+              La marketplace familiale du Gabon. Achetez local, soutenez les entrepreneurs gabonais.
             </p>
             <div className="flex gap-3 mt-4">
               {[
-                { name: "Facebook", icon: "f", href: "https://facebook.com/brotega" },
-                { name: "Instagram", icon: "📷", href: "https://instagram.com/brotega" },
-                { name: "Twitter / X", icon: "𝕏", href: "https://twitter.com/brotega" },
+                { name: "Facebook", icon: "f", href: "https://facebook.com/mycssecret" },
+                { name: "Instagram", icon: "📷", href: "https://instagram.com/mycssecret" },
+                { name: "Twitter / X", icon: "𝕏", href: "https://twitter.com/mycssecret" },
                 { name: "WhatsApp", icon: "📱", href: "https://wa.me/24101234567" },
               ].map((s) => (
                 <a
@@ -31,7 +31,7 @@ export function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={s.name}
-                  className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-[#00A550] transition-colors text-sm"
+                  className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-[#E63946] transition-colors text-sm"
                 >
                   {s.icon}
                 </a>
@@ -54,7 +54,7 @@ export function Footer() {
             <ul className="space-y-2">
               {categories.slice(0, 8).map((c) => (
                 <li key={c.id}>
-                  <Link href={`/catalogue?categorie=${c.slug}`} className="text-sm hover:text-[#00A550] transition-colors flex items-center gap-2">
+                  <Link href={`/catalogue?categorie=${c.slug}`} className="text-sm hover:text-[#E63946] transition-colors flex items-center gap-2">
                     <span className="text-xs">{c.icon}</span>{c.name}
                   </Link>
                 </li>
@@ -77,7 +77,7 @@ export function Footer() {
                 ["Contact", "/contact"],
               ].map(([label, href]) => (
                 <li key={href}>
-                  <Link href={href} className="hover:text-[#00A550] transition-colors">{label}</Link>
+                  <Link href={href} className="hover:text-[#E63946] transition-colors">{label}</Link>
                 </li>
               ))}
             </ul>
@@ -88,21 +88,21 @@ export function Footer() {
             <h3 className="text-white font-bold mb-4">Informations</h3>
             <ul className="space-y-2 text-sm mb-6">
               {[
-                ["À propos de Brotega", "/a-propos"],
+                ["À propos de J'adore la Famille", "/a-propos"],
                 ["Conditions d'utilisation", "/conditions"],
                 ["Politique de confidentialité", "/confidentialite"],
                 ["Comment vendre", "/vendre"],
                 ["Livraison & Retours", "/livraison"],
               ].map(([label, href]) => (
                 <li key={href}>
-                  <Link href={href} className="hover:text-[#00A550] transition-colors">{label}</Link>
+                  <Link href={href} className="hover:text-[#E63946] transition-colors">{label}</Link>
                 </li>
               ))}
             </ul>
             <div className="bg-white/5 rounded-xl p-4">
               <p className="text-xs font-semibold text-white mb-1">Service client</p>
               <p className="text-xs text-gray-400">Lun - Sam : 8h - 20h</p>
-              <a href="tel:+24101234567" className="text-[#00A550] text-sm font-bold mt-1 block hover:underline">+241 01 23 45 67</a>
+              <a href="tel:+24101234567" className="text-[#E63946] text-sm font-bold mt-1 block hover:underline">+241 01 23 45 67</a>
               <a href="https://wa.me/24101234567" className="text-[#25D366] text-xs mt-0.5 block hover:underline">💬 WhatsApp</a>
             </div>
           </div>
@@ -112,7 +112,7 @@ export function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-white/10 py-4 px-4">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500">
-          <p>© 2026 Brotega — Fait avec ❤️ au Gabon 🇬🇦</p>
+          <p>© 2026 J&apos;adore la Famille — Fait avec ❤️ au Gabon 🇬🇦</p>
           <p>Tous droits réservés · Libreville, Gabon</p>
         </div>
       </div>

@@ -23,7 +23,7 @@ export function Toaster() {
   }, []);
 
   const colors: Record<Toast["type"], string> = {
-    success: "bg-[#00A550] text-white",
+    success: "bg-[#E63946] text-white",
     error: "bg-red-500 text-white",
     info: "bg-blue-500 text-white",
   };

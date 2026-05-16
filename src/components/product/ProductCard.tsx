@@ -23,7 +23,7 @@ export function ProductCard({ product }: { product: Product }) {
 
   return (
     <Link href={`/produit/${product.slug}`} className="group">
-      <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-[#00A550]/30 hover:-translate-y-1 flex flex-col h-full">
+      <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-[#E63946]/30 hover:-translate-y-1 flex flex-col h-full">
         {/* Image */}
         <div className="relative overflow-hidden bg-gray-100 aspect-square">
           <Image
@@ -62,13 +62,13 @@ export function ProductCard({ product }: { product: Product }) {
           <div className="flex items-center gap-1 mb-1">
             <span className="text-xs text-gray-500 truncate">{product.vendor.name}</span>
             {product.vendor.verified && (
-              <svg className="w-3 h-3 text-[#00A550] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-3 h-3 text-[#E63946] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
               </svg>
             )}
           </div>
 
-          <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 flex-1 mb-2 group-hover:text-[#00A550] transition-colors">
+          <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 flex-1 mb-2 group-hover:text-[#E63946] transition-colors">
             {product.name}
           </h3>
 
@@ -76,7 +76,7 @@ export function ProductCard({ product }: { product: Product }) {
 
           <div className="flex items-center justify-between mt-3">
             <div>
-              <p className="font-bold text-[#00A550] text-base">{formatXAF(product.price)}</p>
+              <p className="font-bold text-[#E63946] text-base">{formatXAF(product.price)}</p>
               {product.originalPrice && (
                 <p className="text-xs text-gray-400 line-through">{formatXAF(product.originalPrice)}</p>
               )}
@@ -85,7 +85,7 @@ export function ProductCard({ product }: { product: Product }) {
             <button
               onClick={handleAdd}
               disabled={product.stock === 0}
-              className="bg-[#00A550] hover:bg-[#007A3D] disabled:opacity-50 disabled:cursor-not-allowed text-white w-9 h-9 rounded-xl flex items-center justify-center shadow-sm hover:shadow-md transition-all active:scale-95"
+              className="bg-[#E63946] hover:bg-[#C1121F] disabled:opacity-50 disabled:cursor-not-allowed text-white w-9 h-9 rounded-xl flex items-center justify-center shadow-sm hover:shadow-md transition-all active:scale-95"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

@@ -13,7 +13,7 @@ type LivraisonAvecCommande = Livraison & {
 const STATUT_STYLE: Record<Livraison["statut"], { label: string; bg: string; texte: string }> = {
   en_attente:  { label: "En attente",   bg: "bg-yellow-50  border-yellow-200", texte: "text-yellow-700" },
   assignee:    { label: "Assignée",     bg: "bg-blue-50    border-blue-200",   texte: "text-blue-700"   },
-  en_route:    { label: "En route",     bg: "bg-[#E8F7EE]  border-[#00A550]/30", texte: "text-[#00A550]" },
+  en_route:    { label: "En route",     bg: "bg-[#FEF2F2]  border-[#E63946]/30", texte: "text-[#E63946]" },
   livree:      { label: "Livrée ✓",    bg: "bg-gray-50    border-gray-200",   texte: "text-gray-500"   },
   echec:       { label: "Échec",        bg: "bg-red-50     border-red-200",    texte: "text-red-600"    },
 };
@@ -92,7 +92,7 @@ export default function LivreurPage() {
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
       {/* Header */}
-      <div className="bg-[#00A550] px-5 pt-12 pb-6">
+      <div className="bg-[#E63946] px-5 pt-12 pb-6">
         <p className="text-white/70 text-sm font-medium">Tableau de bord</p>
         <h1 className="text-2xl font-black text-white">Mes livraisons 🏍️</h1>
 
@@ -123,7 +123,7 @@ export default function LivreurPage() {
             onClick={() => setOnglet(o)}
             className={`flex-1 py-3.5 text-sm font-bold transition-all ${
               onglet === o
-                ? "text-[#00A550] border-b-2 border-[#00A550]"
+                ? "text-[#E63946] border-b-2 border-[#E63946]"
                 : "text-gray-400"
             }`}
           >
@@ -178,7 +178,7 @@ export default function LivreurPage() {
                   </div>
                 )}
                 {l.commande?.total && (
-                  <p className="text-sm font-black text-[#00A550] mt-1">
+                  <p className="text-sm font-black text-[#E63946] mt-1">
                     {formatXAF(l.commande.total)}
                   </p>
                 )}
@@ -191,7 +191,7 @@ export default function LivreurPage() {
                     <button
                       onClick={() => changerStatut(l.id, "en_route")}
                       disabled={maj === l.id}
-                      className="flex-1 bg-[#00A550] text-white font-bold py-3 rounded-xl text-sm disabled:opacity-50 active:scale-95 transition-all"
+                      className="flex-1 bg-[#E63946] text-white font-bold py-3 rounded-xl text-sm disabled:opacity-50 active:scale-95 transition-all"
                     >
                       {maj === l.id ? "..." : "🏍️ Partir en livraison"}
                     </button>
@@ -200,7 +200,7 @@ export default function LivreurPage() {
                     <button
                       onClick={() => changerStatut(l.id, "livree")}
                       disabled={maj === l.id}
-                      className="flex-1 bg-[#00A550] text-white font-bold py-3 rounded-xl text-sm disabled:opacity-50 active:scale-95 transition-all"
+                      className="flex-1 bg-[#E63946] text-white font-bold py-3 rounded-xl text-sm disabled:opacity-50 active:scale-95 transition-all"
                     >
                       {maj === l.id ? "..." : "✅ Marquer livrée"}
                     </button>

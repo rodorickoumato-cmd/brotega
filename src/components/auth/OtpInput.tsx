@@ -65,7 +65,7 @@ export function OtpInput({ longueur = 6, valeur, onChange, onComplet }: Props) {
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKey(i, e)}
           onPaste={handlePaste}
-          className="w-11 h-14 sm:w-12 sm:h-16 text-center text-2xl font-black border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#00A550] focus:ring-2 focus:ring-[#00A550]/20 transition-all"
+          className="w-11 h-14 sm:w-12 sm:h-16 text-center text-2xl font-black border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#E63946] focus:ring-2 focus:ring-[#E63946]/20 transition-all"
         />
       ))}
     </div>

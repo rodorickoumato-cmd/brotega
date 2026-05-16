@@ -1,107 +1,91 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
-import { toast } from "@/components/ui/Toaster";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { deconnecter } from "@/app/actions/auth";
+import type { Utilisateur } from "@/lib/supabase/database.types";
 
 export default function SecuritePage() {
-  const [pwForm, setPwForm] = useState({ current: "", next: "", confirm: "" });
-  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const [profil, setProfil] = useState<Utilisateur | null>(null);
 
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pwForm.current) { toast("Veuillez saisir votre mot de passe actuel", "error"); return; }
-    if (pwForm.next.length < 8) { toast("Le nouveau mot de passe doit contenir au moins 8 caractères", "error"); return; }
-    if (pwForm.next !== pwForm.confirm) { toast("Les mots de passe ne correspondent pas", "error"); return; }
-    setLoading(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    toast("Mot de passe modifié avec succès ✓", "success");
-    setPwForm({ current: "", next: "", confirm: "" });
-    setLoading(false);
-  };
+  useEffect(() => {
+    const supabase = createClient();
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.push("/auth/login"); return; }
+      const { data } = await supabase.from("utilisateurs").select("*").eq("id", user.id).single();
+      setProfil(data);
+    })();
+  }, [router]);
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="flex items-center gap-3 mb-6">
-        <Link href="/compte" className="text-gray-400 hover:text-[#00A550] transition-colors">← Mon compte</Link>
-        <span className="text-gray-300">/</span>
-        <h1 className="text-2xl font-black text-gray-800">Sécurité</h1>
+    <div className="min-h-screen bg-[#F7F8FA]">
+      <div className="bg-[#E63946] px-5 pt-12 pb-8">
+        <Link href="/compte" className="text-white/70 text-sm">← Mon compte</Link>
+        <h1 className="text-2xl font-black text-white mt-2">Connexion & Sécurité</h1>
       </div>
 
-      <div className="space-y-5">
-        {/* Changement de mot de passe */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="font-bold text-gray-800 mb-1">🔒 Changer le mot de passe</h2>
-          <p className="text-sm text-gray-500 mb-5">Choisissez un mot de passe fort d'au moins 8 caractères.</p>
-          <form onSubmit={handleChangePassword} className="space-y-4">
-            <div>
-              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Mot de passe actuel *</label>
-              <input
-                type="password"
-                value={pwForm.current}
-                onChange={(e) => setPwForm({ ...pwForm, current: e.target.value })}
-                placeholder="••••••••"
-                required
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
-              />
+      <div className="px-4 -mt-4 pb-10 space-y-4">
+        {/* Méthode de connexion */}
+        <div className="bg-white rounded-3xl shadow-sm p-5 space-y-3">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Identifiants de connexion</p>
+
+          <div className="flex items-center gap-3 bg-[#FEF2F2] border-2 border-[#E63946]/20 rounded-2xl px-4 py-3.5">
+            <span className="text-xl">📱</span>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-gray-800">Téléphone vérifié</p>
+              <p className="text-sm text-gray-600">{profil?.telephone ?? "—"}</p>
             </div>
-            <div>
-              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Nouveau mot de passe *</label>
-              <input
-                type="password"
-                value={pwForm.next}
-                onChange={(e) => setPwForm({ ...pwForm, next: e.target.value })}
-                placeholder="Min. 8 caractères"
-                minLength={8}
-                required
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
-              />
+            <span className="text-xs font-bold text-[#E63946] bg-[#E63946]/10 px-2 py-0.5 rounded-full">Actif</span>
+          </div>
+
+          {profil?.email ? (
+            <div className="flex items-center gap-3 bg-[#FEF2F2] border-2 border-[#E63946]/20 rounded-2xl px-4 py-3.5">
+              <span className="text-xl">📧</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-gray-800">Email</p>
+                <p className="text-sm text-gray-600 truncate">{profil.email}</p>
+              </div>
+              <span className="text-xs font-bold text-[#E63946] bg-[#E63946]/10 px-2 py-0.5 rounded-full flex-shrink-0">Actif</span>
             </div>
-            <div>
-              <label className="text-sm font-semibold text-gray-700 mb-1.5 block">Confirmer le nouveau mot de passe *</label>
-              <input
-                type="password"
-                value={pwForm.confirm}
-                onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })}
-                placeholder="Répéter le mot de passe"
-                required
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#00A550]/30"
-              />
-            </div>
-            <Button type="submit" loading={loading}>Enregistrer le nouveau mot de passe</Button>
-          </form>
+          ) : (
+            <Link href="/compte/profil"
+              className="flex items-center gap-3 border-2 border-dashed border-gray-200 rounded-2xl px-4 py-3.5 hover:border-[#E63946] transition-colors">
+              <span className="text-xl">📧</span>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-gray-700">Ajouter un email</p>
+                <p className="text-xs text-gray-400">Pour les confirmations et promotions</p>
+              </div>
+              <span className="text-gray-300 text-lg">›</span>
+            </Link>
+          )}
         </div>
 
-        {/* Sessions actives */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="font-bold text-gray-800 mb-4">📱 Sessions actives</h2>
-          <div className="space-y-3">
-            {[
-              { device: "Android · Chrome", location: "Libreville, Gabon", time: "Maintenant", current: true },
-              { device: "Windows · Chrome", location: "Libreville, Gabon", time: "Il y a 2 jours", current: false },
-            ].map((s, i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                <div>
-                  <p className="text-sm font-semibold text-gray-800">{s.device} {s.current && <span className="text-xs text-[#00A550] font-normal">(appareil actuel)</span>}</p>
-                  <p className="text-xs text-gray-500">{s.location} · {s.time}</p>
-                </div>
-                {!s.current && (
-                  <button className="text-xs text-red-400 hover:text-red-600 hover:underline" onClick={() => toast("Session déconnectée", "success")}>
-                    Déconnecter
-                  </button>
-                )}
-              </div>
-            ))}
+        {/* Info connexion sans mot de passe */}
+        <div className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-4">
+          <div className="flex gap-3">
+            <span className="text-lg flex-shrink-0">🔐</span>
+            <div>
+              <p className="text-sm font-bold text-blue-800">Connexion sécurisée par OTP</p>
+              <p className="text-xs text-blue-600 mt-0.5 leading-relaxed">
+                Votre compte est sécurisé par un code SMS envoyé à chaque connexion. Pas de mot de passe à retenir — votre téléphone est votre clé.
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Zone danger */}
-        <div className="bg-red-50 rounded-2xl p-6 border border-red-100">
-          <h2 className="font-bold text-red-700 mb-2">⚠️ Zone de danger</h2>
-          <p className="text-sm text-red-600 mb-4">La suppression de votre compte est définitive et irréversible.</p>
-          <button className="text-sm text-red-500 hover:text-red-700 font-semibold hover:underline">
-            Supprimer mon compte
-          </button>
+        {/* Déconnexion de tous les appareils */}
+        <div className="bg-white rounded-3xl shadow-sm p-5">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Actions</p>
+          <form action={deconnecter}>
+            <button type="submit"
+              className="w-full text-left flex items-center gap-4 py-2">
+              <span className="text-xl">🚪</span>
+              <span className="text-sm font-semibold text-red-500">Se déconnecter</span>
+            </button>
+          </form>
         </div>
       </div>
     </div>

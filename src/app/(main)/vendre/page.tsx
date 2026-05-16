@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 const steps = [
   {
@@ -46,8 +46,8 @@ export default function VendrePage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       {/* Hero */}
-      <div className="bg-gradient-to-br from-[#00A550] to-[#007A3D] rounded-3xl p-8 text-white text-center mb-10">
-        <h1 className="text-3xl md:text-4xl font-black mb-3">Vendez sur Brotega 🇬🇦</h1>
+      <div className="bg-gradient-to-br from-[#E63946] to-[#C1121F] rounded-3xl p-8 text-white text-center mb-10">
+        <h1 className="text-3xl md:text-4xl font-black mb-3">Vendez sur J'adore la Famille 🇬🇦</h1>
         <p className="text-white/80 text-lg mb-6 max-w-xl mx-auto">
           Rejoignez plus de 500 vendeurs et touchez des milliers de clients dans tout le Gabon.
         </p>
@@ -66,7 +66,7 @@ export default function VendrePage() {
         <div className="space-y-4">
           {steps.map((s) => (
             <div key={s.num} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-start gap-5">
-              <div className="w-12 h-12 bg-[#00A550] rounded-xl flex items-center justify-center text-white font-black text-sm flex-shrink-0">
+              <div className="w-12 h-12 bg-[#E63946] rounded-xl flex items-center justify-center text-white font-black text-sm flex-shrink-0">
                 {s.num}
               </div>
               <div className="flex-1">
@@ -83,7 +83,7 @@ export default function VendrePage() {
 
       {/* Avantages */}
       <div className="mb-10">
-        <h2 className="text-2xl font-black text-gray-800 mb-6 text-center">Pourquoi vendre sur Brotega ?</h2>
+        <h2 className="text-2xl font-black text-gray-800 mb-6 text-center">Pourquoi vendre sur J'adore la Famille ?</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {avantages.map((a) => (
             <div key={a.title} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 text-center">
@@ -96,10 +96,10 @@ export default function VendrePage() {
       </div>
 
       {/* CTA final */}
-      <div className="text-center bg-[#E8F7EE] rounded-2xl p-8">
+      <div className="text-center bg-[#FEF2F2] rounded-2xl p-8">
         <h2 className="text-2xl font-black text-gray-800 mb-2">Prêt à commencer ?</h2>
         <p className="text-gray-500 mb-5">Votre boutique en ligne vous attend. Démarrez aujourd'hui.</p>
-        <Link href="/vendor/register" className="inline-flex bg-[#00A550] text-white font-bold px-8 py-3 rounded-xl hover:bg-[#007A3D] transition-colors">
+        <Link href="/vendor/register" className="inline-flex bg-[#E63946] text-white font-bold px-8 py-3 rounded-xl hover:bg-[#C1121F] transition-colors">
           Créer ma boutique →
         </Link>
       </div>

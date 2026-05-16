@@ -8,7 +8,7 @@ export default function FavorisPage() {
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="flex items-center gap-3 mb-6">
-        <Link href="/compte" className="text-gray-400 hover:text-[#00A550] transition-colors">
+        <Link href="/compte" className="text-gray-400 hover:text-[#E63946] transition-colors">
           ← Mon compte
         </Link>
         <span className="text-gray-300">/</span>
@@ -26,7 +26,7 @@ export default function FavorisPage() {
           <div className="text-5xl mb-3">❤️</div>
           <h2 className="text-lg font-bold text-gray-700 mb-2">Aucun favori</h2>
           <p className="text-gray-500 text-sm mb-5">Ajoutez des produits à vos favoris pour les retrouver ici.</p>
-          <Link href="/catalogue" className="bg-[#00A550] text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-[#007A3D] transition-colors inline-block">
+          <Link href="/catalogue" className="bg-[#E63946] text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-[#C1121F] transition-colors inline-block">
             Découvrir des produits
           </Link>
         </div>

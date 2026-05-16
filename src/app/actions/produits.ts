@@ -6,7 +6,9 @@ import { MAX_PRODUITS_GRATUIT } from "@/lib/rules";
 type ProduitInput = {
   id?: string;
   nom: string;
+  description?: string | null;
   prix: number;
+  categorie?: string | null;
   image?: string | null;
 };
 
@@ -42,7 +44,9 @@ export async function sauvegarderProduit(produit: ProduitInput) {
   const payload = {
     vendeur_id: vendeur.id,
     nom: produit.nom,
+    description: produit.description ?? null,
     prix: produit.prix,
+    categorie: produit.categorie ?? null,
     image: produit.image ?? null,
   };
 

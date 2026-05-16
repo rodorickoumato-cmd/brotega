@@ -14,7 +14,7 @@ import type { StatutCommande } from "@/lib/rules";
 
 const STATUTS_LIBELLE: Record<Commande["statut"], { label: string; couleur: string; emoji: string }> = {
   en_attente_paiement: { label: "En attente de paiement", couleur: "amber", emoji: "⏳" },
-  payee_escrow:        { label: "Payée — bloquée chez Brotega", couleur: "blue", emoji: "🔒" },
+  payee_escrow:        { label: "Payée — bloquée chez J'adore la Famille", couleur: "blue", emoji: "🔒" },
   confirmee_vendeur:   { label: "Confirmée par le vendeur", couleur: "blue", emoji: "✅" },
   en_livraison:        { label: "En livraison", couleur: "blue", emoji: "🚚" },
   livree:              { label: "Livrée", couleur: "green", emoji: "🎉" },
@@ -50,7 +50,7 @@ export default function PageCommande() {
   if (chargement) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00A550] mx-auto" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#E63946] mx-auto" />
         <p className="text-gray-500 mt-4">Chargement de votre commande...</p>
       </div>
     );
@@ -131,7 +131,7 @@ export default function PageCommande() {
         </div>
         <div className="border-t mt-4 pt-3 flex justify-between font-black text-base">
           <span>Total payé</span>
-          <span className="text-[#00A550]">{formatXAF(commande.total)}</span>
+          <span className="text-[#E63946]">{formatXAF(commande.total)}</span>
         </div>
       </div>
 
@@ -146,8 +146,8 @@ export default function PageCommande() {
 
       {/* Action confirmation livraison */}
       {peutConfirmer && (
-        <div className="bg-[#E8F7EE] border border-[#00A550]/30 rounded-2xl p-5">
-          <h3 className="font-bold text-[#00A550] mb-2">Avez-vous reçu votre commande ?</h3>
+        <div className="bg-[#FEF2F2] border border-[#E63946]/30 rounded-2xl p-5">
+          <h3 className="font-bold text-[#E63946] mb-2">Avez-vous reçu votre commande ?</h3>
           <p className="text-sm text-gray-700 mb-4">
             Confirmez la livraison une fois le produit reçu en bon état. Le vendeur recevra alors son paiement.
           </p>
@@ -181,9 +181,9 @@ export default function PageCommande() {
         </Link>
       )}
 
-      {/* Garantie Brotega */}
+      {/* Garantie J'adore la Famille */}
       <div className="bg-blue-50 rounded-2xl p-4 text-sm text-blue-900">
-        <p className="font-bold mb-1">🛡️ Garantie Brotega</p>
+        <p className="font-bold mb-1">🛡️ Garantie J'adore la Famille</p>
         <p className="text-xs">
           Pas livré, remboursé sous 48h. Votre argent est bloqué jusqu&apos;à confirmation de la livraison.
         </p>

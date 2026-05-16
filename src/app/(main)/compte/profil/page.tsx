@@ -3,16 +3,110 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { modifierProfil } from "@/app/actions/auth";
+import { modifierProfil, envoyerEmailOTP, verifierEmailOTP } from "@/app/actions/auth";
 import type { Utilisateur } from "@/lib/supabase/database.types";
+
+// ─── Widget vérification email ─────────────────────────────────────────────────
+
+function EmailVerifWidget({
+  email,
+  onVerifie,
+}: {
+  email: string;
+  onVerifie: () => void;
+}) {
+  const [etape, setEtape] = useState<"idle" | "envoi" | "code" | "succes">("idle");
+  const [code, setCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [erreur, setErreur] = useState("");
+
+  const envoyer = async () => {
+    setErreur("");
+    setLoading(true);
+    const res = await envoyerEmailOTP({ email, creerSiAbsent: false });
+    setLoading(false);
+    if (res.erreur) { setErreur(res.erreur); return; }
+    setEtape("code");
+  };
+
+  const verifier = async () => {
+    if (code.length !== 6) { setErreur("Entrez les 6 chiffres du code."); return; }
+    setErreur("");
+    setLoading(true);
+    const res = await verifierEmailOTP({ email, code });
+    setLoading(false);
+    if (res.erreur) { setErreur(res.erreur); return; }
+    setEtape("succes");
+    onVerifie();
+  };
+
+  if (etape === "succes") {
+    return (
+      <div className="flex items-center gap-2 mt-2 bg-[#FEF2F2] rounded-xl px-3 py-2">
+        <span className="text-[#E63946] font-black text-sm">✅</span>
+        <span className="text-sm font-bold text-[#E63946]">Email vérifié avec succès !</span>
+      </div>
+    );
+  }
+
+  if (etape === "code") {
+    return (
+      <div className="mt-2 space-y-2">
+        <p className="text-xs text-gray-500">Code envoyé à <span className="font-bold">{email}</span></p>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            value={code}
+            onChange={(e) => { setCode(e.target.value.replace(/\D/g, "")); setErreur(""); }}
+            placeholder="000000"
+            autoFocus
+            className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 text-center text-xl font-black tracking-widest focus:outline-none focus:border-[#E63946] transition-colors"
+          />
+          <button
+            onClick={verifier}
+            disabled={loading || code.length < 6}
+            className="bg-[#E63946] text-white font-black px-4 py-3 rounded-xl text-sm disabled:opacity-40 active:scale-95 transition-all flex-shrink-0"
+          >
+            {loading ? "..." : "Vérifier"}
+          </button>
+        </div>
+        <button onClick={envoyer} disabled={loading}
+          className="text-xs text-gray-400 underline disabled:opacity-50">
+          Renvoyer le code
+        </button>
+        {erreur && <p className="text-xs text-red-500">{erreur}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-2">
+      <button
+        onClick={envoyer}
+        disabled={loading}
+        className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl active:scale-95 transition-all disabled:opacity-50"
+      >
+        {loading ? "Envoi..." : "⚠️ Email non vérifié — Vérifier maintenant"}
+      </button>
+      {erreur && <p className="text-xs text-red-500 mt-1">{erreur}</p>}
+    </div>
+  );
+}
+
+// ─── Page profil ───────────────────────────────────────────────────────────────
 
 export default function ProfilPage() {
   const router = useRouter();
   const [profil, setProfil] = useState<Utilisateur | null>(null);
   const [nom, setNom] = useState("");
+  const [email, setEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [marketingOptIn, setMarketingOptIn] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [erreur, setErreur] = useState("");
   const [succes, setSucces] = useState(false);
+  const [erreur, setErreur] = useState("");
 
   useEffect(() => {
     const supabase = createClient();
@@ -20,7 +114,13 @@ export default function ProfilPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/auth/login"); return; }
       const { data } = await supabase.from("utilisateurs").select("*").eq("id", user.id).single();
-      if (data) { setProfil(data); setNom(data.nom); }
+      if (data) {
+        setProfil(data);
+        setNom(data.nom ?? "");
+        setEmail(data.email ?? "");
+        setWhatsapp(data.whatsapp?.replace("+241", "") ?? "");
+        setMarketingOptIn(data.marketing_opt_in ?? false);
+      }
     })();
   }, [router]);
 
@@ -28,29 +128,53 @@ export default function ProfilPage() {
     setErreur("");
     setSucces(false);
     setLoading(true);
-    const res = await modifierProfil({ nom });
+    const whatsappFull = whatsapp ? "+241" + whatsapp : "";
+    const res = await modifierProfil({
+      nom,
+      email,
+      whatsapp: whatsappFull,
+      marketing_opt_in: marketingOptIn,
+    });
     setLoading(false);
     if (res.erreur) { setErreur(res.erreur); return; }
-    setProfil((p) => p ? { ...p, nom } : p);
+    setProfil((p) =>
+      p ? {
+        ...p, nom,
+        email: email || null,
+        email_verifie: email !== (p.email ?? "") ? false : p.email_verifie,
+        whatsapp: whatsappFull || null,
+        marketing_opt_in: marketingOptIn,
+      } : p
+    );
     setSucces(true);
+    setTimeout(() => setSucces(false), 3000);
   };
 
   const initiales = profil?.nom
     ? profil.nom.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase()
     : "?";
 
+  const whatsappBrut = whatsapp?.replace("+241", "") ?? "";
+  const modifie =
+    nom !== (profil?.nom ?? "") ||
+    email !== (profil?.email ?? "") ||
+    whatsappBrut !== (profil?.whatsapp?.replace("+241", "") ?? "") ||
+    marketingOptIn !== (profil?.marketing_opt_in ?? false);
+
+  const emailNonVerifie = !!(profil?.email && !profil?.email_verifie);
+  const emailChanged = email !== (profil?.email ?? "");
+
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
-      {/* Header */}
-      <div className="bg-[#00A550] px-5 pt-12 pb-8">
+      <div className="bg-[#E63946] px-5 pt-12 pb-8">
         <Link href="/compte" className="text-white/70 text-sm">← Mon compte</Link>
         <h1 className="text-2xl font-black text-white mt-2">Mon profil</h1>
       </div>
 
       <div className="px-4 -mt-4 pb-10 space-y-4">
         {/* Avatar */}
-        <div className="bg-white rounded-3xl shadow-sm p-6 flex items-center gap-4">
-          <div className="w-16 h-16 bg-[#00A550] rounded-full flex items-center justify-center text-white font-black text-xl flex-shrink-0">
+        <div className="bg-white rounded-3xl shadow-sm p-5 flex items-center gap-4">
+          <div className="w-16 h-16 bg-[#E63946] rounded-full flex items-center justify-center text-white font-black text-xl flex-shrink-0">
             {initiales}
           </div>
           <div>
@@ -62,43 +186,119 @@ export default function ProfilPage() {
           </div>
         </div>
 
-        {/* Formulaire — 1 seul champ éditable */}
+        {/* Champs éditables */}
         <div className="bg-white rounded-3xl shadow-sm p-5 space-y-4">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">Informations personnelles</p>
+
+          {/* Nom */}
           <div>
             <label className="text-sm font-bold text-gray-700 mb-2 block">Nom complet</label>
             <input
               value={nom}
               onChange={(e) => { setNom(e.target.value); setSucces(false); }}
-              className="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 text-base font-medium focus:outline-none focus:border-[#00A550] transition-colors"
+              placeholder="Jean-Pierre Mbourou"
+              className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base font-medium focus:outline-none focus:border-[#E63946] transition-colors"
             />
           </div>
 
+          {/* Email */}
           <div>
-            <label className="text-sm font-bold text-gray-500 mb-2 block">Téléphone</label>
-            <div className="flex items-center gap-3 bg-gray-50 border-2 border-gray-100 rounded-2xl px-4 py-4">
-              <span className="text-sm font-bold text-gray-400">🇬🇦 +241</span>
-              <span className="text-base font-medium text-gray-500">
-                {profil?.telephone?.replace("+241", "") ?? "—"}
-              </span>
-              <span className="ml-auto text-xs text-gray-400 bg-gray-200 px-2 py-0.5 rounded-full">Non modifiable</span>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-bold text-gray-700">Adresse email</label>
+              {profil?.email && !emailChanged && (
+                profil.email_verifie
+                  ? <span className="text-xs font-bold text-[#E63946] bg-[#FEF2F2] px-2 py-0.5 rounded-full">✓ Vérifié</span>
+                  : <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">⚠ Non vérifié</span>
+              )}
             </div>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setSucces(false); }}
+              placeholder="exemple@gmail.com"
+              className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base focus:outline-none focus:border-[#E63946] transition-colors"
+              inputMode="email"
+            />
+            <p className="text-xs text-gray-400 mt-1.5 ml-1">Pour recevoir vos confirmations et promotions</p>
+
+            {/* Widget vérification — affiché si email non vérifié et pas modifié */}
+            {emailNonVerifie && !emailChanged && !modifie && (
+              <EmailVerifWidget
+                email={profil!.email!}
+                onVerifie={() => setProfil((p) => p ? { ...p, email_verifie: true } : p)}
+              />
+            )}
+          </div>
+
+          {/* WhatsApp */}
+          <div>
+            <label className="text-sm font-bold text-gray-700 mb-2 block">WhatsApp</label>
+            <div className="flex border-2 border-gray-200 rounded-2xl overflow-hidden focus-within:border-[#E63946] transition-colors">
+              <span className="bg-gray-50 px-3 flex items-center text-sm text-gray-500 border-r-2 border-gray-200 font-bold whitespace-nowrap">
+                🇬🇦 +241
+              </span>
+              <input
+                value={whatsappBrut}
+                onChange={(e) => {
+                  setWhatsapp(e.target.value.replace(/\D/g, ""));
+                  setSucces(false);
+                }}
+                placeholder="01 23 45 67"
+                className="flex-1 px-4 py-3.5 text-base font-medium focus:outline-none"
+                inputMode="tel"
+              />
+            </div>
+            <p className="text-xs text-gray-400 mt-1.5 ml-1">Pour le suivi de livraison et le support</p>
           </div>
         </div>
 
+        {/* Téléphone — non modifiable */}
+        <div className="bg-white rounded-3xl shadow-sm p-5">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Connexion</p>
+          <div className="flex items-center gap-3 bg-gray-50 border-2 border-gray-100 rounded-2xl px-4 py-3.5">
+            <span className="text-sm font-bold text-gray-400">🇬🇦 +241</span>
+            <span className="text-base font-medium text-gray-600 flex-1">
+              {profil?.telephone?.replace("+241", "") ?? "—"}
+            </span>
+            <span className="text-xs text-[#E63946] bg-[#FEF2F2] font-bold px-2 py-0.5 rounded-full">✓ Vérifié</span>
+          </div>
+          <p className="text-xs text-gray-400 mt-2 ml-1">Le numéro est votre identifiant — non modifiable</p>
+        </div>
+
+        {/* Marketing opt-in */}
+        <div className="bg-white rounded-3xl shadow-sm p-5">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">Notifications</p>
+          <button
+            onClick={() => { setMarketingOptIn(!marketingOptIn); setSucces(false); }}
+            className={`w-full flex items-center gap-3 border-2 rounded-2xl px-4 py-3.5 text-left transition-all ${
+              marketingOptIn ? "border-[#E63946] bg-[#FEF2F2]" : "border-gray-200"
+            }`}
+          >
+            <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+              marketingOptIn ? "border-[#E63946] bg-[#E63946]" : "border-gray-300"
+            }`}>
+              {marketingOptIn && <span className="text-white text-xs font-black">✓</span>}
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-800">Recevoir promos et nouveautés</p>
+              <p className="text-xs text-gray-500">SMS et email · Désactivable à tout moment</p>
+            </div>
+          </button>
+        </div>
+
         {erreur && (
-          <p className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">{erreur}</p>
+          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">{erreur}</div>
         )}
         {succes && (
-          <p className="bg-[#E8F7EE] border border-[#00A550]/30 rounded-xl px-4 py-3 text-sm text-[#00A550] font-bold">
+          <div className="bg-[#FEF2F2] border border-[#E63946]/30 rounded-xl px-4 py-3 text-sm text-[#E63946] font-bold">
             ✅ Profil mis à jour
-          </p>
+          </div>
         )}
 
-        {/* 1 seule action */}
         <button
           onClick={sauvegarder}
-          disabled={loading || nom === profil?.nom || !nom.trim()}
-          className="w-full bg-[#00A550] text-white font-black py-4 rounded-2xl text-base disabled:opacity-40 active:scale-95 transition-all"
+          disabled={loading || !modifie || !nom.trim()}
+          className="w-full bg-[#E63946] text-white font-black py-4 rounded-2xl text-base disabled:opacity-40 active:scale-95 transition-all"
         >
           {loading ? "Enregistrement..." : "Enregistrer"}
         </button>

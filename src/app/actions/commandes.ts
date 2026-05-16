@@ -7,6 +7,7 @@ import { getProvider } from "@/lib/payment";
 import type { ProviderId } from "@/lib/payment";
 import { vers241 } from "@/lib/phone";
 import { headers } from "next/headers";
+import { envoyerEmailConfirmationCommande, envoyerEmailNouvelleCommande } from "@/lib/email";
 
 const COMMISSION_RATE = 0.05;
 const FRAIS_LIVRAISON_DEFAUT = 2500;
@@ -42,6 +43,56 @@ async function urlWebhookAbsolue(): Promise<string> {
   const proto = h.get("x-forwarded-proto") ?? "https";
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? `${proto}://${host}`;
   return `${base}/api/webhooks/paiements`;
+}
+
+// ─── Email helper (best-effort) ───────────────────────────────
+async function envoyerEmailsCommande(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  admin: any,
+  params: {
+    commandeId: string;
+    codeCourt: string;
+    total: number;
+    items: ItemPanier[];
+    modePaiement: string;
+    acheteurId: string;
+    acheteurEmail: string | null;
+    vendeurId: string;
+  }
+) {
+  try {
+    const articles = params.items.map((i) => ({ nom: i.nom, quantite: i.quantite, prix: i.prix_xaf }));
+
+    // Email acheteur
+    if (params.acheteurEmail) {
+      const { data: acheteur } = await admin.from("utilisateurs").select("nom").eq("id", params.acheteurId).single();
+      await envoyerEmailConfirmationCommande({
+        to: params.acheteurEmail,
+        nom: acheteur?.nom ?? "Client",
+        codeCourt: params.codeCourt,
+        total: params.total,
+        articles,
+        modePaiement: params.modePaiement,
+      });
+    }
+
+    // Email vendeur
+    const { data: vendeur } = await admin.from("vendeurs").select("nom, utilisateur_id").eq("id", params.vendeurId).single();
+    if (vendeur?.utilisateur_id) {
+      const { data: { user: vendeurUser } } = await admin.auth.admin.getUserById(vendeur.utilisateur_id);
+      if (vendeurUser?.email) {
+        await envoyerEmailNouvelleCommande({
+          to: vendeurUser.email,
+          nomVendeur: vendeur.nom,
+          codeCourt: params.codeCourt,
+          total: params.total,
+          articles,
+        });
+      }
+    }
+  } catch {
+    // Never crash the order flow
+  }
 }
 
 // ─── 1. Créer commande + initier paiement ─────────────────────
@@ -113,6 +164,18 @@ export async function creerCommande(input: {
   if (errInsert || !commande) {
     return { erreur: "Erreur création commande : " + (errInsert?.message ?? "inconnue") };
   }
+
+  // Emails de confirmation (best-effort, non bloquant)
+  void envoyerEmailsCommande(admin, {
+    commandeId: commande.id,
+    codeCourt: commande.code_court!,
+    total,
+    items: input.items,
+    modePaiement: input.mode_paiement,
+    acheteurId: user.id,
+    acheteurEmail: user.email ?? null,
+    vendeurId: vendeurId,
+  });
 
   // 7. Cas espèces : commande créée, paiement à la livraison — pas d'appel provider
   if (input.mode_paiement === "especes") {

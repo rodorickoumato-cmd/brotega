@@ -6,7 +6,7 @@ export const categories: Category[] = [
     name: "Alimentation",
     slug: "alimentation",
     icon: "🛒",
-    color: "#00A550",
+    color: "#E63946",
     productCount: 342,
     subcategories: ["Épicerie", "Fruits & Légumes", "Viandes & Poissons", "Boissons", "Bio & Local"],
   },

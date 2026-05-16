@@ -61,7 +61,9 @@ CREATE TABLE IF NOT EXISTS produits (
   id          UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   vendeur_id  UUID REFERENCES vendeurs(id) ON DELETE CASCADE NOT NULL,
   nom         TEXT NOT NULL,
+  description TEXT,
   prix        INTEGER NOT NULL CHECK (prix >= 0),
+  categorie   TEXT,
   image       TEXT,
   statut      TEXT NOT NULL DEFAULT 'actif'
                 CHECK (statut IN ('actif', 'inactif')),
@@ -181,6 +183,26 @@ CREATE TABLE IF NOT EXISTS wallet_transactions (
   description          TEXT,
   created_at           TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- ============================================================
+-- TRIGGER — nb_produits automatique sur vendeurs
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION sync_nb_produits()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE vendeurs SET nb_produits = nb_produits + 1 WHERE id = NEW.vendeur_id;
+  ELSIF TG_OP = 'DELETE' THEN
+    UPDATE vendeurs SET nb_produits = GREATEST(nb_produits - 1, 0) WHERE id = OLD.vendeur_id;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_produits_nb
+AFTER INSERT OR DELETE ON produits
+FOR EACH ROW EXECUTE FUNCTION sync_nb_produits();
 
 -- ============================================================
 -- TRIGGERS — updated_at automatique

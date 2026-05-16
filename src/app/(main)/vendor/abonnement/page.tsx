@@ -94,7 +94,7 @@ export default function AbonnementPage() {
   // ── Sélection du plan ────────────────────────────────────────────────────
   if (ecran === "selection") return (
     <div className="min-h-screen bg-[#F7F8FA]">
-      <div className="bg-[#00A550] px-5 pt-12 pb-8">
+      <div className="bg-[#E63946] px-5 pt-12 pb-8">
         <Link href="/vendor/dashboard" className="text-white/70 text-sm">← Dashboard</Link>
         <h1 className="text-2xl font-black text-white mt-2">Abonnement</h1>
         {planActif && (
@@ -115,13 +115,13 @@ export default function AbonnementPage() {
               <button key={id}
                 onClick={() => { setPlanSelectionne(id); setErreur(""); }}
                 className={`w-full flex items-center gap-3 p-4 rounded-2xl border-2 transition-all text-left ${
-                  selectionne ? "border-[#00A550] bg-[#E8F7EE]" : "border-gray-100 bg-gray-50"
+                  selectionne ? "border-[#E63946] bg-[#FEF2F2]" : "border-gray-100 bg-gray-50"
                 }`}>
                 <span className="text-2xl flex-shrink-0">{emoji}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`font-black text-sm ${selectionne ? "text-[#00A550]" : "text-gray-800"}`}>{p.label}</span>
-                    {badge && <span className="text-xs bg-[#00A550] text-white font-bold px-2 py-0.5 rounded-full">{badge}</span>}
+                    <span className={`font-black text-sm ${selectionne ? "text-[#E63946]" : "text-gray-800"}`}>{p.label}</span>
+                    {badge && <span className="text-xs bg-[#E63946] text-white font-bold px-2 py-0.5 rounded-full">{badge}</span>}
                     {actuel && <span className="text-xs bg-gray-200 text-gray-600 font-bold px-2 py-0.5 rounded-full">Actuel</span>}
                   </div>
                   <span className="text-xs text-gray-500">
@@ -129,7 +129,7 @@ export default function AbonnementPage() {
                     {p.duree_jours ? ` · ${p.duree_jours} jours` : ""}
                   </span>
                 </div>
-                <span className={`font-black text-sm flex-shrink-0 ${selectionne ? "text-[#00A550]" : "text-gray-600"}`}>
+                <span className={`font-black text-sm flex-shrink-0 ${selectionne ? "text-[#E63946]" : "text-gray-600"}`}>
                   {formatXAF(p.prix_xaf)}
                 </span>
               </button>
@@ -140,7 +140,7 @@ export default function AbonnementPage() {
         {erreur && <p className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">{erreur}</p>}
 
         <button onClick={souscrire} disabled={loading || estActif}
-          className="w-full bg-[#00A550] text-white font-black py-4 rounded-2xl text-base disabled:opacity-40 active:scale-95 transition-all">
+          className="w-full bg-[#E63946] text-white font-black py-4 rounded-2xl text-base disabled:opacity-40 active:scale-95 transition-all">
           {loading ? "Traitement..."
             : estActif ? "Plan actuel"
             : plan.prix_xaf === 0 ? "Activer le plan gratuit"
@@ -155,7 +155,7 @@ export default function AbonnementPage() {
   // ── Formulaire de paiement ───────────────────────────────────────────────
   if (ecran === "paiement") return (
     <div className="min-h-screen bg-white flex flex-col">
-      <div className="bg-[#00A550] px-6 pt-14 pb-10">
+      <div className="bg-[#E63946] px-6 pt-14 pb-10">
         <button onClick={() => setEcran("selection")} className="text-white/70 text-sm">← Retour</button>
         <h1 className="text-2xl font-black text-white mt-2">Paiement Mobile Money</h1>
         <p className="text-white/70 text-sm mt-1">Plan {plan.label} — {formatXAF(plan.prix_xaf)}</p>
@@ -168,7 +168,7 @@ export default function AbonnementPage() {
             {(["airtel", "moov"] as const).map((op) => (
               <button key={op} onClick={() => setOperateur(op)}
                 className={`py-4 rounded-2xl border-2 font-black text-sm transition-all ${
-                  operateur === op ? "border-[#00A550] bg-[#E8F7EE] text-[#00A550]" : "border-gray-200 text-gray-600"
+                  operateur === op ? "border-[#E63946] bg-[#FEF2F2] text-[#E63946]" : "border-gray-200 text-gray-600"
                 }`}>
                 {op === "airtel" ? "📶 Airtel Money" : "📡 Moov Money"}
               </button>
@@ -178,7 +178,7 @@ export default function AbonnementPage() {
 
         <div>
           <label className="text-sm font-bold text-gray-700 mb-2 block">Numéro Mobile Money</label>
-          <div className="flex border-2 border-gray-200 rounded-2xl overflow-hidden focus-within:border-[#00A550] transition-colors">
+          <div className="flex border-2 border-gray-200 rounded-2xl overflow-hidden focus-within:border-[#E63946] transition-colors">
             <span className="bg-gray-50 px-4 flex items-center text-sm text-gray-600 border-r-2 border-gray-200 font-bold whitespace-nowrap">
               🇬🇦 +241
             </span>
@@ -193,7 +193,7 @@ export default function AbonnementPage() {
         {erreur && <p className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">{erreur}</p>}
 
         <button onClick={payer} disabled={loading}
-          className="w-full bg-[#00A550] text-white font-black py-4 rounded-2xl text-base disabled:opacity-60 active:scale-95 transition-all">
+          className="w-full bg-[#E63946] text-white font-black py-4 rounded-2xl text-base disabled:opacity-60 active:scale-95 transition-all">
           {loading ? "Envoi en cours..." : `Payer ${formatXAF(plan.prix_xaf)} →`}
         </button>
 
@@ -207,7 +207,7 @@ export default function AbonnementPage() {
   // ── En attente de confirmation ───────────────────────────────────────────
   if (ecran === "attente") return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
-      <div className="animate-spin w-16 h-16 rounded-full border-4 border-[#00A550] border-t-transparent mb-6" />
+      <div className="animate-spin w-16 h-16 rounded-full border-4 border-[#E63946] border-t-transparent mb-6" />
       <h2 className="text-xl font-black text-gray-800 mb-2">En attente de confirmation</h2>
       <p className="text-sm text-gray-500 mb-4">{instructions}</p>
       <p className="text-xs text-gray-400">{formaterPhoneGabon(vers241(telephone) ?? telephone)}</p>
@@ -218,7 +218,7 @@ export default function AbonnementPage() {
   // ── Succès ───────────────────────────────────────────────────────────────
   if (ecran === "succes") return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
-      <div className="w-20 h-20 bg-[#E8F7EE] rounded-full flex items-center justify-center mb-6">
+      <div className="w-20 h-20 bg-[#FEF2F2] rounded-full flex items-center justify-center mb-6">
         <span className="text-4xl">✅</span>
       </div>
       <h2 className="text-2xl font-black text-gray-800 mb-2">Plan activé !</h2>
@@ -226,7 +226,7 @@ export default function AbonnementPage() {
         {planActif ? `Votre plan ${PLANS[planActif].label} est maintenant actif.` : "Votre plan est maintenant actif."}
       </p>
       <Link href="/vendor/dashboard"
-        className="bg-[#00A550] text-white font-black px-8 py-4 rounded-2xl active:scale-95 transition-all">
+        className="bg-[#E63946] text-white font-black px-8 py-4 rounded-2xl active:scale-95 transition-all">
         Retour au dashboard →
       </Link>
     </div>
@@ -243,7 +243,7 @@ export default function AbonnementPage() {
         Le paiement n&apos;a pas abouti. Vérifiez votre solde et réessayez.
       </p>
       <button onClick={() => { setEcran("paiement"); setErreur(""); }}
-        className="bg-[#00A550] text-white font-black px-8 py-4 rounded-2xl active:scale-95 transition-all">
+        className="bg-[#E63946] text-white font-black px-8 py-4 rounded-2xl active:scale-95 transition-all">
         Réessayer →
       </button>
     </div>

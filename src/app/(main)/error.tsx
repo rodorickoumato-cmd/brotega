@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 import { useEffect } from "react";
 import Link from "next/link";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
-    console.error("Erreur Brotega:", error);
+    console.error("Erreur J'adore la Famille:", error);
   }, [error]);
 
   return (
@@ -17,13 +17,13 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
         <button
           onClick={reset}
-          className="bg-[#00A550] hover:bg-[#007A3D] text-white font-bold px-6 py-3 rounded-xl transition-colors"
+          className="bg-[#E63946] hover:bg-[#C1121F] text-white font-bold px-6 py-3 rounded-xl transition-colors"
         >
           🔄 Réessayer
         </button>
         <Link
           href="/"
-          className="border-2 border-gray-200 hover:border-[#00A550] text-gray-700 hover:text-[#00A550] font-semibold px-6 py-3 rounded-xl transition-colors"
+          className="border-2 border-gray-200 hover:border-[#E63946] text-gray-700 hover:text-[#E63946] font-semibold px-6 py-3 rounded-xl transition-colors"
         >
           🏠 Retour à l'accueil
         </Link>

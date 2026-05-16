@@ -1,4 +1,4 @@
-import { getNewProducts } from "@/data/products";
+﻿import { getNewProducts } from "@/data/products";
 import { ProductCard } from "@/components/product/ProductCard";
 import Link from "next/link";
 
@@ -9,9 +9,9 @@ export function NewProducts() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-black text-gray-800">Nouveautés</h2>
-          <p className="text-gray-500 text-sm mt-0.5">Les derniers ajouts sur Brotega</p>
+          <p className="text-gray-500 text-sm mt-0.5">Les derniers ajouts sur J'adore la Famille</p>
         </div>
-        <Link href="/catalogue?isNew=1" className="text-[#00A550] text-sm font-semibold hover:underline">
+        <Link href="/catalogue?isNew=1" className="text-[#E63946] text-sm font-semibold hover:underline">
           Voir tout →
         </Link>
       </div>

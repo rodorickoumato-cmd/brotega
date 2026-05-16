@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 import { useState } from "react";
 import Image from "next/image";
 import { useCart } from "@/store/cart";
@@ -104,11 +104,11 @@ export default function CheckoutPage() {
           const idx = ["address", "payment", "confirm"].indexOf(step);
           return (
             <div key={s} className="flex items-center gap-2 flex-1">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${i <= idx ? "bg-[#00A550] text-white" : "bg-gray-200 text-gray-500"}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 ${i <= idx ? "bg-[#E63946] text-white" : "bg-gray-200 text-gray-500"}`}>
                 {i < idx ? "✓" : i + 1}
               </div>
-              <span className={`text-sm font-medium hidden sm:block ${i <= idx ? "text-[#00A550]" : "text-gray-400"}`}>{labels[i]}</span>
-              {i < 2 && <div className={`flex-1 h-0.5 ${i < idx ? "bg-[#00A550]" : "bg-gray-200"}`} />}
+              <span className={`text-sm font-medium hidden sm:block ${i <= idx ? "text-[#E63946]" : "text-gray-400"}`}>{labels[i]}</span>
+              {i < 2 && <div className={`flex-1 h-0.5 ${i < idx ? "bg-[#E63946]" : "bg-gray-200"}`} />}
             </div>
           );
         })}
@@ -129,14 +129,14 @@ export default function CheckoutPage() {
                     onChange={(e) => setAddress({ ...address, fullName: e.target.value })}
                     placeholder="Jean-Pierre Mbourou"
                     autoComplete="name"
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-[#00A550] focus:ring-2 focus:ring-[#00A550]/20 transition-all"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-[#E63946] focus:ring-2 focus:ring-[#E63946]/20 transition-all"
                   />
                 </div>
 
                 {/* Téléphone avec préfixe */}
                 <div>
                   <label className="text-sm font-bold text-gray-700 mb-1.5 block">Téléphone <span className="text-red-500">*</span></label>
-                  <div className="flex border border-gray-200 rounded-xl overflow-hidden focus-within:border-[#00A550] focus-within:ring-2 focus-within:ring-[#00A550]/20 transition-all">
+                  <div className="flex border border-gray-200 rounded-xl overflow-hidden focus-within:border-[#E63946] focus-within:ring-2 focus-within:ring-[#E63946]/20 transition-all">
                     <span className="bg-gray-50 px-3 flex items-center text-sm text-gray-600 border-r border-gray-200 font-medium whitespace-nowrap">🇬🇦 +241</span>
                     <input
                       value={address.phone}
@@ -155,7 +155,7 @@ export default function CheckoutPage() {
                   <select
                     value={address.city}
                     onChange={(e) => setAddress({ ...address, city: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-[#00A550] focus:ring-2 focus:ring-[#00A550]/20 transition-all"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-[#E63946] focus:ring-2 focus:ring-[#E63946]/20 transition-all"
                   >
                     {CITIES_GABON.map((c) => <option key={c} value={c}>📍 {c}</option>)}
                   </select>
@@ -170,7 +170,7 @@ export default function CheckoutPage() {
                     value={address.district}
                     onChange={(e) => setAddress({ ...address, district: e.target.value })}
                     placeholder="Nombakélé, PK5, Akanda..."
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-[#00A550] focus:ring-2 focus:ring-[#00A550]/20 transition-all"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-[#E63946] focus:ring-2 focus:ring-[#E63946]/20 transition-all"
                   />
                 </div>
 
@@ -184,7 +184,7 @@ export default function CheckoutPage() {
                     onChange={(e) => setAddress({ ...address, details: e.target.value })}
                     placeholder="Près de la boulangerie, maison bleue, 2ème étage..."
                     rows={2}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00A550] focus:ring-2 focus:ring-[#00A550]/20 transition-all resize-none"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#E63946] focus:ring-2 focus:ring-[#E63946]/20 transition-all resize-none"
                   />
                 </div>
 
@@ -208,14 +208,14 @@ export default function CheckoutPage() {
                   <button
                     key={pm.id}
                     onClick={() => setPayMethod(pm.id)}
-                    className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${payMethod === pm.id ? "border-[#00A550] bg-[#E8F7EE]" : "border-gray-200 hover:border-gray-300"}`}
+                    className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${payMethod === pm.id ? "border-[#E63946] bg-[#FEF2F2]" : "border-gray-200 hover:border-gray-300"}`}
                   >
                     <div className="text-3xl">{pm.icon}</div>
                     <div className="flex-1">
                       <p className="font-semibold text-gray-800">{pm.name}</p>
                       <p className="text-xs text-gray-500">{pm.desc}</p>
                     </div>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${payMethod === pm.id ? "border-[#00A550] bg-[#00A550]" : "border-gray-300"}`}>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${payMethod === pm.id ? "border-[#E63946] bg-[#E63946]" : "border-gray-300"}`}>
                       {payMethod === pm.id && <div className="w-2 h-2 rounded-full bg-white" />}
                     </div>
                   </button>
@@ -232,7 +232,7 @@ export default function CheckoutPage() {
                     <li>Montant débité : <strong>{formatXAF(grandTotal)}</strong></li>
                   </ol>
                   <p className="text-blue-700 text-xs mt-2 italic">
-                    🛡️ L&apos;argent est bloqué chez Brotega. Le vendeur le reçoit après confirmation de livraison.
+                    🛡️ L&apos;argent est bloqué chez J'adore la Famille. Le vendeur le reçoit après confirmation de livraison.
                   </p>
                 </div>
               )}
@@ -329,7 +329,7 @@ export default function CheckoutPage() {
             </div>
             <div className="flex justify-between font-black text-base border-t pt-2">
               <span>Total</span>
-              <span className="text-[#00A550]">{formatXAF(grandTotal)}</span>
+              <span className="text-[#E63946]">{formatXAF(grandTotal)}</span>
             </div>
           </div>
         </div>

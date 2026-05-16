@@ -7,12 +7,12 @@ interface BadgeProps {
 }
 
 const variants = {
-  green: "bg-[#E8F7EE] text-[#00A550]",
+  green: "bg-[#FEF2F2] text-[#E63946]",
   yellow: "bg-yellow-100 text-yellow-700",
   red: "bg-red-100 text-red-600",
   gray: "bg-gray-100 text-gray-600",
   orange: "bg-orange-100 text-orange-600",
-  outline: "border border-[#00A550] text-[#00A550] bg-transparent",
+  outline: "border border-[#E63946] text-[#E63946] bg-transparent",
 };
 
 export function Badge({ children, variant = "green", className }: BadgeProps) {

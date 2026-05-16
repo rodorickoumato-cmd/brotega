@@ -77,7 +77,7 @@ export default function AdminLivraisonsPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
-      <div className="bg-[#00A550] px-5 pt-12 pb-6">
+      <div className="bg-[#E63946] px-5 pt-12 pb-6">
         <p className="text-white/70 text-sm">Admin</p>
         <h1 className="text-2xl font-black text-white">Livraisons 🚚</h1>
         <p className="text-white/70 text-sm mt-1">Assigner les livreurs aux commandes</p>
@@ -131,7 +131,7 @@ export default function AdminLivraisonsPage() {
                   </p>
                 )}
                 {l.commande?.total && (
-                  <p className="text-sm font-black text-[#00A550] mt-1">{formatXAF(l.commande.total)}</p>
+                  <p className="text-sm font-black text-[#E63946] mt-1">{formatXAF(l.commande.total)}</p>
                 )}
                 {estAssignee && livreurNom && (
                   <p className="text-xs text-blue-600 mt-1 font-semibold">🏍️ {livreurNom}</p>
@@ -143,7 +143,7 @@ export default function AdminLivraisonsPage() {
                   <select
                     value={selections[l.id] ?? ""}
                     onChange={(e) => setSelections((p) => ({ ...p, [l.id]: e.target.value }))}
-                    className="flex-1 border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:border-[#00A550] transition-colors"
+                    className="flex-1 border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:border-[#E63946] transition-colors"
                   >
                     <option value="">Choisir un livreur</option>
                     {livreurs.map((lv) => (
@@ -153,7 +153,7 @@ export default function AdminLivraisonsPage() {
                   <button
                     onClick={() => handleAssigner(l.id)}
                     disabled={en_cours === l.id || !selections[l.id]}
-                    className="bg-[#00A550] text-white font-bold px-4 py-2.5 rounded-xl text-sm disabled:opacity-40 active:scale-95 transition-all flex-shrink-0"
+                    className="bg-[#E63946] text-white font-bold px-4 py-2.5 rounded-xl text-sm disabled:opacity-40 active:scale-95 transition-all flex-shrink-0"
                   >
                     {en_cours === l.id ? "..." : "Assigner"}
                   </button>

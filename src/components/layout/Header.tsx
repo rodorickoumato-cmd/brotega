@@ -23,21 +23,21 @@ export function Header() {
   return (
     <>
       {/* Top bar */}
-      <div className="bg-[#007A3D] text-white text-xs py-1.5 px-4 text-center">
-        🇬🇦 Livraison disponible dans toutes les villes du Gabon &nbsp;|&nbsp; Paiement sécurisé Airtel Money &amp; Moov Money
+      <div className="bg-[#C1121F] text-white text-xs py-1.5 px-4 text-center">
+        ❤️ La marketplace familiale du Gabon &nbsp;|&nbsp; Paiement sécurisé Airtel Money &amp; Moov Money
       </div>
 
       <header className="bg-white shadow-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center gap-4">
             {/* Logo */}
-            <Link href="/" className="flex-shrink-0" aria-label="Brotega — Accueil">
+            <Link href="/" className="flex-shrink-0" aria-label="J'adore la Famille — Accueil">
               <div className="flex items-center gap-2">
-                <div className="w-9 h-9 bg-[#00A550] rounded-xl flex items-center justify-center">
-                  <span className="text-white font-black text-lg" aria-hidden="true">B</span>
+                <div className="w-9 h-9 bg-[#E63946] rounded-xl flex items-center justify-center">
+                  <span className="text-lg" aria-hidden="true">❤️</span>
                 </div>
                 <div>
-                  <span className="font-black text-xl text-[#00A550]">Brotega</span>
+                  <span className="font-black text-lg text-[#E63946] leading-tight">J&apos;adore la Famille</span>
                   <div className="text-[10px] text-gray-400 leading-none -mt-0.5">La Marketplace du Gabon</div>
                 </div>
               </div>
@@ -50,12 +50,12 @@ export function Header() {
               role="search"
               aria-label="Rechercher des produits"
             >
-              <div className="flex w-full border-2 border-[#00A550] rounded-xl overflow-hidden">
+              <div className="flex w-full border-2 border-[#E63946] rounded-xl overflow-hidden">
                 <select
                   value={selectedCat}
                   onChange={(e) => setSelectedCat(e.target.value)}
                   aria-label="Filtrer par catégorie"
-                  className="text-sm px-3 py-2 bg-[#E8F7EE] text-gray-700 border-r border-green-200 focus:outline-none cursor-pointer"
+                  className="text-sm px-3 py-2 bg-[#FEF2F2] text-gray-700 border-r border-red-200 focus:outline-none cursor-pointer"
                 >
                   <option value="">Toutes catégories</option>
                   {categories.map((c) => (
@@ -74,7 +74,7 @@ export function Header() {
                 <button
                   type="submit"
                   aria-label="Lancer la recherche"
-                  className="bg-[#00A550] hover:bg-[#007A3D] px-4 text-white transition-colors"
+                  className="bg-[#E63946] hover:bg-[#C1121F] px-4 text-white transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -88,7 +88,7 @@ export function Header() {
               {/* Location */}
               <button
                 aria-label="Changer de ville"
-                className="hidden md:flex items-center gap-1.5 text-gray-600 hover:text-[#00A550] text-sm px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                className="hidden md:flex items-center gap-1.5 text-gray-600 hover:text-[#E63946] text-sm px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
@@ -100,7 +100,7 @@ export function Header() {
               {/* Account */}
               <Link
                 href="/auth/login"
-                className="hidden md:flex items-center gap-1.5 text-gray-600 hover:text-[#00A550] text-sm px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                className="hidden md:flex items-center gap-1.5 text-gray-600 hover:text-[#E63946] text-sm px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -120,7 +120,7 @@ export function Header() {
               <button
                 onClick={() => dispatch({ type: "TOGGLE" })}
                 aria-label={`Panier (${count} article${count !== 1 ? "s" : ""})`}
-                className="relative flex items-center gap-1.5 text-gray-700 hover:text-[#00A550] px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                className="relative flex items-center gap-1.5 text-gray-700 hover:text-[#E63946] px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -148,7 +148,7 @@ export function Header() {
 
           {/* Mobile search */}
           <form onSubmit={handleSearch} className="sm:hidden mt-3" role="search">
-            <div className="flex border-2 border-[#00A550] rounded-xl overflow-hidden">
+            <div className="flex border-2 border-[#E63946] rounded-xl overflow-hidden">
               <input
                 type="search"
                 name="q"
@@ -158,7 +158,7 @@ export function Header() {
                 aria-label="Rechercher"
                 className="flex-1 px-4 py-2 text-sm focus:outline-none"
               />
-              <button type="submit" aria-label="Rechercher" className="bg-[#00A550] px-4 text-white">
+              <button type="submit" aria-label="Rechercher" className="bg-[#E63946] px-4 text-white">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
@@ -173,7 +173,7 @@ export function Header() {
             <div className="flex items-center gap-1 py-1">
               <Link
                 href="/catalogue"
-                className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-white bg-[#00A550] rounded-lg whitespace-nowrap"
+                className="flex items-center gap-2 px-3 py-2 text-sm font-semibold text-white bg-[#E63946] rounded-lg whitespace-nowrap"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -184,13 +184,13 @@ export function Header() {
                 <Link
                   key={cat.id}
                   href={`/catalogue?categorie=${cat.slug}`}
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 hover:text-[#00A550] hover:bg-[#E8F7EE] rounded-lg whitespace-nowrap transition-colors font-medium"
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm text-gray-600 hover:text-[#E63946] hover:bg-[#FEF2F2] rounded-lg whitespace-nowrap transition-colors font-medium"
                 >
                   <span aria-hidden="true">{cat.icon}</span>
                   {cat.name}
                 </Link>
               ))}
-              <Link href="/catalogue" className="px-3 py-2 text-sm text-[#00A550] font-semibold hover:underline whitespace-nowrap">
+              <Link href="/catalogue" className="px-3 py-2 text-sm text-[#E63946] font-semibold hover:underline whitespace-nowrap">
                 Voir tout →
               </Link>
             </div>
@@ -219,7 +219,7 @@ export function Header() {
             </div>
             <nav className="flex flex-col gap-1">
               <Link href="/auth/login" onClick={() => setMobileOpen(false)} className="py-3 px-2 border-b text-sm font-medium">Mon compte</Link>
-              <Link href="/vendor/dashboard" onClick={() => setMobileOpen(false)} className="py-3 px-2 border-b text-sm font-medium text-[#00A550]">Devenir vendeur</Link>
+              <Link href="/vendor/dashboard" onClick={() => setMobileOpen(false)} className="py-3 px-2 border-b text-sm font-medium text-[#E63946]">Devenir vendeur</Link>
               {categories.map((c) => (
                 <Link
                   key={c.id}

@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 
@@ -18,17 +18,17 @@ export default function HomePage() {
       <main className="flex-1 bg-[#F7F8FA]">
 
         {/* Hero */}
-        <div className="bg-[#00A550] px-5 pt-8 pb-14">
+        <div className="bg-[#E63946] px-5 pt-8 pb-14">
           <p className="text-white/70 text-sm font-medium mb-1">Bienvenue sur</p>
           <h1 className="text-3xl font-black text-white leading-tight mb-2">
-            Brotega 🇬🇦
+            J'adore la Famille 🇬🇦
           </h1>
           <p className="text-white/80 text-sm mb-6">
             Le marché gabonais en ligne — Airtel & Moov Money
           </p>
           <Link
             href="/catalogue"
-            className="inline-block bg-white text-[#00A550] font-black px-6 py-3 rounded-2xl text-sm shadow-lg active:scale-95 transition-all"
+            className="inline-block bg-white text-[#E63946] font-black px-6 py-3 rounded-2xl text-sm shadow-lg active:scale-95 transition-all"
           >
             Voir les produits →
           </Link>
@@ -51,7 +51,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Pourquoi Brotega */}
+        {/* Pourquoi J'adore la Famille */}
         <div className="mx-4 mt-4 grid grid-cols-2 gap-3">
           <div className="bg-white rounded-2xl p-4 shadow-sm">
             <div className="text-2xl mb-2">📱</div>
@@ -76,12 +76,12 @@ export default function HomePage() {
         </div>
 
         {/* CTA vendeur */}
-        <div className="mx-4 mt-4 mb-8 bg-[#00A550] rounded-3xl p-6">
+        <div className="mx-4 mt-4 mb-8 bg-[#E63946] rounded-3xl p-6">
           <p className="text-white/80 text-xs font-medium mb-1">Vous vendez quelque chose ?</p>
           <h3 className="text-white font-black text-lg mb-3">Ouvrez votre boutique gratuitement</h3>
           <Link
             href="/vendor/register"
-            className="inline-block bg-white text-[#00A550] font-black px-5 py-2.5 rounded-xl text-sm active:scale-95 transition-all"
+            className="inline-block bg-white text-[#E63946] font-black px-5 py-2.5 rounded-xl text-sm active:scale-95 transition-all"
           >
             Commencer →
           </Link>

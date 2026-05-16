@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-const KEY = "brotega_recently_viewed";
+const KEY = "jadore-famille_recently_viewed";
 const MAX = 8;
 
 export function useRecentlyViewed() {
