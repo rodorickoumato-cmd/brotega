@@ -118,7 +118,7 @@ function LoginContent() {
                   <span className="bg-gray-50 px-4 flex items-center text-sm text-gray-600 border-r-2 border-gray-200 font-bold whitespace-nowrap">🇬🇦 +241</span>
                   <input value={telephone} onChange={(e) => { setTelephone(e.target.value); setErreur(""); }}
                     onKeyDown={(e) => e.key === "Enter" && envoyer()}
-                    placeholder="01 23 45 67" inputMode="tel" autoComplete="tel" autoFocus
+                    placeholder="66 XX XX XX" inputMode="tel" autoComplete="tel" autoFocus
                     className="flex-1 px-4 py-4 text-base font-medium focus:outline-none" />
                 </div>
               </div>

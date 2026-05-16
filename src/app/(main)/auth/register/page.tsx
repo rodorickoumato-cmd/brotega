@@ -44,7 +44,7 @@ export default function RegisterPage() {
     setLoading(true);
     if (methode === "telephone") {
       const e164 = vers241(telephone);
-      if (!e164) { setLoading(false); setErreur("Numéro invalide. Exemple : 01 23 45 67"); return; }
+      if (!e164) { setLoading(false); setErreur("Numéro invalide. Exemple : 66 03 08 48"); return; }
       const res = await envoyerOTP({ telephone: e164, creerSiAbsent: true });
       setLoading(false);
       if (res.erreur) { setErreur(res.erreur); return; }
@@ -166,7 +166,7 @@ export default function RegisterPage() {
                   <span className="bg-gray-50 px-4 flex items-center text-sm text-gray-600 border-r-2 border-gray-200 font-bold whitespace-nowrap">🇬🇦 +241</span>
                   <input value={telephone} onChange={(e) => { setTelephone(e.target.value); setErreur(""); }}
                     onKeyDown={(e) => e.key === "Enter" && envoyer()}
-                    placeholder="01 23 45 67" inputMode="tel" autoComplete="tel" autoFocus
+                    placeholder="66 XX XX XX" inputMode="tel" autoComplete="tel" autoFocus
                     className="flex-1 px-4 py-4 text-base font-medium focus:outline-none" />
                 </div>
               </div>
@@ -257,7 +257,7 @@ export default function RegisterPage() {
                 <div className="flex border-2 border-gray-200 rounded-2xl overflow-hidden focus-within:border-[#E63946] transition-colors">
                   <span className="bg-gray-50 px-4 flex items-center text-sm text-gray-600 border-r-2 border-gray-200 font-bold whitespace-nowrap">🇬🇦 +241</span>
                   <input value={telProfil} onChange={(e) => setTelProfil(e.target.value)}
-                    placeholder="01 23 45 67" inputMode="tel"
+                    placeholder="66 XX XX XX" inputMode="tel"
                     className="flex-1 px-4 py-4 text-base font-medium focus:outline-none" />
                 </div>
               </div>
