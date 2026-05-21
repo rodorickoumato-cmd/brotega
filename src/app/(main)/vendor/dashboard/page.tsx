@@ -335,27 +335,6 @@ function DeleteConfirm({ nom, onConfirm, onCancel }: {
   );
 }
 
-// ─── Code boutique copiable ───────────────────────────────────────────────────
-
-function CodeBoutique({ vendeurId }: { vendeurId: string }) {
-  const code = vendeurId.replace(/-/g, "").slice(0, 8).toUpperCase();
-  const [copie, setCopie] = useState(false);
-
-  const copier = async () => {
-    await navigator.clipboard.writeText(code).catch(() => {});
-    setCopie(true);
-    setTimeout(() => setCopie(false), 2000);
-  };
-
-  return (
-    <button onClick={copier}
-      className="flex items-center gap-1.5 bg-white/15 rounded-xl px-3 py-1.5 active:scale-95 transition-all">
-      <span className="text-white/70 text-xs">Code :</span>
-      <span className="text-white font-black text-xs tracking-widest">{code}</span>
-      <span className="text-white/60 text-xs">{copie ? "✓" : "⎘"}</span>
-    </button>
-  );
-}
 
 // ─── Dashboard principal ──────────────────────────────────────────────────────
 
@@ -370,7 +349,6 @@ export default function VendorDashboard() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Produit | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
   const [erreurGlobale, setErreurGlobale] = useState("");
 
   useEffect(() => {
@@ -441,7 +419,7 @@ export default function VendorDashboard() {
     setCommandes((prev) => prev.map((c) => c.id === commandeId ? { ...c, statut: "confirmee_vendeur" as const } : c));
   };
 
-  const filtres = produits.filter((p) => p.nom.toLowerCase().includes(search.toLowerCase()));
+  const filtres = produits;
   const initiales = vendeur?.nom?.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() ?? "?";
   const planActif = maxProduits > MAX_PRODUITS_GRATUIT ? "payant" : "gratuit";
   const limiteAtteinte = produits.length >= maxProduits;
@@ -479,38 +457,26 @@ export default function VendorDashboard() {
             {initiales}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white font-black text-lg leading-tight truncate">{vendeur?.nom}</p>
-            <p className="text-white/70 text-sm">📍 {vendeur?.ville}</p>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                vendeur?.statut === "verifie" ? "bg-white text-[#E63946]"
-                : vendeur?.statut === "suspendu" ? "bg-red-400 text-white"
-                : "bg-white/20 text-white"
-              }`}>
-                {vendeur?.statut === "verifie" ? "✓ Vérifié"
-                  : vendeur?.statut === "suspendu" ? "Suspendu"
-                  : "En attente"}
-              </span>
-              <span className="text-xs text-white/60">Plan {planActif}</span>
-            </div>
-            {vendeur && <div className="mt-2"><CodeBoutique vendeurId={vendeur.id} /></div>}
+            <p className="text-white font-black text-xl leading-tight truncate">{vendeur?.nom}</p>
+            <p className="text-white/70 text-sm mt-0.5">📍 {vendeur?.ville}</p>
+            {vendeur?.statut === "verifie" && (
+              <span className="inline-block mt-1.5 text-xs font-bold bg-white text-[#E63946] px-2 py-0.5 rounded-full">✓ Boutique vérifiée</span>
+            )}
+            {vendeur?.statut === "suspendu" && (
+              <span className="inline-block mt-1.5 text-xs font-bold bg-red-400 text-white px-2 py-0.5 rounded-full">Boutique suspendue</span>
+            )}
           </div>
-          <Link href="/vendor/wallet"
-            className="flex-shrink-0 bg-white/20 text-white font-bold text-xs px-3 py-2 rounded-xl active:scale-95 transition-all">
-            💰 Wallet
-          </Link>
         </div>
 
         {/* Stats rapides */}
-        <div className="grid grid-cols-3 gap-3 mt-5">
+        <div className="grid grid-cols-2 gap-3 mt-5">
           {[
-            { label: "Produits", value: produits.length },
-            { label: "Actifs", value: produits.filter((p) => p.statut === "actif").length },
-            { label: "Commandes", value: commandes.length },
+            { label: "Mes produits", value: produits.length, icon: "🛍️" },
+            { label: "Commandes", value: commandes.length, icon: "📦" },
           ].map((s) => (
-            <div key={s.label} className="bg-white/15 rounded-2xl p-3 text-center">
-              <p className="text-2xl font-black text-white">{s.value}</p>
-              <p className="text-white/70 text-xs">{s.label}</p>
+            <div key={s.label} className="bg-white/15 rounded-2xl p-4 text-center">
+              <p className="text-3xl font-black text-white">{s.value}</p>
+              <p className="text-white/80 text-sm mt-1">{s.icon} {s.label}</p>
             </div>
           ))}
         </div>
@@ -532,18 +498,19 @@ export default function VendorDashboard() {
           }`}>
             <span className="text-2xl">{limiteAtteinte ? "🔒" : "⚡"}</span>
             <div className="flex-1 min-w-0">
-              <p className={`text-sm font-black ${limiteAtteinte ? "text-red-700" : "text-amber-700"}`}>
-                {limiteAtteinte ? `Limite atteinte (${maxProduits} produits)` : `${produits.length}/${maxProduits} produits utilisés`}
+              <p className={`text-base font-black ${limiteAtteinte ? "text-red-700" : "text-amber-700"}`}>
+                {limiteAtteinte
+                  ? "Vous avez atteint la limite (3 produits)"
+                  : `${produits.length} / ${maxProduits} produits`}
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">
-                {limiteAtteinte ? "Passez à un plan payant pour ajouter plus de produits."
-                  : `Plan gratuit — ${maxProduits - produits.length} emplacement(s) restant(s)`}
-              </p>
+              {limiteAtteinte && (
+                <p className="text-sm text-gray-600 mt-0.5">Abonnez-vous pour vendre plus.</p>
+              )}
             </div>
             {limiteAtteinte && (
               <Link href="/vendor/abonnement"
-                className="flex-shrink-0 bg-[#E63946] text-white text-xs font-black px-3 py-2 rounded-xl active:scale-95 transition-all">
-                Upgrader
+                className="flex-shrink-0 bg-[#E63946] text-white text-sm font-black px-4 py-2.5 rounded-xl active:scale-95 transition-all">
+                S&apos;abonner
               </Link>
             )}
           </div>
@@ -552,11 +519,11 @@ export default function VendorDashboard() {
         {/* Onglets */}
         <div className="flex bg-white rounded-2xl p-1.5 shadow-sm gap-1">
           {[
-            { id: "produits" as const, label: `🛍️ Produits (${produits.length})` },
-            { id: "commandes" as const, label: `📦 Commandes (${commandes.length})` },
+            { id: "produits" as const, label: "🛍️ Mes produits" },
+            { id: "commandes" as const, label: "📦 Commandes" },
           ].map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
                 tab === t.id ? "bg-[#E63946] text-white shadow-sm" : "text-gray-500"
               }`}>
               {t.label}
@@ -567,87 +534,64 @@ export default function VendorDashboard() {
         {/* ── Onglet Produits ── */}
         {tab === "produits" && (
           <div className="space-y-3">
-            {/* Barre recherche + bouton ajouter */}
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
-                <input
-                  type="text"
-                  placeholder="Rechercher..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-8 pr-4 py-3 bg-white border border-gray-200 rounded-2xl text-sm focus:outline-none focus:border-[#E63946] transition-colors"
-                />
-              </div>
+            {/* Bouton ajouter */}
+            {!limiteAtteinte && (
               <button
                 onClick={openAdd}
-                disabled={limiteAtteinte}
-                className="bg-[#E63946] text-white font-black px-4 py-3 rounded-2xl text-sm disabled:opacity-40 active:scale-95 transition-all whitespace-nowrap flex items-center gap-1">
-                + Ajouter
+                className="w-full bg-[#E63946] text-white font-black py-4 rounded-2xl text-base active:scale-95 transition-all flex items-center justify-center gap-2">
+                <span className="text-xl">+</span> Ajouter un produit
               </button>
-            </div>
+            )}
 
             {/* Liste produits */}
-            {filtres.length === 0 ? (
+            {produits.length === 0 ? (
               <div className="bg-white rounded-3xl p-10 text-center shadow-sm">
-                <div className="text-5xl mb-3">{search ? "🔍" : "🛍️"}</div>
-                <p className="font-black text-gray-700 mb-1">
-                  {search ? "Aucun résultat" : "Boutique vide"}
-                </p>
-                <p className="text-sm text-gray-400 mb-5">
-                  {search ? `Aucun produit pour "${search}"` : "Ajoutez votre premier produit."}
-                </p>
-                {!search && !limiteAtteinte && (
+                <div className="text-6xl mb-4">🛍️</div>
+                <p className="font-black text-gray-700 text-lg mb-2">Boutique vide</p>
+                <p className="text-gray-400 mb-6">Ajoutez votre premier produit.</p>
+                {!limiteAtteinte && (
                   <button onClick={openAdd}
-                    className="bg-[#E63946] text-white font-black px-6 py-3 rounded-2xl text-sm active:scale-95 transition-all">
+                    className="bg-[#E63946] text-white font-black px-8 py-4 rounded-2xl text-base active:scale-95 transition-all">
                     + Ajouter un produit
                   </button>
                 )}
               </div>
             ) : (
               filtres.map((p) => (
-                <div key={p.id} className="bg-white rounded-2xl shadow-sm p-4 flex items-center gap-3">
-                  {/* Image */}
-                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
-                    {p.image ? (
-                      <img src={p.image} alt={p.nom} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-2xl">🖼️</div>
-                    )}
-                  </div>
-
-                  {/* Infos */}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-black text-gray-800 truncate">{p.nom}</p>
-                    {p.description && <p className="text-xs text-gray-400 truncate mt-0.5">{p.description}</p>}
-                    <p className="text-[#E63946] font-bold text-sm mt-0.5">{formatXAF(p.prix)}</p>
-                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                <div key={p.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                  {/* Image + infos */}
+                  <div className="flex items-center gap-4 p-4">
+                    <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                      {p.image ? (
+                        <img src={p.image} alt={p.nom} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-3xl">🖼️</div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-black text-gray-800 text-base leading-tight">{p.nom}</p>
+                      <p className="text-[#E63946] font-black text-lg mt-1">{formatXAF(p.prix)}</p>
+                      <span className={`inline-block mt-1 text-xs font-bold px-2 py-0.5 rounded-full ${
                         p.statut === "actif" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
                       }`}>
-                        {p.statut === "actif" ? "Actif" : "Inactif"}
+                        {p.statut === "actif" ? "✓ En vente" : "Masqué"}
                       </span>
-                      {p.categorie && (
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                          {categories.find((c) => c.slug === p.categorie)?.icon} {categories.find((c) => c.slug === p.categorie)?.name ?? p.categorie}
-                        </span>
-                      )}
                     </div>
                   </div>
 
-                  {/* Actions — 3 max */}
-                  <div className="flex flex-col gap-2 flex-shrink-0">
+                  {/* Actions */}
+                  <div className="grid grid-cols-3 divide-x divide-gray-100 border-t border-gray-100">
                     <button onClick={() => openEdit(p)}
-                      className="text-xs font-bold text-[#E63946] bg-[#FEF2F2] px-3 py-1.5 rounded-xl active:scale-95 transition-all">
-                      Modifier
+                      className="py-3 text-sm font-bold text-[#E63946] active:bg-red-50 transition-all">
+                      ✏️ Modifier
                     </button>
                     <button onClick={() => handleToggleStatut(p)}
-                      className="text-xs font-bold text-gray-600 bg-gray-100 px-3 py-1.5 rounded-xl active:scale-95 transition-all">
-                      {p.statut === "actif" ? "Désactiver" : "Activer"}
+                      className="py-3 text-sm font-bold text-gray-600 active:bg-gray-50 transition-all">
+                      {p.statut === "actif" ? "👁️ Masquer" : "👁️ Afficher"}
                     </button>
                     <button onClick={() => setDeleteId(p.id)}
-                      className="text-xs font-bold text-red-500 bg-red-50 px-3 py-1.5 rounded-xl active:scale-95 transition-all">
-                      Supprimer
+                      className="py-3 text-sm font-bold text-red-500 active:bg-red-50 transition-all">
+                      🗑️ Supprimer
                     </button>
                   </div>
                 </div>
@@ -702,10 +646,16 @@ export default function VendorDashboard() {
         {/* Voir ma boutique */}
         {vendeur && (
           <Link href={`/vendeur/${vendeur.slug}`}
-            className="block w-full text-center bg-white rounded-2xl py-4 text-[#E63946] font-bold text-sm shadow-sm active:scale-95 transition-all border border-[#E63946]/20">
-            Voir ma boutique publique →
+            className="block w-full text-center bg-white rounded-2xl py-4 text-[#E63946] font-bold text-base shadow-sm active:scale-95 transition-all border border-[#E63946]/20">
+            👀 Voir ma boutique
           </Link>
         )}
+
+        {/* Wallet */}
+        <Link href="/vendor/wallet"
+          className="block w-full text-center bg-white rounded-2xl py-4 text-gray-700 font-bold text-base shadow-sm active:scale-95 transition-all">
+          💰 Mon portefeuille
+        </Link>
       </div>
     </div>
   );

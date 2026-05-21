@@ -85,20 +85,21 @@ function LoginContent() {
         {/* Choix méthode */}
         {etape === "choix" && (
           <>
-            <button onClick={() => choisir("telephone")}
-              className="w-full flex items-center gap-4 border-2 border-gray-200 rounded-2xl px-5 py-4 hover:border-[#E63946] hover:bg-[#FEF2F2] transition-all text-left">
-              <span className="text-2xl">📱</span>
-              <div>
-                <p className="font-black text-gray-800">Téléphone</p>
-                <p className="text-sm text-gray-500">Recevoir un code SMS</p>
-              </div>
-            </button>
             <button onClick={() => choisir("email")}
-              className="w-full flex items-center gap-4 border-2 border-gray-200 rounded-2xl px-5 py-4 hover:border-[#E63946] hover:bg-[#FEF2F2] transition-all text-left">
+              className="w-full flex items-center gap-4 border-2 border-[#E63946] bg-[#FEF2F2] rounded-2xl px-5 py-4 transition-all text-left">
               <span className="text-2xl">📧</span>
               <div>
                 <p className="font-black text-gray-800">Email</p>
                 <p className="text-sm text-gray-500">Recevoir un code par email</p>
+              </div>
+              <span className="ml-auto text-xs font-bold text-[#E63946] bg-white px-2 py-1 rounded-lg">Recommandé</span>
+            </button>
+            <button onClick={() => choisir("telephone")}
+              className="w-full flex items-center gap-4 border-2 border-gray-200 rounded-2xl px-5 py-4 hover:border-gray-300 transition-all text-left">
+              <span className="text-2xl">📱</span>
+              <div>
+                <p className="font-black text-gray-800">Téléphone</p>
+                <p className="text-sm text-gray-500">Code SMS (nécessite activation)</p>
               </div>
             </button>
             <p className="text-center text-sm text-gray-500 pt-2">
