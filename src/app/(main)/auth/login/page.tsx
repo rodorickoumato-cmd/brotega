@@ -38,12 +38,12 @@ function LoginContent() {
     if (methode === "telephone") {
       const e164 = vers241(telephone);
       if (!e164) { setLoading(false); setErreur("Numéro invalide. Exemple : 01 23 45 67"); return; }
-      const res = await envoyerOTP({ telephone: e164, creerSiAbsent: false });
+      const res = await envoyerOTP({ telephone: e164, creerSiAbsent: true });
       setLoading(false);
       if (res.erreur) { setErreur(res.erreur); return; }
       setPhoneE164(e164);
     } else {
-      const res = await envoyerEmailOTP({ email, creerSiAbsent: false });
+      const res = await envoyerEmailOTP({ email, creerSiAbsent: true });
       setLoading(false);
       if (res.erreur) { setErreur(res.erreur); return; }
     }
