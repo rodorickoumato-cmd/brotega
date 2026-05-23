@@ -3,97 +3,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { modifierProfil, envoyerEmailOTP, verifierEmailOTP } from "@/app/actions/auth";
+import { modifierProfil } from "@/app/actions/auth";
 import type { Utilisateur } from "@/lib/supabase/database.types";
-
-// ─── Widget vérification email ─────────────────────────────────────────────────
-
-function EmailVerifWidget({
-  email,
-  onVerifie,
-}: {
-  email: string;
-  onVerifie: () => void;
-}) {
-  const [etape, setEtape] = useState<"idle" | "envoi" | "code" | "succes">("idle");
-  const [code, setCode] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [erreur, setErreur] = useState("");
-
-  const envoyer = async () => {
-    setErreur("");
-    setLoading(true);
-    const res = await envoyerEmailOTP({ email, creerSiAbsent: false });
-    setLoading(false);
-    if (res.erreur) { setErreur(res.erreur); return; }
-    setEtape("code");
-  };
-
-  const verifier = async () => {
-    if (code.length !== 6) { setErreur("Entrez les 6 chiffres du code."); return; }
-    setErreur("");
-    setLoading(true);
-    const res = await verifierEmailOTP({ email, code });
-    setLoading(false);
-    if (res.erreur) { setErreur(res.erreur); return; }
-    setEtape("succes");
-    onVerifie();
-  };
-
-  if (etape === "succes") {
-    return (
-      <div className="flex items-center gap-2 mt-2 bg-[#FEF2F2] rounded-xl px-3 py-2">
-        <span className="text-[#E63946] font-black text-sm">✅</span>
-        <span className="text-sm font-bold text-[#E63946]">Email vérifié avec succès !</span>
-      </div>
-    );
-  }
-
-  if (etape === "code") {
-    return (
-      <div className="mt-2 space-y-2">
-        <p className="text-xs text-gray-500">Code envoyé à <span className="font-bold">{email}</span></p>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            inputMode="numeric"
-            maxLength={6}
-            value={code}
-            onChange={(e) => { setCode(e.target.value.replace(/\D/g, "")); setErreur(""); }}
-            placeholder="000000"
-            autoFocus
-            className="flex-1 border-2 border-gray-200 rounded-xl px-4 py-3 text-center text-xl font-black tracking-widest focus:outline-none focus:border-[#E63946] transition-colors"
-          />
-          <button
-            onClick={verifier}
-            disabled={loading || code.length < 6}
-            className="bg-[#E63946] text-white font-black px-4 py-3 rounded-xl text-sm disabled:opacity-40 active:scale-95 transition-all flex-shrink-0"
-          >
-            {loading ? "..." : "Vérifier"}
-          </button>
-        </div>
-        <button onClick={envoyer} disabled={loading}
-          className="text-xs text-gray-400 underline disabled:opacity-50">
-          Renvoyer le code
-        </button>
-        {erreur && <p className="text-xs text-red-500">{erreur}</p>}
-      </div>
-    );
-  }
-
-  return (
-    <div className="mt-2">
-      <button
-        onClick={envoyer}
-        disabled={loading}
-        className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-2 rounded-xl active:scale-95 transition-all disabled:opacity-50"
-      >
-        {loading ? "Envoi..." : "⚠️ Email non vérifié — Vérifier maintenant"}
-      </button>
-      {erreur && <p className="text-xs text-red-500 mt-1">{erreur}</p>}
-    </div>
-  );
-}
 
 // ─── Page profil ───────────────────────────────────────────────────────────────
 
@@ -221,13 +132,6 @@ export default function ProfilPage() {
             />
             <p className="text-xs text-gray-400 mt-1.5 ml-1">Pour recevoir vos confirmations et promotions</p>
 
-            {/* Widget vérification — affiché si email non vérifié et pas modifié */}
-            {emailNonVerifie && !emailChanged && !modifie && (
-              <EmailVerifWidget
-                email={profil!.email!}
-                onVerifie={() => setProfil((p) => p ? { ...p, email_verifie: true } : p)}
-              />
-            )}
           </div>
 
           {/* WhatsApp */}

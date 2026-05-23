@@ -2,141 +2,121 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { vers241 } from "@/lib/phone";
 import type { Database } from "@/lib/supabase/database.types";
 
 function slugifier(str: string): string {
   return str.toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-// Mapping erreurs Supabase → messages français simples
-function traduireErreurAuth(msg: string): string {
+function traduireErreur(msg: string): string {
   if (!msg) return "Erreur inconnue.";
-  const map: Record<string, string> = {
-    "Invalid phone number": "Numéro de téléphone invalide.",
-    "Phone not confirmed": "Numéro non confirmé. Vérifiez le code SMS.",
-    "Token has expired or is invalid": "Code expiré ou invalide. Demandez un nouveau code.",
-    "SMS rate limit exceeded": "Trop de demandes. Patientez quelques minutes.",
-    "Too many requests": "Trop de tentatives. Réessayez dans quelques minutes.",
-    "User already registered": "Ce numéro est déjà utilisé.",
-    "Phone provider": "SMS non configuré. Contactez le support.",
-    "phone_provider": "SMS non configuré. Contactez le support.",
-    "provider is not enabled": "Envoi SMS non activé sur le serveur.",
-    "Signups not allowed": "Inscription désactivée. Connectez-vous plutôt.",
-    "signups_disabled": "Inscription désactivée.",
-    "not found": "Service introuvable. Vérifiez la configuration.",
-    "Twilio": "Erreur Twilio : " + msg,
-  };
-  for (const [k, v] of Object.entries(map)) if (msg.toLowerCase().includes(k.toLowerCase())) return v;
-  // Retourne l'erreur brute pour faciliter le diagnostic
+  if (msg.includes("Invalid login credentials")) return "Email ou mot de passe incorrect.";
+  if (msg.includes("Email not confirmed")) return "Vérifiez votre email avant de vous connecter.";
+  if (msg.includes("User already registered")) return "Cet email est déjà utilisé. Connectez-vous.";
+  if (msg.includes("Password should be")) return "Le mot de passe doit avoir au moins 6 caractères.";
+  if (msg.includes("Too many requests") || msg.includes("rate limit")) return "Trop de tentatives. Réessayez dans quelques minutes.";
   return "Erreur : " + msg;
 }
 
-// 1a) Envoi OTP par email — login ET register
-export async function envoyerEmailOTP(input: { email: string; creerSiAbsent: boolean }) {
+// ─── Connexion ────────────────────────────────────────────────────────────────
+
+export async function seConnecter(input: { email: string; motDePasse: string }) {
   const email = input.email.trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { erreur: "Adresse email invalide." };
+  if (!email || !input.motDePasse) return { erreur: "Email et mot de passe requis." };
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithOtp({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
-    options: { shouldCreateUser: input.creerSiAbsent },
+    password: input.motDePasse,
   });
 
-  if (error) return { erreur: traduireErreurAuth(error.message) };
-  return { succes: true, email };
-}
-
-// 1b) Vérification OTP email
-export async function verifierEmailOTP(input: { email: string; code: string }) {
-  const email = input.email.trim().toLowerCase();
-  if (!/^\d{6}$/.test(input.code)) return { erreur: "Le code doit avoir 6 chiffres." };
-
-  const supabase = await createClient();
-  const { data, error } = await supabase.auth.verifyOtp({
-    email,
-    token: input.code,
-    type: "email",
-  });
-
-  if (error || !data.user) return { erreur: traduireErreurAuth(error?.message ?? "") };
+  if (error || !data.user) return { erreur: traduireErreur(error?.message ?? "") };
 
   const { data: profil } = await supabase
-    .from("utilisateurs")
-    .select("id, role")
-    .eq("id", data.user.id)
-    .single();
+    .from("utilisateurs").select("id, role").eq("id", data.user.id).single();
 
-  // Si le profil existe déjà, marque l'email comme vérifié
-  if (profil) {
-    await supabase
-      .from("utilisateurs")
-      .update({ email, email_verifie: true })
-      .eq("id", data.user.id);
-    revalidatePath("/compte/profil");
-    revalidatePath("/compte");
+  revalidatePath("/");
+  return { succes: true, profilExiste: !!profil, role: profil?.role ?? null };
+}
+
+// ─── Inscription ──────────────────────────────────────────────────────────────
+
+export async function sInscrire(input: {
+  email: string;
+  motDePasse: string;
+  nom: string;
+  telephone?: string;
+  role: "acheteur" | "vendeur";
+  nomBoutique?: string;
+  ville?: string;
+}) {
+  const email = input.email.trim().toLowerCase();
+  if (!email) return { erreur: "Email requis." };
+  if (!input.motDePasse || input.motDePasse.length < 6) return { erreur: "Mot de passe : 6 caractères minimum." };
+  if (!input.nom.trim()) return { erreur: "Votre nom est requis." };
+  if (input.role === "vendeur" && !input.nomBoutique?.trim()) return { erreur: "Le nom de la boutique est requis." };
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password: input.motDePasse,
+  });
+
+  if (error) return { erreur: traduireErreur(error.message) };
+  if (!data.user) return { erreur: "Impossible de créer le compte." };
+
+  const telephone = input.telephone?.trim() || null;
+
+  const { error: profilError } = await supabase.from("utilisateurs").insert({
+    id: data.user.id,
+    nom: input.nom.trim(),
+    email,
+    email_verifie: false,
+    telephone,
+    whatsapp: telephone,
+    role: input.role,
+    marketing_opt_in: false,
+  });
+
+  if (profilError && !profilError.message.includes("duplicate")) {
+    return { erreur: "Erreur création profil : " + profilError.message };
+  }
+
+  if (input.role === "vendeur" && input.nomBoutique) {
+    const slug = `${slugifier(input.nomBoutique)}-${data.user.id.slice(0, 6)}`;
+    await supabase.from("vendeurs").insert({
+      utilisateur_id: data.user.id,
+      nom: input.nomBoutique.trim(),
+      slug,
+      ville: input.ville ?? "Libreville",
+      telephone,
+      whatsapp: telephone,
+      statut: "en_attente",
+      categories: [],
+    });
   }
 
   revalidatePath("/");
-  return { succes: true, userId: data.user.id, profilExiste: !!profil, role: profil?.role ?? null };
+  return { succes: true, role: input.role };
 }
 
-// 1c) Envoi OTP par SMS — utilisé pour login ET register
-//     `creerSiAbsent` = false pour login (l'utilisateur doit exister)
-//     `creerSiAbsent` = true pour register
-export async function envoyerOTP(input: { telephone: string; creerSiAbsent: boolean }) {
-  const phone = vers241(input.telephone);
-  if (!phone) return { erreur: "Numéro invalide. Format attendu : 66 03 08 48" };
+// ─── Mot de passe oublié ──────────────────────────────────────────────────────
 
+export async function reinitialiserMotDePasse(email: string) {
   const supabase = await createClient();
-
-  const { error } = await supabase.auth.signInWithOtp({
-    phone,
-    options: {
-      shouldCreateUser: input.creerSiAbsent,
-      channel: "sms",
-    },
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+    redirectTo: `${appUrl}/auth/reset-password`,
   });
-
-  if (error) return { erreur: traduireErreurAuth(error.message) };
-  return { succes: true, telephone: phone };
+  if (error) return { erreur: traduireErreur(error.message) };
+  return { succes: true };
 }
 
-// 2) Vérification OTP — connecte la session
-export async function verifierOTP(input: { telephone: string; code: string }) {
-  const phone = vers241(input.telephone);
-  if (!phone) return { erreur: "Numéro invalide." };
-  if (!/^\d{6}$/.test(input.code)) return { erreur: "Le code doit avoir 6 chiffres." };
+// ─── Création profil (conservé pour compatibilité) ────────────────────────────
 
-  const supabase = await createClient();
-
-  const { data, error } = await supabase.auth.verifyOtp({
-    phone,
-    token: input.code,
-    type: "sms",
-  });
-
-  if (error || !data.user) return { erreur: traduireErreurAuth(error?.message ?? "") };
-
-  // Vérifie si profil existe déjà
-  const { data: profil } = await supabase
-    .from("utilisateurs")
-    .select("id, role")
-    .eq("id", data.user.id)
-    .single();
-
-  revalidatePath("/");
-  return {
-    succes: true,
-    userId: data.user.id,
-    profilExiste: !!profil,
-    role: profil?.role ?? null,
-  };
-}
-
-// 3) Création du profil après OTP vérifié (étape post-OTP au register)
 export async function creerProfil(data: {
   nom: string;
   role: "acheteur" | "vendeur";
@@ -151,7 +131,7 @@ export async function creerProfil(data: {
   if (!user) return { erreur: "Session expirée. Reconnectez-vous." };
 
   const authEmail = user.email ?? null;
-  const telephone = data.telephone ?? (user.phone ? "+" + user.phone : null);
+  const telephone = data.telephone ?? null;
 
   const { error: profilError } = await supabase.from("utilisateurs").insert({
     id: user.id,
@@ -190,19 +170,13 @@ export async function devenirVendeur(data: { nomBoutique: string; ville: string 
   if (!user) return { erreur: "Non connecté." };
 
   const { data: profil } = await supabase
-    .from("utilisateurs")
-    .select("id, role, telephone")
-    .eq("id", user.id)
-    .single();
+    .from("utilisateurs").select("id, role, telephone").eq("id", user.id).single();
 
   if (!profil) return { erreur: "Profil introuvable." };
   if (profil.role === "vendeur") return { erreur: "Vous êtes déjà vendeur." };
 
   const { data: dejaVendeur } = await supabase
-    .from("vendeurs")
-    .select("id")
-    .eq("utilisateur_id", user.id)
-    .maybeSingle();
+    .from("vendeurs").select("id").eq("utilisateur_id", user.id).maybeSingle();
 
   if (dejaVendeur) return { erreur: "Vous avez déjà une boutique." };
 
@@ -221,9 +195,7 @@ export async function devenirVendeur(data: { nomBoutique: string; ville: string 
   if (vendeurError) return { erreur: "Erreur création boutique : " + vendeurError.message };
 
   const { error: roleError } = await supabase
-    .from("utilisateurs")
-    .update({ role: "vendeur" })
-    .eq("id", user.id);
+    .from("utilisateurs").update({ role: "vendeur" }).eq("id", user.id);
   if (roleError) return { erreur: "Erreur mise à jour du rôle : " + roleError.message };
 
   revalidatePath("/");
@@ -268,7 +240,6 @@ export async function getSessionUtilisateur() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-
   const { data: profil } = await supabase
     .from("utilisateurs").select("*").eq("id", user.id).single();
   return profil;
@@ -278,7 +249,6 @@ export async function getVendeurActuel() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-
   const { data: vendeur } = await supabase
     .from("vendeurs").select("*").eq("utilisateur_id", user.id).single();
   return vendeur;

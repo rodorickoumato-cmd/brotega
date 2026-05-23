@@ -1,67 +1,38 @@
 "use client";
-import { useEffect, useState, Suspense } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { OtpInput } from "@/components/auth/OtpInput";
-import { envoyerOTP, verifierOTP, envoyerEmailOTP, verifierEmailOTP } from "@/app/actions/auth";
-import { vers241, formaterPhoneGabon } from "@/lib/phone";
-
-type Methode = "telephone" | "email";
-type Etape = "choix" | "saisie" | "otp";
+import { seConnecter, reinitialiserMotDePasse } from "@/app/actions/auth";
 
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") ?? "/";
 
-  const [methode, setMethode] = useState<Methode>("telephone");
-  const [etape, setEtape] = useState<Etape>("choix");
-  const [telephone, setTelephone] = useState("");
-  const [phoneE164, setPhoneE164] = useState("");
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
+  const [motDePasse, setMotDePasse] = useState("");
   const [loading, setLoading] = useState(false);
   const [erreur, setErreur] = useState("");
-  const [renvoiSec, setRenvoiSec] = useState(0);
+  const [oublie, setOublie] = useState(false);
+  const [resetEnvoye, setResetEnvoye] = useState(false);
 
-  useEffect(() => {
-    if (renvoiSec <= 0) return;
-    const t = setTimeout(() => setRenvoiSec((s) => s - 1), 1000);
-    return () => clearTimeout(t);
-  }, [renvoiSec]);
-
-  const choisir = (m: Methode) => { setMethode(m); setEtape("saisie"); setErreur(""); };
-
-  const envoyer = async () => {
-    setErreur("");
-    setLoading(true);
-    if (methode === "telephone") {
-      const e164 = vers241(telephone);
-      if (!e164) { setLoading(false); setErreur("Numéro invalide. Exemple : 01 23 45 67"); return; }
-      const res = await envoyerOTP({ telephone: e164, creerSiAbsent: true });
-      setLoading(false);
-      if (res.erreur) { setErreur(res.erreur); return; }
-      setPhoneE164(e164);
-    } else {
-      const res = await envoyerEmailOTP({ email, creerSiAbsent: true });
-      setLoading(false);
-      if (res.erreur) { setErreur(res.erreur); return; }
-    }
-    setEtape("otp");
-    setRenvoiSec(60);
-  };
-
-  const verifier = async (codeFinal: string) => {
-    setErreur("");
-    setLoading(true);
-    const res = methode === "telephone"
-      ? await verifierOTP({ telephone: phoneE164, code: codeFinal })
-      : await verifierEmailOTP({ email, code: codeFinal });
+  const connecter = async () => {
+    if (!email.trim() || !motDePasse) { setErreur("Remplissez tous les champs."); return; }
+    setErreur(""); setLoading(true);
+    const res = await seConnecter({ email, motDePasse });
     setLoading(false);
-    if (res.erreur) { setErreur(res.erreur); setCode(""); return; }
-    if (!res.profilExiste) { router.push("/auth/register"); return; }
+    if (res.erreur) { setErreur(res.erreur); return; }
     router.push(redirectTo);
     router.refresh();
+  };
+
+  const envoyerReset = async () => {
+    if (!email.trim()) { setErreur("Entrez votre email d'abord."); return; }
+    setErreur(""); setLoading(true);
+    const res = await reinitialiserMotDePasse(email);
+    setLoading(false);
+    if (res.erreur) { setErreur(res.erreur); return; }
+    setResetEnvoye(true);
   };
 
   return (
@@ -71,108 +42,71 @@ function LoginContent() {
           <span className="text-2xl">❤️</span>
         </div>
         <h1 className="text-2xl font-black text-white">
-          {etape === "choix" ? "Connexion" : etape === "saisie" ? (methode === "telephone" ? "Votre numéro" : "Votre email") : "Vérification"}
+          {oublie ? "Mot de passe oublié" : "Connexion"}
         </h1>
         <p className="text-white/70 text-sm mt-1">
-          {etape === "choix" && "Choisissez votre méthode"}
-          {etape === "saisie" && (methode === "telephone" ? "Numéro gabonais +241" : "Entrez votre adresse email")}
-          {etape === "otp" && (methode === "telephone" ? `SMS envoyé au ${formaterPhoneGabon(phoneE164)}` : `Code envoyé à ${email}`)}
+          {oublie ? "On vous envoie un lien de réinitialisation" : "Entrez votre email et mot de passe"}
         </p>
       </div>
 
-      <div className="flex-1 px-6 py-8 -mt-4 bg-white rounded-t-3xl space-y-5">
+      <div className="flex-1 px-6 py-8 -mt-4 bg-white rounded-t-3xl space-y-4">
 
-        {/* Choix méthode */}
-        {etape === "choix" && (
+        {resetEnvoye ? (
+          <div className="bg-green-50 border border-green-200 rounded-2xl p-5 text-center">
+            <div className="text-4xl mb-3">📧</div>
+            <p className="font-black text-green-700 text-lg mb-1">Email envoyé !</p>
+            <p className="text-sm text-gray-600">Ouvrez votre boîte mail et cliquez le lien pour créer un nouveau mot de passe.</p>
+            <button onClick={() => { setOublie(false); setResetEnvoye(false); }}
+              className="mt-4 text-[#E63946] font-bold text-sm">
+              ← Retour à la connexion
+            </button>
+          </div>
+        ) : (
           <>
-            <button onClick={() => choisir("email")}
-              className="w-full flex items-center gap-4 border-2 border-[#E63946] bg-[#FEF2F2] rounded-2xl px-5 py-4 transition-all text-left">
-              <span className="text-2xl">📧</span>
-              <div>
-                <p className="font-black text-gray-800">Email</p>
-                <p className="text-sm text-gray-500">Recevoir un code par email</p>
-              </div>
-              <span className="ml-auto text-xs font-bold text-[#E63946] bg-white px-2 py-1 rounded-lg">Recommandé</span>
-            </button>
-            <button onClick={() => choisir("telephone")}
-              className="w-full flex items-center gap-4 border-2 border-gray-200 rounded-2xl px-5 py-4 hover:border-gray-300 transition-all text-left">
-              <span className="text-2xl">📱</span>
-              <div>
-                <p className="font-black text-gray-800">Téléphone</p>
-                <p className="text-sm text-gray-500">Code SMS (nécessite activation)</p>
-              </div>
-            </button>
-            <p className="text-center text-sm text-gray-500 pt-2">
-              Pas de compte ?{" "}
-              <Link href="/auth/register" className="text-[#E63946] font-black">S&apos;inscrire</Link>
-            </p>
-          </>
-        )}
+            <div>
+              <label className="text-sm font-bold text-gray-700 mb-2 block">Email</label>
+              <input
+                type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErreur(""); }}
+                onKeyDown={(e) => e.key === "Enter" && !oublie && connecter()}
+                placeholder="exemple@gmail.com" autoComplete="email" inputMode="email"
+                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 text-base focus:outline-none focus:border-[#E63946] transition-colors"
+              />
+            </div>
 
-        {/* Saisie */}
-        {etape === "saisie" && (
-          <>
-            {methode === "telephone" ? (
+            {!oublie && (
               <div>
-                <label className="text-sm font-bold text-gray-700 mb-2 block">Téléphone</label>
-                <div className="flex border-2 border-gray-200 rounded-2xl overflow-hidden focus-within:border-[#E63946] transition-colors">
-                  <span className="bg-gray-50 px-4 flex items-center text-sm text-gray-600 border-r-2 border-gray-200 font-bold whitespace-nowrap">🇬🇦 +241</span>
-                  <input value={telephone} onChange={(e) => { setTelephone(e.target.value); setErreur(""); }}
-                    onKeyDown={(e) => e.key === "Enter" && envoyer()}
-                    placeholder="66 XX XX XX" inputMode="tel" autoComplete="tel" autoFocus
-                    className="flex-1 px-4 py-4 text-base font-medium focus:outline-none" />
-                </div>
-              </div>
-            ) : (
-              <div>
-                <label className="text-sm font-bold text-gray-700 mb-2 block">Adresse email</label>
-                <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErreur(""); }}
-                  onKeyDown={(e) => e.key === "Enter" && envoyer()}
-                  placeholder="exemple@gmail.com" inputMode="email" autoComplete="email" autoFocus
-                  className="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 text-base focus:outline-none focus:border-[#E63946] transition-colors" />
+                <label className="text-sm font-bold text-gray-700 mb-2 block">Mot de passe</label>
+                <input
+                  type="password" value={motDePasse} onChange={(e) => { setMotDePasse(e.target.value); setErreur(""); }}
+                  onKeyDown={(e) => e.key === "Enter" && connecter()}
+                  placeholder="••••••••" autoComplete="current-password"
+                  className="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 text-base focus:outline-none focus:border-[#E63946] transition-colors"
+                />
               </div>
             )}
-            {erreur && <p className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">{erreur}</p>}
-            <button onClick={envoyer} disabled={loading}
-              className="w-full bg-[#E63946] text-white font-black py-4 rounded-2xl text-base disabled:opacity-60 active:scale-95 transition-all">
-              {loading ? "Envoi..." : methode === "telephone" ? "Recevoir le code SMS →" : "Recevoir le code →"}
-            </button>
-            <button onClick={() => { setEtape("choix"); setErreur(""); }}
-              className="w-full text-center text-sm text-gray-500 font-medium">← Autre méthode</button>
-          </>
-        )}
 
-        {/* OTP */}
-        {etape === "otp" && (
-          <>
-            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700">
-              {methode === "telephone" ? `📱 SMS envoyé au ${formaterPhoneGabon(phoneE164)}` : `📧 Code envoyé à ${email} — vérifiez vos spams`}
-            </div>
-            <div>
-              <label className="text-sm font-bold text-gray-700 mb-4 block text-center">Code à 6 chiffres</label>
-              <OtpInput valeur={code} onChange={setCode} onComplet={verifier} />
-            </div>
-            {erreur && <p className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 text-center">{erreur}</p>}
-            <button onClick={() => verifier(code)} disabled={loading || code.length !== 6}
-              className="w-full bg-[#E63946] text-white font-black py-4 rounded-2xl text-base disabled:opacity-40 active:scale-95 transition-all">
-              {loading ? "Vérification..." : "Confirmer"}
+            {erreur && (
+              <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                <p className="text-sm text-red-700 font-medium">{erreur}</p>
+              </div>
+            )}
+
+            <button
+              onClick={oublie ? envoyerReset : connecter}
+              disabled={loading}
+              className="w-full bg-[#E63946] text-white font-black py-4 rounded-2xl text-base disabled:opacity-60 active:scale-95 transition-all">
+              {loading ? "Chargement..." : oublie ? "Envoyer le lien" : "Se connecter"}
             </button>
-            <div className="flex items-center justify-between text-sm">
-              <button onClick={() => { setEtape("saisie"); setCode(""); setErreur(""); }}
-                className="text-gray-500 font-medium">← Modifier</button>
-              <button onClick={async () => {
-                if (renvoiSec > 0) return;
-                setLoading(true);
-                const res = methode === "telephone"
-                  ? await envoyerOTP({ telephone: phoneE164, creerSiAbsent: false })
-                  : await envoyerEmailOTP({ email, creerSiAbsent: false });
-                setLoading(false);
-                if (!res.erreur) setRenvoiSec(60);
-              }} disabled={renvoiSec > 0 || loading}
-                className="text-[#E63946] font-bold disabled:text-gray-400">
-                {renvoiSec > 0 ? `Renvoyer (${renvoiSec}s)` : "Renvoyer"}
-              </button>
-            </div>
+
+            <button onClick={() => { setOublie(!oublie); setErreur(""); }}
+              className="w-full text-center text-sm text-gray-500 font-medium py-2">
+              {oublie ? "← Retour" : "Mot de passe oublié ?"}
+            </button>
+
+            <p className="text-center text-sm text-gray-500 pt-2">
+              Pas encore de compte ?{" "}
+              <Link href="/auth/register" className="text-[#E63946] font-black">S&apos;inscrire</Link>
+            </p>
           </>
         )}
       </div>
