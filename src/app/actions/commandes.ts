@@ -287,9 +287,11 @@ export async function getCommandeParCode(code: string) {
   if (data.utilisateur_id === user.id) return data;
 
   // Vérifier si l'utilisateur est le vendeur de cette commande
-  const { data: vendeur } = await supabase
-    .from("vendeurs").select("utilisateur_id").eq("id", data.vendeur_id).maybeSingle();
-  if (vendeur?.utilisateur_id === user.id) return data;
+  if (data.vendeur_id) {
+    const { data: vendeur } = await supabase
+      .from("vendeurs").select("utilisateur_id").eq("id", data.vendeur_id).maybeSingle();
+    if (vendeur?.utilisateur_id === user.id) return data;
+  }
 
   // Vérifier si admin
   const { data: profil } = await supabase
