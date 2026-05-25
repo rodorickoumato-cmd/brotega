@@ -68,7 +68,7 @@ export async function sInscrire(input: {
   if (error) return { erreur: traduireErreur(error.message) };
   if (!data.user) return { erreur: "Impossible de créer le compte." };
 
-  const telephone = input.telephone?.trim() || null;
+  const telephone = input.telephone?.trim() ? `+241${input.telephone.trim()}` : null;
 
   const { error: profilError } = await supabase.from("utilisateurs").insert({
     id: data.user.id,
@@ -109,7 +109,7 @@ export async function reinitialiserMotDePasse(email: string) {
   const supabase = await createClient();
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-    redirectTo: `${appUrl}/auth/reset-password`,
+    redirectTo: `${appUrl}/auth/callback?next=/auth/reset-password`,
   });
   if (error) return { erreur: traduireErreur(error.message) };
   return { succes: true };

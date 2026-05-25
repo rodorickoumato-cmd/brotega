@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = req.nextUrl;
+  const { searchParams, origin } = req.nextUrl;
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
-  const type = searchParams.get("type") as "email" | "magiclink" | null;
+  const type = searchParams.get("type") as "email" | "recovery" | "magiclink" | null;
   const next = searchParams.get("next") ?? "/";
 
   const supabase = await createClient();
@@ -16,5 +16,10 @@ export async function GET(req: NextRequest) {
     await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
   }
 
-  return NextResponse.redirect(new URL(next, req.url));
+  // Pour le reset de mot de passe, toujours rediriger vers la page dédiée
+  if (type === "recovery") {
+    return NextResponse.redirect(new URL("/auth/reset-password", origin));
+  }
+
+  return NextResponse.redirect(new URL(next, origin));
 }
