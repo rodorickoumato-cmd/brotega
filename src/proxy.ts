@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const ROUTES_PROTEGEES = ["/compte", "/checkout", "/vendor", "/livreur", "/admin", "/messages"];
 
-export async function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
