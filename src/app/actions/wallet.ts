@@ -1,4 +1,4 @@
-﻿"use server";
+"use server";
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -6,7 +6,6 @@ import { vers241 } from "@/lib/phone";
 import type { Wallet, WalletTransaction } from "@/lib/supabase/database.types";
 
 const RETRAIT_MIN_XAF = 5000;
-const RETRAIT_MAX_PAR_JOUR = 1; // 1 retrait par jour max
 
 // ─── 1. Lecture wallet du vendeur connecté ────────────────────
 export async function getMonWallet(): Promise<{
@@ -25,7 +24,6 @@ export async function getMonWallet(): Promise<{
   const { data: wallet } = await supabase
     .from("wallets").select("*").eq("vendeur_id", vendeur.id).maybeSingle();
 
-  // Si le wallet n'existe pas (vendeur pré-trigger), créer un wallet vide via admin
   if (!wallet) {
     const admin = createAdminClient();
     await admin.from("wallets").insert({ vendeur_id: vendeur.id }).select().maybeSingle();
@@ -63,7 +61,6 @@ export async function demanderRetrait(input: {
   telephone: string;
   provider: "airtel" | "moov";
 }) {
-  // Validations basiques
   if (!Number.isInteger(input.montant_xaf) || input.montant_xaf < RETRAIT_MIN_XAF) {
     return { erreur: `Montant minimum : ${RETRAIT_MIN_XAF.toLocaleString("fr-FR")} XAF` };
   }
@@ -78,51 +75,22 @@ export async function demanderRetrait(input: {
     .from("vendeurs").select("id").eq("utilisateur_id", user.id).maybeSingle();
   if (!vendeur) return { erreur: "Aucune boutique trouvée" };
 
-  // Vérifier le solde disponible
-  const { data: wallet } = await supabase
-    .from("wallets").select("balance_available_xaf").eq("vendeur_id", vendeur.id).single();
-  if (!wallet || wallet.balance_available_xaf < input.montant_xaf) {
-    return { erreur: "Solde disponible insuffisant." };
-  }
-
-  // Limiter à 1 retrait par jour
-  const debut = new Date(); debut.setUTCHours(0, 0, 0, 0);
-  const { count } = await supabase
-    .from("wallet_transactions")
-    .select("id", { count: "exact", head: true })
-    .eq("vendeur_id", vendeur.id)
-    .eq("type", "retrait")
-    .gte("created_at", debut.toISOString());
-
-  if ((count ?? 0) >= RETRAIT_MAX_PAR_JOUR) {
-    return { erreur: "Limite atteinte : 1 retrait par jour. Réessayez demain." };
-  }
-
-  // Débit du wallet + ligne de transaction (via admin pour bypass RLS)
+  // Débit atomique : vérification solde + limite journalière + débit + trace en une seule transaction DB
   const admin = createAdminClient();
-  const nouveauSolde = wallet.balance_available_xaf - input.montant_xaf;
+  const description = `Retrait vers ${input.provider === "airtel" ? "Airtel Money" : "Moov Money"} ${phone}`;
 
-  const { error: errUpdate } = await admin.from("wallets")
-    .update({ balance_available_xaf: nouveauSolde })
-    .eq("vendeur_id", vendeur.id);
-  if (errUpdate) return { erreur: "Erreur débit wallet : " + errUpdate.message };
-
-  // Récupérer pending pour la trace
-  const { data: walletApres } = await admin.from("wallets")
-    .select("balance_pending_xaf, balance_available_xaf")
-    .eq("vendeur_id", vendeur.id).single();
-
-  await admin.from("wallet_transactions").insert({
-    vendeur_id: vendeur.id,
-    type: "retrait",
-    montant_xaf: -input.montant_xaf,
-    solde_pending_apres: walletApres?.balance_pending_xaf ?? 0,
-    solde_available_apres: walletApres?.balance_available_xaf ?? nouveauSolde,
-    description: `Retrait vers ${input.provider === "airtel" ? "Airtel Money" : "Moov Money"} ${phone}`,
+  const { data: result, error: errRpc } = await admin.rpc("debiter_wallet_retrait", {
+    p_vendeur_id: vendeur.id,
+    p_montant: input.montant_xaf,
+    p_description: description,
   });
 
-  // TODO : déclencher le payout via provider Mobile Money (API payout Pawapay)
-  // Pour l'instant : trace seulement, l'admin J'adore la Famille traitera manuellement.
+  if (errRpc) return { erreur: "Erreur technique : " + errRpc.message };
+
+  const rpcResult = result as { succes: boolean; erreur?: string };
+  if (!rpcResult.succes) return { erreur: rpcResult.erreur ?? "Erreur inconnue" };
+
+  // TODO : déclencher le payout via PawaPay (API payout). Pour l'instant traitement manuel admin.
 
   return {
     succes: true,

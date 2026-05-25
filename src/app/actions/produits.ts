@@ -1,5 +1,6 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { MAX_PRODUITS_GRATUIT } from "@/lib/rules";
 
@@ -19,13 +20,27 @@ export async function sauvegarderProduit(produit: ProduitInput) {
 
   const { data: vendeur } = await supabase
     .from("vendeurs")
-    .select("id, nb_produits")
+    .select("id")
     .eq("utilisateur_id", user.id)
     .single();
   if (!vendeur) return { erreur: "Aucune boutique trouvée." };
 
-  // Vérifie la limite du plan gratuit (uniquement à la création)
-  if (!produit.id) {
+  if (produit.id) {
+    // Mise à jour : pas de vérification de limite
+    const { error } = await supabase
+      .from("produits")
+      .update({
+        nom: produit.nom,
+        description: produit.description ?? null,
+        prix: produit.prix,
+        categorie: produit.categorie ?? null,
+        image: produit.image ?? null,
+      })
+      .eq("id", produit.id)
+      .eq("vendeur_id", vendeur.id);
+    if (error) return { erreur: error.message };
+  } else {
+    // Création : vérifie la limite via RPC atomique (advisory lock + count réel)
     const { data: abo } = await supabase
       .from("abonnements")
       .select("max_produits")
@@ -36,30 +51,21 @@ export async function sauvegarderProduit(produit: ProduitInput) {
       .maybeSingle();
 
     const max = abo?.max_produits ?? MAX_PRODUITS_GRATUIT;
-    if (vendeur.nb_produits >= max) {
-      return { erreur: `Limite atteinte (${max} produits). Passez à un plan supérieur.` };
-    }
-  }
+    const admin = createAdminClient();
 
-  const payload = {
-    vendeur_id: vendeur.id,
-    nom: produit.nom,
-    description: produit.description ?? null,
-    prix: produit.prix,
-    categorie: produit.categorie ?? null,
-    image: produit.image ?? null,
-  };
+    const { data: result, error: errRpc } = await admin.rpc("inserer_produit_si_limite_ok", {
+      p_vendeur_id: vendeur.id,
+      p_max: max,
+      p_nom: produit.nom,
+      p_description: produit.description ?? null,
+      p_prix: produit.prix,
+      p_categorie: produit.categorie ?? null,
+      p_image: produit.image ?? null,
+    });
 
-  if (produit.id) {
-    const { error } = await supabase
-      .from("produits")
-      .update(payload)
-      .eq("id", produit.id)
-      .eq("vendeur_id", vendeur.id);
-    if (error) return { erreur: error.message };
-  } else {
-    const { error } = await supabase.from("produits").insert(payload);
-    if (error) return { erreur: error.message };
+    if (errRpc) return { erreur: errRpc.message };
+    const rpcResult = result as { succes: boolean; erreur?: string };
+    if (!rpcResult.succes) return { erreur: rpcResult.erreur ?? "Limite atteinte." };
   }
 
   revalidatePath("/vendor/dashboard");

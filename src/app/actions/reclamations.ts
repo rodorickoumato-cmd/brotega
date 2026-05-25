@@ -9,6 +9,8 @@ import type { StatutCommande } from "@/lib/rules";
 export async function ouvrirReclamation(commandeId: string, motif: string) {
   if (!motif.trim() || motif.trim().length < 10)
     return { erreur: "Décrivez le problème (minimum 10 caractères)." };
+  if (motif.trim().length > 5000)
+    return { erreur: "Description trop longue (maximum 5000 caractères)." };
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
