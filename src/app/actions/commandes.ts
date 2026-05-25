@@ -8,9 +8,9 @@ import type { ProviderId } from "@/lib/payment";
 import { vers241 } from "@/lib/phone";
 import { headers } from "next/headers";
 import { envoyerEmailConfirmationCommande, envoyerEmailNouvelleCommande } from "@/lib/email";
+import { TAUX_COMMISSION, FRAIS_LIVRAISON_XAF } from "@/lib/rules";
 
-const COMMISSION_RATE = 0.05;
-const FRAIS_LIVRAISON_DEFAUT = 2500;
+const FRAIS_LIVRAISON_DEFAUT = FRAIS_LIVRAISON_XAF;
 
 export type ItemPanier = {
   produit_id: string;
@@ -154,7 +154,7 @@ export async function creerCommande(input: {
   const sousTotal = itemsVerifies.reduce((s, it) => s + it.prix_xaf * it.quantite, 0);
   const fraisLivraison = FRAIS_LIVRAISON_DEFAUT;
   const total = sousTotal + fraisLivraison;
-  const commission = Math.round(sousTotal * COMMISSION_RATE);
+  const commission = Math.round(sousTotal * TAUX_COMMISSION);
 
   // 5. Validation téléphone Mobile Money si applicable
   const isMM = input.mode_paiement === "airtel_money" || input.mode_paiement === "moov_money";

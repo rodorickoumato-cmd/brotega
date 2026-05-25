@@ -46,8 +46,8 @@ export const MAX_VENDEURS_PAR_COMMANDE = 1;
 // Règle : frais de livraison fixes (V1 — pas de zones)
 export const FRAIS_LIVRAISON_XAF = 2_500;
 
-// Règle : commission J'adore la Famille prélevée sur le sous-total à la libération de l'escrow
-export const TAUX_COMMISSION = 0.05; // 5 %
+// Règle : modèle 100 % abonnement — aucune commission prélevée sur les ventes
+export const TAUX_COMMISSION = 0; // 0 % — revenus via abonnements uniquement
 
 // Règle : statuts possibles d'une commande (dans l'ordre chronologique)
 export const STATUTS_COMMANDE = [

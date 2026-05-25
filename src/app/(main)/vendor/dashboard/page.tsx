@@ -354,29 +354,34 @@ export default function VendorDashboard() {
   useEffect(() => {
     const supabase = createClient();
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push("/auth/login?redirect=/vendor/dashboard"); return; }
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { router.push("/auth/login?redirect=/vendor/dashboard"); return; }
 
-      const { data: v } = await supabase
-        .from("vendeurs").select("*").eq("utilisateur_id", user.id).single();
+        const { data: v } = await supabase
+          .from("vendeurs").select("*").eq("utilisateur_id", user.id).single();
 
-      if (!v) { router.push("/vendor/register"); return; }
-      setVendeur(v);
+        if (!v) { router.push("/vendor/register"); return; }
+        setVendeur(v);
 
-      const [prodData, aboData, cmdData] = await Promise.all([
-        getMesProduits(),
-        supabase.from("abonnements").select("max_produits")
-          .eq("vendeur_id", v.id).eq("statut", "actif")
-          .order("created_at", { ascending: false }).limit(1).maybeSingle(),
-        supabase.from("commandes").select("*")
-          .eq("vendeur_id", v.id)
-          .order("created_at", { ascending: false }).limit(20),
-      ]);
+        const [prodData, aboData, cmdData] = await Promise.all([
+          getMesProduits(),
+          supabase.from("abonnements").select("max_produits")
+            .eq("vendeur_id", v.id).eq("statut", "actif")
+            .order("created_at", { ascending: false }).limit(1).maybeSingle(),
+          supabase.from("commandes").select("*")
+            .eq("vendeur_id", v.id)
+            .order("created_at", { ascending: false }).limit(20),
+        ]);
 
-      setProduits(prodData);
-      setMaxProduits(aboData.data?.max_produits ?? MAX_PRODUITS_GRATUIT);
-      setCommandes(cmdData.data ?? []);
-      setChargement(false);
+        setProduits(prodData);
+        setMaxProduits(aboData.data?.max_produits ?? MAX_PRODUITS_GRATUIT);
+        setCommandes(cmdData.data ?? []);
+      } catch {
+        setErreurGlobale("Erreur de chargement. Actualisez la page.");
+      } finally {
+        setChargement(false);
+      }
     })();
   }, [router]);
 

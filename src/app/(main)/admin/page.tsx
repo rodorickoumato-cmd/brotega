@@ -25,15 +25,20 @@ export default function AdminPage() {
   useEffect(() => {
     const supabase = createClient();
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push("/auth/login"); return; }
-      const { data: profil } = await supabase
-        .from("utilisateurs").select("role").eq("id", user.id).single();
-      if (profil?.role !== "admin") { router.push("/"); return; }
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { router.push("/auth/login"); return; }
+        const { data: profil } = await supabase
+          .from("utilisateurs").select("role").eq("id", user.id).single();
+        if (profil?.role !== "admin") { router.push("/"); return; }
 
-      const res = await getStatsAdmin();
-      if (res.stats) setStats(res.stats);
-      setChargement(false);
+        const res = await getStatsAdmin();
+        if (res.stats) setStats(res.stats);
+      } catch {
+        // Erreur réseau silencieuse — affiche stats vides
+      } finally {
+        setChargement(false);
+      }
     })();
   }, [router]);
 

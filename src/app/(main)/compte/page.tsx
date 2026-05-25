@@ -27,18 +27,23 @@ export default function ComptePage() {
   useEffect(() => {
     const supabase = createClient();
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push("/auth/login?redirect=/compte"); return; }
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { router.push("/auth/login?redirect=/compte"); return; }
 
-      const [{ data: p }, { data: c }] = await Promise.all([
-        supabase.from("utilisateurs").select("*").eq("id", user.id).single(),
-        supabase.from("commandes").select("*").eq("utilisateur_id", user.id)
-          .order("created_at", { ascending: false }).limit(3),
-      ]);
+        const [{ data: p }, { data: c }] = await Promise.all([
+          supabase.from("utilisateurs").select("*").eq("id", user.id).single(),
+          supabase.from("commandes").select("*").eq("utilisateur_id", user.id)
+            .order("created_at", { ascending: false }).limit(3),
+        ]);
 
-      setProfil(p);
-      setCommandes(c ?? []);
-      setChargement(false);
+        setProfil(p);
+        setCommandes(c ?? []);
+      } catch {
+        // En cas d'erreur réseau, on affiche quand même la page (vide)
+      } finally {
+        setChargement(false);
+      }
     })();
   }, [router]);
 

@@ -1,10 +1,18 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/store/cart";
 import { CartSidebar } from "@/components/cart/CartSidebar";
 import { categories } from "@/data/categories";
+
+type AuthEtat = {
+  charge: boolean;
+  connecte: boolean;
+  role: string | null;
+  initiales: string;
+};
 
 export function Header() {
   const { count, dispatch } = useCart();
@@ -12,6 +20,42 @@ export function Header() {
   const [search, setSearch] = useState("");
   const [selectedCat, setSelectedCat] = useState("");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [auth, setAuth] = useState<AuthEtat>({
+    charge: true,
+    connecte: false,
+    role: null,
+    initiales: "",
+  });
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    async function miseAJourAuth(userId: string | null) {
+      if (!userId) {
+        setAuth({ charge: false, connecte: false, role: null, initiales: "" });
+        return;
+      }
+      const { data } = await supabase
+        .from("utilisateurs")
+        .select("role, nom")
+        .eq("id", userId)
+        .single();
+      const initiales = data?.nom
+        ? data.nom.trim().split(/\s+/).map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
+        : "?";
+      setAuth({ charge: false, connecte: true, role: data?.role ?? "acheteur", initiales });
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      miseAJourAuth(session?.user?.id ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      miseAJourAuth(session?.user?.id ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,6 +63,41 @@ export function Header() {
     const cat = selectedCat ? `&categorie=${selectedCat}` : "";
     router.push(`/catalogue?q=${encodeURIComponent(q)}${cat}`);
   };
+
+  // Lien principal (droite du header) selon le rôle
+  const navAction = !auth.connecte
+    ? { href: "/vendor/register", label: "Vendre", cls: "bg-[#FFD100] text-[#1A202C]" }
+    : auth.role === "vendeur"
+    ? { href: "/vendor/dashboard", label: "Ma boutique", cls: "bg-[#FFD100] text-[#1A202C]" }
+    : auth.role === "admin"
+    ? { href: "/admin", label: "⚙️ Admin", cls: "bg-gray-800 text-white" }
+    : auth.role === "livreur"
+    ? { href: "/livreur", label: "🚚 Livraisons", cls: "bg-blue-500 text-white" }
+    : { href: "/vendor/register", label: "Vendre", cls: "bg-[#FFD100] text-[#1A202C]" };
+
+  // Lien compte selon auth
+  const compteHref = auth.connecte ? "/compte" : "/auth/login";
+
+  // Menu mobile selon rôle
+  const mobileMenuItems = auth.connecte
+    ? [
+        { href: "/compte", label: auth.role === "vendeur" ? `Mon compte (${auth.initiales})` : "Mon compte" },
+        { href: "/compte/commandes", label: "Mes commandes" },
+        ...(auth.role === "vendeur"
+          ? [
+              { href: "/vendor/dashboard", label: "🏪 Dashboard vendeur" },
+              { href: "/vendor/abonnement", label: "💎 Mon abonnement" },
+            ]
+          : auth.role === "admin"
+          ? [{ href: "/admin", label: "⚙️ Administration" }]
+          : auth.role === "livreur"
+          ? [{ href: "/livreur", label: "🚚 Mes livraisons" }]
+          : [{ href: "/vendor/register", label: "🏪 Devenir vendeur" }]),
+      ]
+    : [
+        { href: "/auth/login", label: "Se connecter" },
+        { href: "/vendor/register", label: "Devenir vendeur" },
+      ];
 
   return (
     <>
@@ -87,7 +166,7 @@ export function Header() {
             <div className="flex items-center gap-2 ml-auto sm:ml-0">
               {/* Location */}
               <button
-                aria-label="Changer de ville"
+                aria-label="Ville"
                 className="hidden md:flex items-center gap-1.5 text-gray-600 hover:text-[#E63946] text-sm px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -97,26 +176,37 @@ export function Header() {
                 <span className="font-medium">Libreville</span>
               </button>
 
-              {/* Account */}
+              {/* Compte (dynamique selon auth) */}
               <Link
-                href="/auth/login"
+                href={compteHref}
                 className="hidden md:flex items-center gap-1.5 text-gray-600 hover:text-[#E63946] text-sm px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                aria-label="Mon compte"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span className="font-medium">Compte</span>
+                {auth.connecte ? (
+                  <span className="w-7 h-7 rounded-full bg-[#E63946] text-white text-xs font-black flex items-center justify-center">
+                    {auth.charge ? "…" : auth.initiales}
+                  </span>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                )}
+                <span className="font-medium">
+                  {auth.charge ? "" : auth.connecte ? "Mon compte" : "Se connecter"}
+                </span>
               </Link>
 
-              {/* Vendor */}
-              <Link
-                href="/vendor/dashboard"
-                className="hidden lg:flex items-center gap-1.5 bg-[#FFD100] hover:bg-[#E6BC00] text-[#1A202C] text-sm font-semibold px-4 py-2 rounded-xl transition-colors"
-              >
-                Vendre
-              </Link>
+              {/* Bouton action principal (rôle-dépendant) */}
+              {!auth.charge && (
+                <Link
+                  href={navAction.href}
+                  className={`hidden lg:flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl transition-colors ${navAction.cls}`}
+                >
+                  {navAction.label}
+                </Link>
+              )}
 
-              {/* Cart */}
+              {/* Panier */}
               <button
                 onClick={() => dispatch({ type: "TOGGLE" })}
                 aria-label={`Panier (${count} article${count !== 1 ? "s" : ""})`}
@@ -212,24 +302,50 @@ export function Header() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
-              <span className="font-bold text-lg">Menu</span>
+              {auth.connecte ? (
+                <div className="flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-full bg-[#E63946] text-white text-sm font-black flex items-center justify-center">
+                    {auth.initiales}
+                  </span>
+                  <span className="font-bold text-sm text-gray-800">
+                    {auth.role === "vendeur" ? "Vendeur"
+                     : auth.role === "admin" ? "Administrateur"
+                     : auth.role === "livreur" ? "Livreur"
+                     : "Client"}
+                  </span>
+                </div>
+              ) : (
+                <span className="font-bold text-lg">Menu</span>
+              )}
               <button onClick={() => setMobileOpen(false)} aria-label="Fermer le menu" className="p-1 rounded-lg hover:bg-gray-100">
                 ✕
               </button>
             </div>
+
             <nav className="flex flex-col gap-1">
-              <Link href="/auth/login" onClick={() => setMobileOpen(false)} className="py-3 px-2 border-b text-sm font-medium">Mon compte</Link>
-              <Link href="/vendor/dashboard" onClick={() => setMobileOpen(false)} className="py-3 px-2 border-b text-sm font-medium text-[#E63946]">Devenir vendeur</Link>
-              {categories.map((c) => (
+              {mobileMenuItems.map((item) => (
                 <Link
-                  key={c.id}
-                  href={`/catalogue?categorie=${c.slug}`}
+                  key={item.href}
+                  href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className="py-2.5 px-2 flex items-center gap-2 text-sm hover:bg-gray-50 rounded-lg"
+                  className="py-3 px-2 border-b text-sm font-medium text-gray-700 hover:text-[#E63946]"
                 >
-                  <span aria-hidden="true">{c.icon}</span>{c.name}
+                  {item.label}
                 </Link>
               ))}
+              <div className="mt-2 pt-2 border-t">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-2 mb-2">Catégories</p>
+                {categories.map((c) => (
+                  <Link
+                    key={c.id}
+                    href={`/catalogue?categorie=${c.slug}`}
+                    onClick={() => setMobileOpen(false)}
+                    className="py-2.5 px-2 flex items-center gap-2 text-sm hover:bg-gray-50 rounded-lg"
+                  >
+                    <span aria-hidden="true">{c.icon}</span>{c.name}
+                  </Link>
+                ))}
+              </div>
             </nav>
           </div>
         </div>
