@@ -218,18 +218,15 @@ export async function devenirVendeur(data: { nomBoutique: string; ville: string 
   const admin = createAdminClient();
 
   if (dejaVendeur) {
-    // Boutique déjà créée mais rôle pas mis à jour (incident précédent) → on corrige tout
-    if (profil.role !== "vendeur") {
-      const { error: roleError } = await admin
-        .from("utilisateurs").update({ role: "vendeur" }).eq("id", user.id);
-      if (roleError) return { erreur: "Erreur mise à jour du rôle : " + roleError.message };
-      await admin.auth.admin.updateUserById(user.id, {
-        app_metadata: { role: "vendeur" },
-      });
-      revalidatePath("/");
-      return { succes: true };
-    }
-    return { erreur: "Vous avez déjà une boutique." };
+    // Boutique existe mais rôle pas encore "vendeur" (incident précédent) → on corrige
+    const { error: roleError } = await admin
+      .from("utilisateurs").update({ role: "vendeur" }).eq("id", user.id);
+    if (roleError) return { erreur: "Erreur mise à jour du rôle : " + roleError.message };
+    await admin.auth.admin.updateUserById(user.id, {
+      app_metadata: { role: "vendeur" },
+    });
+    revalidatePath("/");
+    return { succes: true };
   }
 
   const slug = `${slugifier(data.nomBoutique)}-${user.id.slice(0, 6)}`;
