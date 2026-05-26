@@ -14,7 +14,7 @@ import {
 import { categories } from "@/data/categories";
 import { confirmerCommandeVendeur } from "@/app/actions/commandes";
 import type { Produit, Vendeur, Commande } from "@/lib/supabase/database.types";
-import { MAX_PRODUITS_GRATUIT } from "@/lib/rules";
+import { PLANS, MAX_PRODUITS_GRATUIT } from "@/lib/rules";
 import { ImageCropModal } from "@/components/ui/ImageCropModal";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -147,14 +147,17 @@ function ProductFormModal({
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
     setSubmitting(true);
-    await onSave(
-      form.nom.trim(),
-      form.description.trim() || null,
-      Number(form.prix),
-      form.categorie || null,
-      form.imageUrl || null,
-    );
-    setSubmitting(false);
+    try {
+      await onSave(
+        form.nom.trim(),
+        form.description.trim() || null,
+        Number(form.prix),
+        form.categorie || null,
+        form.imageUrl || null,
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -394,7 +397,7 @@ export default function VendorDashboard() {
 
         const [prodData, aboData, cmdData] = await Promise.all([
           getMesProduits(),
-          supabase.from("abonnements").select("max_produits")
+          supabase.from("abonnements").select("plan")
             .eq("vendeur_id", v.id).eq("statut", "actif")
             .order("created_at", { ascending: false }).limit(1).maybeSingle(),
           supabase.from("commandes").select("*")
@@ -403,7 +406,9 @@ export default function VendorDashboard() {
         ]);
 
         setProduits(prodData);
-        setMaxProduits(aboData.data?.max_produits ?? MAX_PRODUITS_GRATUIT);
+        const planId = (aboData.data?.plan ?? "gratuit") as keyof typeof PLANS;
+        const planMax = PLANS[planId]?.max_produits ?? MAX_PRODUITS_GRATUIT;
+        setMaxProduits(Number.isFinite(planMax) ? (planMax as number) : 9999);
         setCommandes(cmdData.data ?? []);
       } catch {
         setErreurGlobale("Erreur de chargement. Actualisez la page.");
@@ -419,7 +424,7 @@ export default function VendorDashboard() {
 
   const handleSave = async (nom: string, description: string | null, prix: number, categorie: string | null, image: string | null) => {
     const res = await sauvegarderProduit({ id: editing?.id, nom, description, prix, categorie, image });
-    if (res.erreur) { setErreurGlobale(res.erreur); return; }
+    if (res.erreur) { closeForm(); setErreurGlobale(res.erreur); return; }
     closeForm();
     const updated = await getMesProduits();
     setProduits(updated);

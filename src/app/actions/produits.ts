@@ -2,7 +2,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
-import { MAX_PRODUITS_GRATUIT } from "@/lib/rules";
+import { PLANS, MAX_PRODUITS_GRATUIT } from "@/lib/rules";
 
 type ProduitInput = {
   id?: string;
@@ -43,14 +43,16 @@ export async function sauvegarderProduit(produit: ProduitInput) {
     // Création : vérifie la limite via RPC atomique (advisory lock + count réel)
     const { data: abo } = await supabase
       .from("abonnements")
-      .select("max_produits")
+      .select("plan")
       .eq("vendeur_id", vendeur.id)
       .eq("statut", "actif")
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
 
-    const max = abo?.max_produits ?? MAX_PRODUITS_GRATUIT;
+    const planId = (abo?.plan ?? "gratuit") as keyof typeof PLANS;
+    const planMax = PLANS[planId]?.max_produits ?? MAX_PRODUITS_GRATUIT;
+    const max = Number.isFinite(planMax) ? (planMax as number) : 9999;
     const admin = createAdminClient();
 
     const { data: result, error: errRpc } = await admin.rpc("inserer_produit_si_limite_ok", {
