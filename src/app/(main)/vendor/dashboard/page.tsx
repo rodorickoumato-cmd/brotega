@@ -174,7 +174,13 @@ function ProductFormModal({
         form.categorie || null,
         form.imageUrl || null,
       );
-      if (erreur) setErrors((p) => ({ ...p, server: erreur }));
+      if (erreur) {
+        setErrors((p) => ({ ...p, server: erreur }));
+        bodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    } catch {
+      setErrors((p) => ({ ...p, server: "Erreur inattendue. Réessayez." }));
+      bodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setSubmitting(false);
     }
@@ -209,6 +215,17 @@ function ProductFormModal({
 
         {/* Corps */}
         <div ref={bodyRef} className="overflow-y-auto flex-1 p-5 space-y-5">
+
+          {/* Erreurs de validation — toujours visible après scroll-to-top */}
+          {(errors.nom || errors.prix || errors.image || errors.server) && (
+            <div className="bg-red-50 border-2 border-red-300 rounded-2xl px-4 py-3 text-sm text-red-700 font-medium space-y-1">
+              <p className="font-black text-red-800 mb-1">Corrigez les erreurs suivantes :</p>
+              {errors.image  && <p>📷 {errors.image}</p>}
+              {errors.nom    && <p>✏️ {errors.nom}</p>}
+              {errors.prix   && <p>💰 {errors.prix}</p>}
+              {errors.server && <p>❌ {errors.server}</p>}
+            </div>
+          )}
 
           {/* Photo */}
           <div>
@@ -383,14 +400,6 @@ function ProductFormModal({
           {upload.status === "uploading" && (
             <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700 font-bold text-center animate-pulse">
               ⏳ Photo en cours d&apos;envoi — attendez avant de valider
-            </div>
-          )}
-          {(errors.nom || errors.prix || errors.image || errors.server) && (
-            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-medium space-y-1">
-              {errors.image  && <p>📷 {errors.image}</p>}
-              {errors.nom    && <p>✏️ {errors.nom}</p>}
-              {errors.prix   && <p>💰 {errors.prix}</p>}
-              {errors.server && <p>❌ {errors.server}</p>}
             </div>
           )}
           <div className="flex gap-3">
