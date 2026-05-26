@@ -64,16 +64,17 @@ function ProductFormModal({
 }: {
   produit: Produit | null;
   nomBoutique: string;
-  onSave: (nom: string, description: string | null, prix: number, unite: string, stock: number | null, categorie: string | null, image: string | null) => Promise<void>;
+  onSave: (nom: string, description: string | null, prix: number, unite: string, stock: number | null, categorie: string | null, image: string | null) => Promise<string | null>;
   onClose: () => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState<FormData>(() =>
     produit
       ? { nom: produit.nom, description: produit.description ?? "", prix: produit.prix.toString(), unite: produit.unite ?? "piece", stock: produit.stock?.toString() ?? "", categorie: produit.categorie ?? "", imagePreview: produit.image ?? "", imageUrl: produit.image ?? "" }
       : emptyForm
   );
-  const [errors, setErrors] = useState<{ nom?: string; prix?: string; image?: string }>({});
+  const [errors, setErrors] = useState<{ nom?: string; prix?: string; image?: string; server?: string }>({});
   const [upload, setUpload] = useState<UploadState>({ status: "idle" });
   const [infoCompression, setInfoCompression] = useState<{ avant: number; apres: number } | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -156,11 +157,15 @@ function ProductFormModal({
     if (!form.prix || Number(form.prix) <= 0) errs.prix = "Prix doit être supérieur à 0.";
     if (!form.imagePreview) errs.image = "Ajoutez une photo du produit.";
     if (upload.status === "uploading") errs.image = "Attendez la fin de l'envoi...";
+    if (upload.status === "error") errs.image = "La photo n'a pas pu être envoyée. Appuyez sur Réessayer.";
     setErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    if (Object.keys(errs).length > 0) {
+      bodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
     setSubmitting(true);
     try {
-      await onSave(
+      const erreur = await onSave(
         form.nom.trim(),
         form.description.trim() || null,
         Number(form.prix),
@@ -169,6 +174,7 @@ function ProductFormModal({
         form.categorie || null,
         form.imageUrl || null,
       );
+      if (erreur) setErrors((p) => ({ ...p, server: erreur }));
     } finally {
       setSubmitting(false);
     }
@@ -202,7 +208,7 @@ function ProductFormModal({
         </div>
 
         {/* Corps */}
-        <div className="overflow-y-auto flex-1 p-5 space-y-5">
+        <div ref={bodyRef} className="overflow-y-auto flex-1 p-5 space-y-5">
 
           {/* Photo */}
           <div>
@@ -373,16 +379,26 @@ function ProductFormModal({
         </div>
 
         {/* Pied */}
-        <div className="flex gap-3 px-5 py-4 border-t border-gray-100 flex-shrink-0 bg-white rounded-b-3xl">
-          <button onClick={onClose}
-            className="flex-1 py-3.5 border-2 border-gray-200 rounded-2xl text-sm font-bold text-gray-600 active:scale-95 transition-all">
-            Annuler
-          </button>
-          <button onClick={handleSubmit}
-            disabled={submitting || upload.status === "uploading"}
-            className="flex-[2] py-3.5 bg-[#E63946] text-white rounded-2xl text-sm font-black disabled:opacity-50 active:scale-95 transition-all">
-            {submitting ? "Enregistrement..." : upload.status === "uploading" ? "⏳ Photo en cours..." : produit ? "Enregistrer" : "Ajouter le produit"}
-          </button>
+        <div className="px-5 pb-4 pt-3 border-t border-gray-100 flex-shrink-0 bg-white rounded-b-3xl space-y-3">
+          {(errors.nom || errors.prix || errors.image || errors.server) && (
+            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-medium space-y-1">
+              {errors.image  && <p>📷 {errors.image}</p>}
+              {errors.nom    && <p>✏️ {errors.nom}</p>}
+              {errors.prix   && <p>💰 {errors.prix}</p>}
+              {errors.server && <p>❌ {errors.server}</p>}
+            </div>
+          )}
+          <div className="flex gap-3">
+            <button onClick={onClose}
+              className="flex-1 py-3.5 border-2 border-gray-200 rounded-2xl text-sm font-bold text-gray-600 active:scale-95 transition-all">
+              Annuler
+            </button>
+            <button onClick={handleSubmit}
+              disabled={submitting || upload.status === "uploading"}
+              className="flex-[2] py-3.5 bg-[#E63946] text-white rounded-2xl text-sm font-black disabled:opacity-50 active:scale-95 transition-all">
+              {submitting ? "Enregistrement..." : upload.status === "uploading" ? "⏳ Photo en cours..." : produit ? "Enregistrer" : "Ajouter le produit"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -474,12 +490,13 @@ export default function VendorDashboard() {
   const openEdit = (p: Produit) => { setEditing(p); setShowForm(true); setErreurGlobale(""); };
   const closeForm = () => { setShowForm(false); setEditing(null); };
 
-  const handleSave = async (nom: string, description: string | null, prix: number, unite: string, stock: number | null, categorie: string | null, image: string | null) => {
+  const handleSave = async (nom: string, description: string | null, prix: number, unite: string, stock: number | null, categorie: string | null, image: string | null): Promise<string | null> => {
     const res = await sauvegarderProduit({ id: editing?.id, nom, description, prix, unite, stock, categorie, image });
-    if (res.erreur) { closeForm(); setErreurGlobale(res.erreur); return; }
+    if (res.erreur) return res.erreur; // l'erreur s'affiche dans le modal, pas besoin de le fermer
     closeForm();
     const updated = await getMesProduits();
     setProduits(updated);
+    return null;
   };
 
   const handleToggleStatut = async (p: Produit) => {

@@ -1,12 +1,11 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { CITIES_GABON } from "@/lib/utils";
 import { sInscrire } from "@/app/actions/auth";
+import { createClient } from "@/lib/supabase/client";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [role, setRole] = useState<"acheteur" | "vendeur">("acheteur");
   const [nom, setNom] = useState("");
   const [email, setEmail] = useState("");
@@ -26,8 +25,9 @@ export default function RegisterPage() {
     });
     setLoading(false);
     if (res.erreur) { setErreur(res.erreur); return; }
-    router.push(role === "vendeur" ? "/vendor/dashboard" : "/");
-    router.refresh();
+    // Rafraîchit le JWT pour intégrer app_metadata.role avant navigation
+    await createClient().auth.refreshSession().catch(() => {});
+    window.location.href = role === "vendeur" ? "/vendor/dashboard" : "/";
   };
 
   return (

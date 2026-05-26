@@ -86,9 +86,10 @@ export async function sInscrire(input: {
     return { erreur: "Erreur création profil : " + profilError.message };
   }
 
+  const adminInscription = createAdminClient();
+
   if (input.role === "vendeur" && input.nomBoutique) {
     const slug = `${slugifier(input.nomBoutique)}-${data.user.id.slice(0, 6)}`;
-    const adminInscription = createAdminClient();
     const { data: vendeurInscrit } = await adminInscription.from("vendeurs").insert({
       utilisateur_id: data.user.id,
       nom: input.nomBoutique.trim(),
@@ -107,6 +108,11 @@ export async function sInscrire(input: {
       }, { onConflict: "vendeur_id", ignoreDuplicates: true });
     }
   }
+
+  // Rôle gravé dans le JWT (app_metadata) — lu sans requête DB partout
+  await adminInscription.auth.admin.updateUserById(data.user.id, {
+    app_metadata: { role: input.role },
+  });
 
   revalidatePath("/");
   return { succes: true, role: input.role };
@@ -154,10 +160,11 @@ export async function creerProfil(data: {
   });
   if (profilError) return { erreur: "Erreur création profil : " + profilError.message };
 
+  const adminProfil = createAdminClient();
+
   if (data.role === "vendeur" && data.nomBoutique) {
     const slug = `${slugifier(data.nomBoutique)}-${user.id.slice(0, 6)}`;
-    const adminVendeur = createAdminClient();
-    const { error: vendeurError } = await adminVendeur.from("vendeurs").insert({
+    const { error: vendeurError } = await adminProfil.from("vendeurs").insert({
       utilisateur_id: user.id,
       nom: data.nomBoutique,
       slug,
@@ -169,6 +176,10 @@ export async function creerProfil(data: {
     });
     if (vendeurError) return { erreur: "Erreur création boutique : " + vendeurError.message };
   }
+
+  await adminProfil.auth.admin.updateUserById(user.id, {
+    app_metadata: { role: data.role },
+  });
 
   revalidatePath("/");
   return { succes: true, role: data.role };
@@ -204,11 +215,24 @@ export async function devenirVendeur(data: { nomBoutique: string; ville: string 
   const { data: dejaVendeur } = await supabase
     .from("vendeurs").select("id").eq("utilisateur_id", user.id).maybeSingle();
 
-  if (dejaVendeur) return { erreur: "Vous avez déjà une boutique." };
+  const admin = createAdminClient();
+
+  if (dejaVendeur) {
+    // Boutique déjà créée mais rôle pas mis à jour (incident précédent) → on corrige tout
+    if (profil.role !== "vendeur") {
+      const { error: roleError } = await admin
+        .from("utilisateurs").update({ role: "vendeur" }).eq("id", user.id);
+      if (roleError) return { erreur: "Erreur mise à jour du rôle : " + roleError.message };
+      await admin.auth.admin.updateUserById(user.id, {
+        app_metadata: { role: "vendeur" },
+      });
+      revalidatePath("/");
+      return { succes: true };
+    }
+    return { erreur: "Vous avez déjà une boutique." };
+  }
 
   const slug = `${slugifier(data.nomBoutique)}-${user.id.slice(0, 6)}`;
-
-  const admin = createAdminClient();
 
   // INSERT vendeur avec le client utilisateur (RLS : chacun ne peut créer que sa boutique)
   const { data: vendeurCree, error: vendeurError } = await supabase
@@ -234,10 +258,15 @@ export async function devenirVendeur(data: { nomBoutique: string; ville: string 
     balance_pending_xaf: 0,
   }, { onConflict: "vendeur_id", ignoreDuplicates: true });
 
-  // Changement de rôle : opération privilégiée, jamais accordée aux utilisateurs
+  // Changement de rôle en DB — opération privilégiée via admin client
   const { error: roleError } = await admin
     .from("utilisateurs").update({ role: "vendeur" }).eq("id", user.id);
   if (roleError) return { erreur: "Erreur mise à jour du rôle : " + roleError.message };
+
+  // Rôle gravé dans le JWT (app_metadata) — synchronisé avec la DB
+  await admin.auth.admin.updateUserById(user.id, {
+    app_metadata: { role: "vendeur" },
+  });
 
   revalidatePath("/");
   return { succes: true };

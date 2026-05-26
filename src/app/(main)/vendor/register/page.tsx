@@ -1,15 +1,41 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { CITIES_GABON } from "@/lib/utils";
 import { devenirVendeur } from "@/app/actions/auth";
+import { createClient } from "@/lib/supabase/client";
 
 export default function VendorRegisterPage() {
-  const router = useRouter();
   const [nomBoutique, setNomBoutique] = useState("");
   const [ville, setVille] = useState("Libreville");
   const [loading, setLoading] = useState(false);
   const [erreur, setErreur] = useState("");
+  const [verification, setVerification] = useState(true); // bloque le formulaire pendant le check
+
+  // Vérifie le rôle AVANT d'afficher quoi que ce soit
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser()
+      .then(({ data: { user } }) => {
+        if (!user) { setVerification(false); return; }
+        return supabase.from("utilisateurs").select("role").eq("id", user.id).single()
+          .then(({ data }) => {
+            if (data?.role === "vendeur") {
+              window.location.href = "/vendor/dashboard";
+            } else {
+              setVerification(false);
+            }
+          });
+      })
+      .catch(() => setVerification(false));
+  }, []);
+
+  if (verification) {
+    return (
+      <div className="min-h-screen bg-[#E63946] flex items-center justify-center">
+        <div className="animate-spin w-10 h-10 rounded-full border-4 border-white border-t-transparent" />
+      </div>
+    );
+  }
 
   const soumettre = async () => {
     setErreur("");
@@ -21,8 +47,10 @@ export default function VendorRegisterPage() {
     const res = await devenirVendeur({ nomBoutique: nomBoutique.trim(), ville });
     setLoading(false);
     if (res.erreur) { setErreur(res.erreur); return; }
-    router.push("/vendor/dashboard");
-    router.refresh();
+    // Rafraîchit le JWT pour intégrer app_metadata.role = "vendeur" avant navigation
+    const supabase = createClient();
+    await supabase.auth.refreshSession();
+    window.location.href = "/vendor/dashboard";
   };
 
   return (

@@ -30,28 +30,38 @@ export function Header() {
   useEffect(() => {
     const supabase = createClient();
 
-    async function miseAJourAuth(userId: string | null) {
+    async function miseAJourAuth(userId: string | null, roleJwt?: string) {
       if (!userId) {
         setAuth({ charge: false, connecte: false, role: null, initiales: "" });
         return;
       }
+      // Rôle depuis le JWT en priorité (pas de requête DB) ; fallback DB pour comptes anciens
+      let role = roleJwt ?? "";
       const { data } = await supabase
         .from("utilisateurs")
-        .select("role, nom")
+        .select(role ? "nom" : "role, nom")
         .eq("id", userId)
         .single();
-      const initiales = data?.nom
-        ? data.nom.trim().split(/\s+/).map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
+      if (!role) role = (data as { role?: string })?.role ?? "acheteur";
+      const nom = (data as { nom?: string })?.nom ?? "";
+      const initiales = nom
+        ? nom.trim().split(/\s+/).map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
         : "?";
-      setAuth({ charge: false, connecte: true, role: data?.role ?? "acheteur", initiales });
+      setAuth({ charge: false, connecte: true, role, initiales });
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      miseAJourAuth(session?.user?.id ?? null);
+      miseAJourAuth(
+        session?.user?.id ?? null,
+        (session?.user?.app_metadata?.role as string) || undefined,
+      );
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      miseAJourAuth(session?.user?.id ?? null);
+      miseAJourAuth(
+        session?.user?.id ?? null,
+        (session?.user?.app_metadata?.role as string) || undefined,
+      );
     });
 
     return () => subscription.unsubscribe();
@@ -200,9 +210,19 @@ export function Header() {
               {!auth.charge && (
                 <Link
                   href={navAction.href}
-                  className={`hidden lg:flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl transition-colors ${navAction.cls}`}
+                  className={`hidden md:flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-xl transition-colors ${navAction.cls}`}
                 >
                   {navAction.label}
+                </Link>
+              )}
+              {/* Accès rapide dashboard vendeur sur mobile */}
+              {!auth.charge && auth.role === "vendeur" && (
+                <Link
+                  href="/vendor/dashboard"
+                  className="flex md:hidden items-center justify-center w-9 h-9 bg-[#FFD100] rounded-xl text-lg"
+                  aria-label="Ma boutique"
+                >
+                  🏪
                 </Link>
               )}
 

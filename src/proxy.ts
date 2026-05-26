@@ -50,16 +50,17 @@ export default async function proxy(request: NextRequest) {
   if (entreeRole) {
     if (!user) return loginUrl();
 
-    // Lecture du rôle directement en DB (1 requête légère, côté serveur uniquement)
-    const { data: profil } = await supabase
-      .from("utilisateurs")
-      .select("role")
-      .eq("id", user.id)
-      .single();
+    // Rôle lu depuis le JWT (app_metadata) — aucune requête DB en middleware
+    // Fallback DB pour les comptes créés avant cette architecture (période de transition)
+    let roleUtilisateur = (user.app_metadata?.role as string) ?? "";
+    if (!roleUtilisateur) {
+      const { data: profil } = await supabase
+        .from("utilisateurs").select("role").eq("id", user.id).single();
+      roleUtilisateur = profil?.role ?? "";
+    }
 
     const rolesAutorises = entreeRole[1];
-    if (!rolesAutorises.includes(profil?.role ?? "")) {
-      // Connecté mais mauvais rôle → page d'accueil (pas de message d'erreur qui aide un attaquant)
+    if (!rolesAutorises.includes(roleUtilisateur)) {
       return NextResponse.redirect(new URL("/", request.url));
     }
   }

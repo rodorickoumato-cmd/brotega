@@ -1,11 +1,10 @@
 "use client";
 import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { seConnecter, reinitialiserMotDePasse } from "@/app/actions/auth";
 
 function LoginContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") ?? "/";
 
@@ -22,8 +21,8 @@ function LoginContent() {
     const res = await seConnecter({ email, motDePasse });
     setLoading(false);
     if (res.erreur) { setErreur(res.erreur); return; }
-    router.push(redirectTo);
-    router.refresh();
+    // Rechargement complet : garantit que le header relise le rôle depuis la DB
+    window.location.href = redirectTo;
   };
 
   const envoyerReset = async () => {
