@@ -15,6 +15,7 @@ import { categories } from "@/data/categories";
 import { confirmerCommandeVendeur } from "@/app/actions/commandes";
 import type { Produit, Vendeur, Commande } from "@/lib/supabase/database.types";
 import { MAX_PRODUITS_GRATUIT } from "@/lib/rules";
+import { ImageCropModal } from "@/components/ui/ImageCropModal";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -64,6 +65,7 @@ function ProductFormModal({
   const [upload, setUpload] = useState<UploadState>({ status: "idle" });
   const [infoCompression, setInfoCompression] = useState<{ avant: number; apres: number } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
 
   const set = (field: keyof FormData, value: string) => {
     setForm((p) => ({ ...p, [field]: value }));
@@ -99,7 +101,8 @@ function ProductFormModal({
     });
   };
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Étape 1 : sélection du fichier → ouverture du rogneur
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fichier = e.target.files?.[0];
     e.target.value = "";
     if (!fichier) return;
@@ -108,10 +111,19 @@ function ProductFormModal({
       return;
     }
     setErrors((p) => ({ ...p, image: undefined }));
+    // Créer une URL blob pour le rogneur
+    const blobUrl = URL.createObjectURL(fichier);
+    setCropSrc(blobUrl);
+  };
+
+  // Étape 2 : après rognage → compression + upload
+  const handleCropConfirm = async (fichierRogne: File) => {
+    URL.revokeObjectURL(cropSrc ?? "");
+    setCropSrc(null);
     setInfoCompression(null);
     setUpload({ status: "uploading", progress: 0 });
     try {
-      const res = await compresserImage(fichier, 1200, 0.88);
+      const res = await compresserImage(fichierRogne, 1200, 0.88);
       setInfoCompression({ avant: res.tailleAvant, apres: res.tailleApres });
       setForm((p) => ({ ...p, imagePreview: res.preview, imageUrl: "" }));
       const url = await uploadVersCloudinaire(res.fichier);
@@ -119,6 +131,11 @@ function ProductFormModal({
     } catch (err) {
       setErrors((p) => ({ ...p, image: err instanceof Error ? err.message : "Échec upload." }));
     }
+  };
+
+  const handleCropAnnuler = () => {
+    URL.revokeObjectURL(cropSrc ?? "");
+    setCropSrc(null);
   };
 
   const handleSubmit = async () => {
@@ -141,6 +158,16 @@ function ProductFormModal({
   };
 
   return (
+    <>
+      {/* Rogneur de photo (plein écran, z-index supérieur) */}
+      {cropSrc && (
+        <ImageCropModal
+          src={cropSrc}
+          onConfirm={handleCropConfirm}
+          onAnnuler={handleCropAnnuler}
+        />
+      )}
+
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-lg max-h-[92vh] flex flex-col">
         {/* En-tête */}
@@ -304,6 +331,7 @@ function ProductFormModal({
         </div>
       </div>
     </div>
+    </>
   );
 }
 
