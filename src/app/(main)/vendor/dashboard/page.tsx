@@ -178,8 +178,9 @@ function ProductFormModal({
         setErrors((p) => ({ ...p, server: erreur }));
         bodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
       }
-    } catch {
-      setErrors((p) => ({ ...p, server: "Erreur inattendue. Réessayez." }));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setErrors((p) => ({ ...p, server: msg || "Erreur inattendue. Réessayez." }));
       bodyRef.current?.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setSubmitting(false);

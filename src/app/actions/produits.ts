@@ -16,6 +16,7 @@ type ProduitInput = {
 };
 
 export async function sauvegarderProduit(produit: ProduitInput) {
+  try {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { erreur: "Non authentifié." };
@@ -79,6 +80,10 @@ export async function sauvegarderProduit(produit: ProduitInput) {
   revalidatePath("/vendor/dashboard");
   revalidatePath("/catalogue");
   return { succes: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { erreur: "Erreur serveur : " + msg };
+  }
 }
 
 export async function changerStatutProduit(produitId: string, statut: "actif" | "inactif") {
