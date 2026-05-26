@@ -88,8 +88,8 @@ export async function sInscrire(input: {
 
   if (input.role === "vendeur" && input.nomBoutique) {
     const slug = `${slugifier(input.nomBoutique)}-${data.user.id.slice(0, 6)}`;
-    const adminVendeur = createAdminClient();
-    await adminVendeur.from("vendeurs").insert({
+    const adminInscription = createAdminClient();
+    const { data: vendeurInscrit } = await adminInscription.from("vendeurs").insert({
       utilisateur_id: data.user.id,
       nom: input.nomBoutique.trim(),
       slug,
@@ -98,7 +98,14 @@ export async function sInscrire(input: {
       whatsapp: telephone,
       statut: "en_attente",
       categories: [],
-    });
+    }).select("id").single();
+    if (vendeurInscrit) {
+      await adminInscription.from("wallets").upsert({
+        vendeur_id: vendeurInscrit.id,
+        balance_available_xaf: 0,
+        balance_pending_xaf: 0,
+      }, { onConflict: "vendeur_id", ignoreDuplicates: true });
+    }
   }
 
   revalidatePath("/");
@@ -201,21 +208,33 @@ export async function devenirVendeur(data: { nomBoutique: string; ville: string 
 
   const slug = `${slugifier(data.nomBoutique)}-${user.id.slice(0, 6)}`;
 
-  // INSERT vendeur avec le client utilisateur — la RLS autorise chacun à créer sa propre boutique
-  const { error: vendeurError } = await supabase.from("vendeurs").insert({
-    utilisateur_id: user.id,
-    nom: data.nomBoutique,
-    slug,
-    ville: data.ville,
-    telephone: profil.telephone,
-    whatsapp: profil.telephone,
-    statut: "en_attente",
-    categories: [],
-  });
+  const admin = createAdminClient();
+
+  // INSERT vendeur avec le client utilisateur (RLS : chacun ne peut créer que sa boutique)
+  const { data: vendeurCree, error: vendeurError } = await supabase
+    .from("vendeurs")
+    .insert({
+      utilisateur_id: user.id,
+      nom: data.nomBoutique,
+      slug,
+      ville: data.ville,
+      telephone: profil.telephone,
+      whatsapp: profil.telephone,
+      statut: "en_attente",
+      categories: [],
+    })
+    .select("id")
+    .single();
   if (vendeurError) return { erreur: "Erreur création boutique : " + vendeurError.message };
 
-  // Changement de rôle : opération privilégiée → admin client (les utilisateurs ne peuvent pas changer leur propre rôle)
-  const admin = createAdminClient();
+  // Création du wallet (admin client — contournement RLS nécessaire et intentionnel)
+  await admin.from("wallets").upsert({
+    vendeur_id: vendeurCree.id,
+    balance_available_xaf: 0,
+    balance_pending_xaf: 0,
+  }, { onConflict: "vendeur_id", ignoreDuplicates: true });
+
+  // Changement de rôle : opération privilégiée, jamais accordée aux utilisateurs
   const { error: roleError } = await admin
     .from("utilisateurs").update({ role: "vendeur" }).eq("id", user.id);
   if (roleError) return { erreur: "Erreur mise à jour du rôle : " + roleError.message };
