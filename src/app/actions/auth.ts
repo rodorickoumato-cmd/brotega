@@ -1,5 +1,6 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Database } from "@/lib/supabase/database.types";
@@ -87,7 +88,8 @@ export async function sInscrire(input: {
 
   if (input.role === "vendeur" && input.nomBoutique) {
     const slug = `${slugifier(input.nomBoutique)}-${data.user.id.slice(0, 6)}`;
-    await supabase.from("vendeurs").insert({
+    const adminVendeur = createAdminClient();
+    await adminVendeur.from("vendeurs").insert({
       utilisateur_id: data.user.id,
       nom: input.nomBoutique.trim(),
       slug,
@@ -147,7 +149,8 @@ export async function creerProfil(data: {
 
   if (data.role === "vendeur" && data.nomBoutique) {
     const slug = `${slugifier(data.nomBoutique)}-${user.id.slice(0, 6)}`;
-    const { error: vendeurError } = await supabase.from("vendeurs").insert({
+    const adminVendeur = createAdminClient();
+    const { error: vendeurError } = await adminVendeur.from("vendeurs").insert({
       utilisateur_id: user.id,
       nom: data.nomBoutique,
       slug,
@@ -198,7 +201,10 @@ export async function devenirVendeur(data: { nomBoutique: string; ville: string 
 
   const slug = `${slugifier(data.nomBoutique)}-${user.id.slice(0, 6)}`;
 
-  const { error: vendeurError } = await supabase.from("vendeurs").insert({
+  // Admin client : bypass RLS pour que le trigger wallet s'exécute avec les droits suffisants
+  const admin = createAdminClient();
+
+  const { error: vendeurError } = await admin.from("vendeurs").insert({
     utilisateur_id: user.id,
     nom: data.nomBoutique,
     slug,
@@ -210,7 +216,7 @@ export async function devenirVendeur(data: { nomBoutique: string; ville: string 
   });
   if (vendeurError) return { erreur: "Erreur création boutique : " + vendeurError.message };
 
-  const { error: roleError } = await supabase
+  const { error: roleError } = await admin
     .from("utilisateurs").update({ role: "vendeur" }).eq("id", user.id);
   if (roleError) return { erreur: "Erreur mise à jour du rôle : " + roleError.message };
 
