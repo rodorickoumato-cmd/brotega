@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { MAX_PRODUITS_GRATUIT } from "@/lib/rules";
 
 async function verifierAdmin() {
   const supabase = await createClient();
@@ -41,29 +42,100 @@ export async function getPaiementsAdmin() {
   return { erreur: null, paiements: data };
 }
 
-// ── Vendeurs ───────────────────────────────────────────────────
+// ── Vendeurs avec abonnement ────────────────────────────────────
 export async function getVendeursAdmin() {
   const { erreur } = await verifierAdmin();
   if (erreur) return { erreur, vendeurs: null };
   const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("vendeurs")
-    .select("id, nom, slug, ville, statut, categories, nb_produits, note, created_at, utilisateur_id")
-    .order("created_at", { ascending: false });
-  if (error) return { erreur: error.message, vendeurs: null };
-  return { erreur: null, vendeurs: data };
+
+  const [vendeursRes, abonnementsRes] = await Promise.all([
+    admin.from("vendeurs")
+      .select("id, nom, slug, ville, statut, categories, nb_produits, note, created_at, utilisateur_id")
+      .order("created_at", { ascending: false }),
+    admin.from("abonnements")
+      .select("vendeur_id, plan, statut, date_fin, prix_xaf")
+      .in("statut", ["actif", "expire"])
+      .order("created_at", { ascending: false }),
+  ]);
+
+  if (vendeursRes.error) return { erreur: vendeursRes.error.message, vendeurs: null };
+
+  // Attache l'abonnement le plus récent à chaque vendeur
+  const aboParVendeur = new Map<string, typeof abonnementsRes.data extends (infer T)[] | null ? T : never>();
+  for (const abo of abonnementsRes.data ?? []) {
+    if (!aboParVendeur.has(abo.vendeur_id)) {
+      aboParVendeur.set(abo.vendeur_id, abo);
+    }
+  }
+
+  const vendeurs = (vendeursRes.data ?? []).map((v) => ({
+    ...v,
+    abonnement: aboParVendeur.get(v.id) ?? null,
+  }));
+
+  return { erreur: null, vendeurs };
 }
 
+// ── Valider / Suspendre / Réactiver ────────────────────────────
 export async function changerStatutVendeur(vendeurId: string, statut: "verifie" | "suspendu" | "en_attente") {
   const { erreur } = await verifierAdmin();
   if (erreur) return { erreur };
   const admin = createAdminClient();
-  const { error } = await admin
-    .from("vendeurs")
-    .update({ statut })
-    .eq("id", vendeurId);
+  const { error } = await admin.from("vendeurs").update({ statut }).eq("id", vendeurId);
   if (error) return { erreur: error.message };
   return { succes: true };
+}
+
+// ── Expirer les abonnements dépassés + masquer les produits en excès ──
+// À appeler manuellement depuis le dashboard admin ou via cron Supabase
+export async function traiterAbonnementsExpires() {
+  const { erreur } = await verifierAdmin();
+  if (erreur) return { erreur, nb: 0 };
+
+  const admin = createAdminClient();
+  const maintenant = new Date().toISOString();
+
+  // 1. Trouver les abonnements payants dont la date_fin est dépassée
+  const { data: aboExpires } = await admin
+    .from("abonnements")
+    .select("id, vendeur_id, plan")
+    .eq("statut", "actif")
+    .neq("plan", "gratuit")
+    .lt("date_fin", maintenant);
+
+  if (!aboExpires?.length) return { succes: true, nb: 0 };
+
+  const vendeurIds = [...new Set(aboExpires.map((a) => a.vendeur_id))];
+
+  // 2. Marquer les abonnements comme expirés
+  await admin.from("abonnements")
+    .update({ statut: "expire" })
+    .in("id", aboExpires.map((a) => a.id));
+
+  // 3. Pour chaque vendeur, masquer les produits au-delà de la limite gratuite
+  for (const vendeurId of vendeurIds) {
+    const { data: produits } = await admin
+      .from("produits")
+      .select("id")
+      .eq("vendeur_id", vendeurId)
+      .eq("statut", "actif")
+      .order("created_at", { ascending: true });  // les plus anciens restent visibles
+
+    if (produits && produits.length > MAX_PRODUITS_GRATUIT) {
+      const aDesactiver = produits.slice(MAX_PRODUITS_GRATUIT).map((p) => p.id);
+      await admin.from("produits")
+        .update({ statut: "inactif" })
+        .in("id", aDesactiver);
+    }
+  }
+
+  // 4. Suspendre ces vendeurs (abonnement expiré = boutique en pause)
+  await admin.from("vendeurs")
+    .update({ statut: "suspendu" })
+    .in("id", vendeurIds)
+    .eq("statut", "verifie");
+
+  return { succes: true, nb: vendeurIds.length };
 }
 
 // ── Stats dashboard ────────────────────────────────────────────
@@ -72,14 +144,19 @@ export async function getStatsAdmin() {
   if (erreur) return { erreur, stats: null };
   const admin = createAdminClient();
 
-  const [cmdRes, vendRes, paiRes] = await Promise.all([
+  const [cmdRes, vendRes, paiRes, aboExpiresRes] = await Promise.all([
     admin.from("commandes").select("id, total, statut", { count: "exact" }),
     admin.from("vendeurs").select("id, statut", { count: "exact" }),
     admin.from("paiements").select("id, montant_xaf, statut", { count: "exact" }),
+    admin.from("abonnements")
+      .select("id", { count: "exact", head: true })
+      .eq("statut", "actif")
+      .neq("plan", "gratuit")
+      .lt("date_fin", new Date().toISOString()),
   ]);
 
   const commandes = cmdRes.data ?? [];
-  const vendeurs = vendRes.data ?? [];
+  const vendeurs  = vendRes.data ?? [];
   const paiements = paiRes.data ?? [];
 
   const chiffreAffaires = paiements
@@ -99,6 +176,7 @@ export async function getStatsAdmin() {
       vendeursEnAttente: vendeurs.filter((v) => v.statut === "en_attente").length,
       chiffreAffaires,
       paiementsReussis: paiements.filter((p) => p.statut === "reussi").length,
+      abonnementsExpires: aboExpiresRes.count ?? 0,
     },
   };
 }
