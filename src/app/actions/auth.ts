@@ -169,10 +169,26 @@ export async function devenirVendeur(data: { nomBoutique: string; ville: string 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { erreur: "Non connecté." };
 
-  const { data: profil } = await supabase
+  let { data: profil } = await supabase
     .from("utilisateurs").select("id, role, telephone").eq("id", user.id).single();
 
-  if (!profil) return { erreur: "Profil introuvable." };
+  // Profil absent (inscription incomplète) → le créer automatiquement
+  if (!profil) {
+    const nomDefaut = user.email?.split("@")[0] ?? "Vendeur";
+    await supabase.from("utilisateurs").insert({
+      id: user.id,
+      nom: nomDefaut,
+      email: user.email ?? null,
+      email_verifie: !!user.email_confirmed_at,
+      role: "acheteur",
+      marketing_opt_in: false,
+    });
+    const { data: profilCree } = await supabase
+      .from("utilisateurs").select("id, role, telephone").eq("id", user.id).single();
+    profil = profilCree;
+  }
+
+  if (!profil) return { erreur: "Impossible de créer votre profil. Contactez le support." };
   if (profil.role === "vendeur") return { erreur: "Vous êtes déjà vendeur." };
 
   const { data: dejaVendeur } = await supabase
