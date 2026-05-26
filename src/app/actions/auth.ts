@@ -201,10 +201,8 @@ export async function devenirVendeur(data: { nomBoutique: string; ville: string 
 
   const slug = `${slugifier(data.nomBoutique)}-${user.id.slice(0, 6)}`;
 
-  // Admin client : bypass RLS pour que le trigger wallet s'exécute avec les droits suffisants
-  const admin = createAdminClient();
-
-  const { error: vendeurError } = await admin.from("vendeurs").insert({
+  // INSERT vendeur avec le client utilisateur — la RLS autorise chacun à créer sa propre boutique
+  const { error: vendeurError } = await supabase.from("vendeurs").insert({
     utilisateur_id: user.id,
     nom: data.nomBoutique,
     slug,
@@ -216,6 +214,8 @@ export async function devenirVendeur(data: { nomBoutique: string; ville: string 
   });
   if (vendeurError) return { erreur: "Erreur création boutique : " + vendeurError.message };
 
+  // Changement de rôle : opération privilégiée → admin client (les utilisateurs ne peuvent pas changer leur propre rôle)
+  const admin = createAdminClient();
   const { error: roleError } = await admin
     .from("utilisateurs").update({ role: "vendeur" }).eq("id", user.id);
   if (roleError) return { erreur: "Erreur mise à jour du rôle : " + roleError.message };
