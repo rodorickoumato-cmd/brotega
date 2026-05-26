@@ -45,7 +45,7 @@ export async function sauvegarderProduit(produit: ProduitInput) {
       .eq("vendeur_id", vendeur.id);
     if (error) return { erreur: error.message };
   } else {
-    // Création : vérifie la limite via RPC atomique (advisory lock + count réel)
+    // Création : vérification de limite + insertion via client admin (bypass RLS)
     const { data: abo } = await supabase
       .from("abonnements")
       .select("plan")
@@ -58,23 +58,32 @@ export async function sauvegarderProduit(produit: ProduitInput) {
     const planId = (abo?.plan ?? "gratuit") as keyof typeof PLANS;
     const planMax = PLANS[planId]?.max_produits ?? MAX_PRODUITS_GRATUIT;
     const max = Number.isFinite(planMax) ? (planMax as number) : 9999;
+
     const admin = createAdminClient();
 
-    const { data: result, error: errRpc } = await admin.rpc("inserer_produit_si_limite_ok", {
-      p_vendeur_id: vendeur.id,
-      p_max: max,
-      p_nom: produit.nom,
-      p_description: produit.description ?? null,
-      p_prix: produit.prix,
-      p_categorie: produit.categorie ?? null,
-      p_image: produit.image ?? null,
-      p_unite: produit.unite ?? "piece",
-      p_stock: produit.stock ?? null,
+    const { count, error: countError } = await admin
+      .from("produits")
+      .select("*", { count: "exact", head: true })
+      .eq("vendeur_id", vendeur.id);
+
+    if (countError) return { erreur: countError.message };
+    if ((count ?? 0) >= max) {
+      return { erreur: `Limite atteinte (${max} produits). Passez à un abonnement supérieur.` };
+    }
+
+    const { error: insertError } = await admin.from("produits").insert({
+      vendeur_id: vendeur.id,
+      nom: produit.nom,
+      description: produit.description ?? null,
+      prix: produit.prix,
+      unite: produit.unite ?? "piece",
+      stock: produit.stock ?? null,
+      categorie: produit.categorie ?? null,
+      image: produit.image ?? null,
+      statut: "actif",
     });
 
-    if (errRpc) return { erreur: errRpc.message };
-    const rpcResult = result as { succes: boolean; erreur?: string };
-    if (!rpcResult.succes) return { erreur: rpcResult.erreur ?? "Limite atteinte." };
+    if (insertError) return { erreur: insertError.message };
   }
 
   revalidatePath("/vendor/dashboard");
