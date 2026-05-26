@@ -359,6 +359,14 @@ export type Database = {
         Args: { p_vendeur_id: string; p_montant: number; p_commission: number; p_commande_id: string };
         Returns: void;
       };
+      debiter_wallet_retrait: {
+        Args: { p_vendeur_id: string; p_montant: number; p_description: string };
+        Returns: Record<string, unknown>;
+      };
+      inserer_produit_si_limite_ok: {
+        Args: { p_vendeur_id: string; p_max: number; p_nom: string; p_description: string | null; p_prix: number; p_categorie: string | null; p_image: string | null };
+        Returns: Record<string, unknown>;
+      };
     };
 
     Enums: { [_ in never]: never };
