@@ -1,5 +1,6 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Database } from "@/lib/supabase/database.types";
@@ -37,8 +38,17 @@ export async function seConnecter(input: { email: string; motDePasse: string }) 
   const { data: profil } = await supabase
     .from("utilisateurs").select("id, role").eq("id", data.user.id).single();
 
+  // Auto-promotion : si l'email correspond à ADMIN_EMAIL, forcer le rôle admin
+  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
+  if (adminEmail && email === adminEmail && profil?.role !== "admin") {
+    const adminClient = createAdminClient();
+    await adminClient.from("utilisateurs").update({ role: "admin" }).eq("id", data.user.id);
+  }
+
+  const roleEffectif = (adminEmail && email === adminEmail) ? "admin" : (profil?.role ?? null);
+
   revalidatePath("/");
-  return { succes: true, profilExiste: !!profil, role: profil?.role ?? null };
+  return { succes: true, profilExiste: !!profil, role: roleEffectif };
 }
 
 // ─── Inscription ──────────────────────────────────────────────────────────────
