@@ -1,6 +1,5 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
 import { PLANS, MAX_PRODUITS_GRATUIT } from "@/lib/rules";
 
 type ProduitInput = {
@@ -81,8 +80,6 @@ export async function sauvegarderProduit(produit: ProduitInput) {
       if (insertError) return { erreur: insertError.message };
     }
 
-    revalidatePath("/vendor/dashboard");
-    revalidatePath("/catalogue");
     return { succes: true };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -107,7 +104,6 @@ export async function changerStatutProduit(produitId: string, statut: "actif" | 
       .eq("vendeur_id", vendeur.id);
 
     if (error) return { erreur: error.message };
-    revalidatePath("/vendor/dashboard");
     return { succes: true };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -132,8 +128,6 @@ export async function supprimerProduit(produitId: string) {
       .eq("vendeur_id", vendeur.id);
 
     if (error) return { erreur: error.message };
-    revalidatePath("/vendor/dashboard");
-    revalidatePath("/catalogue");
     return { succes: true };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
