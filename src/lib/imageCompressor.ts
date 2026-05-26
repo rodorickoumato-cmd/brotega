@@ -12,8 +12,8 @@ export type ResultatCompression = {
 
 export async function compresserImage(
   fichier: File,
-  maxDimension = 800,
-  qualite = 0.75
+  maxDimension = 1200,
+  qualite = 0.88
 ): Promise<ResultatCompression> {
   return new Promise((resolve, reject) => {
     if (!fichier.type.startsWith("image/")) {

@@ -111,7 +111,7 @@ function ProductFormModal({
     setInfoCompression(null);
     setUpload({ status: "uploading", progress: 0 });
     try {
-      const res = await compresserImage(fichier, 800, 0.75);
+      const res = await compresserImage(fichier, 1200, 0.88);
       setInfoCompression({ avant: res.tailleAvant, apres: res.tailleApres });
       setForm((p) => ({ ...p, imagePreview: res.preview, imageUrl: "" }));
       const url = await uploadVersCloudinaire(res.fichier);
