@@ -108,10 +108,12 @@ export type Database = {
       produits: {
         Row: {
           id: string;
-          vendeur_id: string;  // FK → vendeurs.id
+          vendeur_id: string;
           nom: string;
           description: string | null;
           prix: number;
+          unite: string;
+          stock: number | null;
           categorie: string | null;
           image: string | null;
           statut: "actif" | "inactif";
@@ -124,6 +126,8 @@ export type Database = {
           nom: string;
           description?: string | null;
           prix: number;
+          unite?: string;
+          stock?: number | null;
           categorie?: string | null;
           image?: string | null;
           statut?: "actif" | "inactif";
@@ -364,7 +368,7 @@ export type Database = {
         Returns: Record<string, unknown>;
       };
       inserer_produit_si_limite_ok: {
-        Args: { p_vendeur_id: string; p_max: number; p_nom: string; p_description: string | null; p_prix: number; p_categorie: string | null; p_image: string | null };
+        Args: { p_vendeur_id: string; p_max: number; p_nom: string; p_description: string | null; p_prix: number; p_categorie: string | null; p_image: string | null; p_unite: string; p_stock: number | null };
         Returns: Record<string, unknown>;
       };
     };

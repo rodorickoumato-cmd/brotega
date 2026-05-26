@@ -9,6 +9,8 @@ type ProduitInput = {
   nom: string;
   description?: string | null;
   prix: number;
+  unite?: string;
+  stock?: number | null;
   categorie?: string | null;
   image?: string | null;
 };
@@ -33,6 +35,8 @@ export async function sauvegarderProduit(produit: ProduitInput) {
         nom: produit.nom,
         description: produit.description ?? null,
         prix: produit.prix,
+        unite: produit.unite ?? "piece",
+        stock: produit.stock ?? null,
         categorie: produit.categorie ?? null,
         image: produit.image ?? null,
       })
@@ -63,6 +67,8 @@ export async function sauvegarderProduit(produit: ProduitInput) {
       p_prix: produit.prix,
       p_categorie: produit.categorie ?? null,
       p_image: produit.image ?? null,
+      p_unite: produit.unite ?? "piece",
+      p_stock: produit.stock ?? null,
     });
 
     if (errRpc) return { erreur: errRpc.message };

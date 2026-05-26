@@ -25,9 +25,21 @@ type UploadState =
   | { status: "done"; url: string }
   | { status: "error"; message: string };
 
-type FormData = { nom: string; description: string; prix: string; categorie: string; imagePreview: string; imageUrl: string };
+const UNITES = [
+  { val: "piece",  label: "Pièce",    hint: "à l'unité"    },
+  { val: "kg",     label: "Kg",       hint: "au kilogramme" },
+  { val: "g",      label: "Gramme",   hint: "au gramme"    },
+  { val: "litre",  label: "Litre",    hint: "au litre"     },
+  { val: "cl",     label: "Cl",       hint: "au centilitre" },
+  { val: "lot",    label: "Lot",      hint: "au lot"       },
+  { val: "paquet", label: "Paquet",   hint: "au paquet"    },
+  { val: "sac",    label: "Sac",      hint: "au sac"       },
+  { val: "boite",  label: "Boîte",    hint: "à la boîte"   },
+] as const;
 
-const emptyForm: FormData = { nom: "", description: "", prix: "", categorie: "", imagePreview: "", imageUrl: "" };
+type FormData = { nom: string; description: string; prix: string; unite: string; stock: string; categorie: string; imagePreview: string; imageUrl: string };
+
+const emptyForm: FormData = { nom: "", description: "", prix: "", unite: "piece", stock: "", categorie: "", imagePreview: "", imageUrl: "" };
 
 // ─── Statuts commandes ────────────────────────────────────────────────────────
 
@@ -52,13 +64,13 @@ function ProductFormModal({
 }: {
   produit: Produit | null;
   nomBoutique: string;
-  onSave: (nom: string, description: string | null, prix: number, categorie: string | null, image: string | null) => Promise<void>;
+  onSave: (nom: string, description: string | null, prix: number, unite: string, stock: number | null, categorie: string | null, image: string | null) => Promise<void>;
   onClose: () => void;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [form, setForm] = useState<FormData>(() =>
     produit
-      ? { nom: produit.nom, description: produit.description ?? "", prix: produit.prix.toString(), categorie: produit.categorie ?? "", imagePreview: produit.image ?? "", imageUrl: produit.image ?? "" }
+      ? { nom: produit.nom, description: produit.description ?? "", prix: produit.prix.toString(), unite: produit.unite ?? "piece", stock: produit.stock?.toString() ?? "", categorie: produit.categorie ?? "", imagePreview: produit.image ?? "", imageUrl: produit.image ?? "" }
       : emptyForm
   );
   const [errors, setErrors] = useState<{ nom?: string; prix?: string; image?: string }>({});
@@ -152,6 +164,8 @@ function ProductFormModal({
         form.nom.trim(),
         form.description.trim() || null,
         Number(form.prix),
+        form.unite || "piece",
+        form.stock ? Number(form.stock) : null,
         form.categorie || null,
         form.imageUrl || null,
       );
@@ -295,28 +309,66 @@ function ProductFormModal({
             </select>
           </div>
 
-          {/* Prix */}
+          {/* Prix + Unité (même ligne) */}
           <div>
             <label className="text-sm font-bold text-gray-700 mb-2 block">
-              Prix de vente (XAF) <span className="text-red-400">*</span>
+              Prix de vente <span className="text-red-400">*</span>
             </label>
-            <div className="relative">
-              <input
-                type="number"
-                min={0}
-                value={form.prix}
-                onChange={(e) => set("prix", e.target.value)}
-                placeholder="0"
-                className={`w-full border-2 rounded-2xl px-4 py-4 pr-16 text-base focus:outline-none transition-colors ${
-                  errors.prix ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-[#E63946]"
-                }`}
-              />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-medium pointer-events-none">FCFA</span>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="number"
+                  min={0}
+                  value={form.prix}
+                  onChange={(e) => set("prix", e.target.value)}
+                  placeholder="0"
+                  className={`w-full border-2 rounded-2xl px-4 py-4 pr-16 text-base focus:outline-none transition-colors ${
+                    errors.prix ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-[#E63946]"
+                  }`}
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-gray-400 font-medium pointer-events-none">FCFA</span>
+              </div>
+              <select
+                value={form.unite}
+                onChange={(e) => set("unite", e.target.value)}
+                className="w-28 border-2 border-gray-200 focus:border-[#E63946] rounded-2xl px-3 py-4 text-sm font-bold text-gray-700 focus:outline-none bg-white appearance-none text-center"
+                title="Unité de vente"
+              >
+                {UNITES.map((u) => (
+                  <option key={u.val} value={u.val}>{u.label}</option>
+                ))}
+              </select>
             </div>
             {errors.prix && <p className="text-xs text-red-500 mt-1">{errors.prix}</p>}
             {form.prix && Number(form.prix) > 0 && (
-              <p className="text-sm font-black text-[#E63946] mt-2">{formatXAF(Number(form.prix))}</p>
+              <p className="text-sm font-black text-[#E63946] mt-2">
+                {formatXAF(Number(form.prix))} / {UNITES.find(u => u.val === form.unite)?.hint ?? form.unite}
+              </p>
             )}
+          </div>
+
+          {/* Stock disponible */}
+          <div>
+            <label className="text-sm font-bold text-gray-700 mb-2 block">
+              Stock disponible <span className="text-gray-400 font-normal text-xs">(optionnel)</span>
+            </label>
+            <div className="flex gap-3 items-center">
+              <input
+                type="number"
+                min={0}
+                value={form.stock}
+                onChange={(e) => set("stock", e.target.value)}
+                placeholder="Illimité"
+                className="w-36 border-2 border-gray-200 focus:border-[#E63946] rounded-2xl px-4 py-3.5 text-base focus:outline-none transition-colors"
+              />
+              <p className="text-xs text-gray-400 flex-1">
+                {form.stock
+                  ? Number(form.stock) <= 5
+                    ? `⚠️ Faible stock — les acheteurs verront "Plus que ${form.stock} disponible"`
+                    : `${form.stock} ${UNITES.find(u => u.val === form.unite)?.label ?? ""} en stock`
+                  : "Laissez vide pour un stock illimité"}
+              </p>
+            </div>
           </div>
         </div>
 
@@ -422,8 +474,8 @@ export default function VendorDashboard() {
   const openEdit = (p: Produit) => { setEditing(p); setShowForm(true); setErreurGlobale(""); };
   const closeForm = () => { setShowForm(false); setEditing(null); };
 
-  const handleSave = async (nom: string, description: string | null, prix: number, categorie: string | null, image: string | null) => {
-    const res = await sauvegarderProduit({ id: editing?.id, nom, description, prix, categorie, image });
+  const handleSave = async (nom: string, description: string | null, prix: number, unite: string, stock: number | null, categorie: string | null, image: string | null) => {
+    const res = await sauvegarderProduit({ id: editing?.id, nom, description, prix, unite, stock, categorie, image });
     if (res.erreur) { closeForm(); setErreurGlobale(res.erreur); return; }
     closeForm();
     const updated = await getMesProduits();
@@ -608,12 +660,26 @@ export default function VendorDashboard() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-black text-gray-800 text-base leading-tight">{p.nom}</p>
-                      <p className="text-[#E63946] font-black text-lg mt-1">{formatXAF(p.prix)}</p>
-                      <span className={`inline-block mt-1 text-xs font-bold px-2 py-0.5 rounded-full ${
-                        p.statut === "actif" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
-                      }`}>
-                        {p.statut === "actif" ? "✓ En vente" : "Masqué"}
-                      </span>
+                      <p className="text-[#E63946] font-black text-lg mt-1">
+                        {formatXAF(p.prix)}
+                        <span className="text-sm font-normal text-gray-400 ml-1">
+                          / {UNITES.find(u => u.val === p.unite)?.label ?? p.unite}
+                        </span>
+                      </p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                          p.statut === "actif" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                        }`}>
+                          {p.statut === "actif" ? "✓ En vente" : "Masqué"}
+                        </span>
+                        {p.stock !== null && p.stock !== undefined && (
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            p.stock <= 5 ? "bg-orange-100 text-orange-700" : "bg-gray-100 text-gray-500"
+                          }`}>
+                            {p.stock <= 0 ? "Rupture" : p.stock <= 5 ? `⚠️ ${p.stock} restant${p.stock > 1 ? "s" : ""}` : `${p.stock} en stock`}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
