@@ -380,6 +380,11 @@ function ProductFormModal({
 
         {/* Pied */}
         <div className="px-5 pb-4 pt-3 border-t border-gray-100 flex-shrink-0 bg-white rounded-b-3xl space-y-3">
+          {upload.status === "uploading" && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700 font-bold text-center animate-pulse">
+              ⏳ Photo en cours d&apos;envoi — attendez avant de valider
+            </div>
+          )}
           {(errors.nom || errors.prix || errors.image || errors.server) && (
             <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700 font-medium space-y-1">
               {errors.image  && <p>📷 {errors.image}</p>}
@@ -396,7 +401,11 @@ function ProductFormModal({
             <button onClick={handleSubmit}
               disabled={submitting || upload.status === "uploading"}
               className="flex-[2] py-3.5 bg-[#E63946] text-white rounded-2xl text-sm font-black disabled:opacity-50 active:scale-95 transition-all">
-              {submitting ? "Enregistrement..." : upload.status === "uploading" ? "⏳ Photo en cours..." : produit ? "Enregistrer" : "Ajouter le produit"}
+              {submitting
+                ? "⏳ Enregistrement..."
+                : upload.status === "uploading"
+                ? `⏳ Photo en cours... ${(upload as { status: "uploading"; progress: number }).progress ?? 0}%`
+                : produit ? "Enregistrer ✓" : "Ajouter le produit →"}
             </button>
           </div>
         </div>
