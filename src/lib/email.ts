@@ -1,7 +1,14 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = process.env.EMAIL_FROM ?? "J'adore la Famille <noreply@mycssecret.com>";
+// Initialisation lazy — évite le crash au build si la clé est absente
+let _resend: Resend | null = null;
+function getResend(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null;
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
+  return _resend;
+}
+
+const FROM = process.env.EMAIL_FROM ?? "J'adore la Famille <noreply@jadoelafamille.com>";
 
 export type EmailCommandeParams = {
   to: string;
@@ -31,7 +38,8 @@ function lignesArticles(articles: { nom: string; quantite: number; prix: number 
 }
 
 export async function envoyerEmailConfirmationCommande(params: EmailCommandeParams) {
-  if (!process.env.RESEND_API_KEY) return;
+  const resend = getResend();
+  if (!resend) return;
   try {
     await resend.emails.send({
       from: FROM,
@@ -62,7 +70,8 @@ export async function envoyerEmailConfirmationCommande(params: EmailCommandePara
 }
 
 export async function envoyerEmailNouvelleCommande(params: EmailVendeurParams) {
-  if (!process.env.RESEND_API_KEY) return;
+  const resend = getResend();
+  if (!resend) return;
   try {
     await resend.emails.send({
       from: FROM,
