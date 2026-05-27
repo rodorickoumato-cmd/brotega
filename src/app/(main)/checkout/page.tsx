@@ -218,47 +218,74 @@ export default function CheckoutPage() {
 
           {step === "payment" && (
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-              <h2 className="font-bold text-lg mb-5">Mode de paiement</h2>
-              <div className="space-y-3 mb-6">
+              <h2 className="font-bold text-lg mb-1">Mode de paiement</h2>
+              <p className="text-xs text-gray-500 mb-5">Sécurisé · Argent bloqué jusqu&apos;à livraison</p>
+
+              {/* Avis clients Moov */}
+              <div className="flex items-start gap-2.5 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-4">
+                <svg className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-xs text-gray-600 leading-relaxed">
+                  <span className="font-semibold">Client Moov Money ?</span> Le paiement en ligne Moov n&apos;est pas encore disponible.
+                  Choisissez <span className="font-semibold">Espèces à la livraison</span> — vous payez le livreur à la réception.
+                </p>
+              </div>
+
+              <div className="space-y-3 mb-5">
                 {payMethods.map((pm) => (
                   <button
                     key={pm.id}
                     onClick={() => setPayMethod(pm.id)}
                     className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all text-left ${payMethod === pm.id ? "border-[#E63946] bg-[#FEF2F2]" : "border-gray-200 hover:border-gray-300"}`}
                   >
-                    <div className="text-3xl">{pm.icon}</div>
+                    <div className="text-2xl">{pm.icon}</div>
                     <div className="flex-1">
-                      <p className="font-semibold text-gray-800">{pm.name}</p>
-                      <p className="text-xs text-gray-500">{pm.desc}</p>
+                      <p className="font-semibold text-sm text-gray-800">{pm.name}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{pm.desc}</p>
                     </div>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${payMethod === pm.id ? "border-[#E63946] bg-[#E63946]" : "border-gray-300"}`}>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${payMethod === pm.id ? "border-[#E63946] bg-[#E63946]" : "border-gray-300"}`}>
                       {payMethod === pm.id && <div className="w-2 h-2 rounded-full bg-white" />}
                     </div>
                   </button>
                 ))}
               </div>
 
-              {(payMethod === "airtel_money" || payMethod === "moov_money") && (
-                <div className="bg-blue-50 rounded-xl p-4 mb-4 text-sm">
-                  <p className="font-semibold text-blue-800 mb-1">📲 Comment ça marche</p>
-                  <ol className="text-blue-700 space-y-1 text-xs list-decimal list-inside">
-                    <li>Vous validez la commande</li>
-                    <li>Vous recevez une notification USSD sur votre téléphone</li>
-                    <li>Saisissez votre code PIN {payMethod === "airtel_money" ? "Airtel" : "Moov"} Money</li>
+              {payMethod === "airtel_money" && (
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-4">
+                  <p className="font-semibold text-blue-800 text-sm mb-2">Comment ça marche</p>
+                  <ol className="text-blue-700 space-y-1.5 text-xs list-decimal list-inside">
+                    <li>Vous confirmez la commande</li>
+                    <li>Une demande USSD arrive sur votre téléphone Airtel</li>
+                    <li>Saisissez votre code PIN Airtel Money</li>
                     <li>Montant débité : <strong>{formatXAF(grandTotal)}</strong></li>
                   </ol>
-                  <p className="text-blue-700 text-xs mt-2 italic">
-                    🛡️ L&apos;argent est bloqué chez J'adore la Famille. Le vendeur le reçoit après confirmation de livraison.
-                  </p>
+                  <div className="flex items-start gap-2 mt-3 pt-3 border-t border-blue-100">
+                    <svg className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    <p className="text-blue-700 text-xs">Votre argent est bloqué jusqu&apos;à confirmation de livraison. Si non livré : remboursement sous 48h.</p>
+                  </div>
                 </div>
               )}
 
               {payMethod === "especes" && (
-                <div className="bg-amber-50 rounded-xl p-4 mb-4 text-sm">
-                  <p className="font-semibold text-amber-900 mb-1">💵 Paiement à la livraison</p>
-                  <p className="text-amber-800 text-xs">
-                    Préparez exactement <strong>{formatXAF(grandTotal)}</strong>. Le livreur ne fera pas la monnaie.
-                  </p>
+                <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 mb-4">
+                  <p className="font-semibold text-amber-900 text-sm mb-2">Paiement à la livraison</p>
+                  <ul className="text-amber-800 text-xs space-y-1.5">
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                      Préparez exactement <strong className="ml-1">{formatXAF(grandTotal)}</strong>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                      Le livreur ne rend pas la monnaie
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                      Compatible Airtel Money, Moov Money et cash
+                    </li>
+                  </ul>
                 </div>
               )}
 
