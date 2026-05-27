@@ -15,17 +15,16 @@ export function cn(...classes: (string | undefined | false | null)[]): string {
   return classes.filter(Boolean).join(" ");
 }
 
-export const CITIES_GABON = [
-  "Libreville",
-  "Port-Gentil",
-  "Franceville",
-  "Oyem",
-  "Moanda",
-  "Mouila",
-  "Lambaréné",
-  "Tchibanga",
-  "Koulamoutou",
-  "Makokou",
-  "Bitam",
-  "Gamba",
-];
+export const PROVINCES_GABON: Record<string, string[]> = {
+  "Estuaire":         ["Libreville", "Owendo", "Akanda", "Ntoum", "Kango", "Cocobeach"],
+  "Haut-Ogooué":      ["Franceville", "Moanda", "Mounana", "Okondja", "Bakoumba", "Lekoni", "Bongoville", "Akiéni"],
+  "Moyen-Ogooué":     ["Lambaréné", "Ndjolé", "Sindara", "Bifoun", "Malinga"],
+  "Ngounié":          ["Mouila", "Ndendé", "Fougamou", "Mimongo", "Lebamba", "Mbigou", "Mandji"],
+  "Nyanga":           ["Tchibanga", "Mayumba", "Moabi", "Ndindi", "Mabanda"],
+  "Ogooué-Ivindo":    ["Makokou", "Booué", "Mékambo", "Ovan", "Lopé"],
+  "Ogooué-Lolo":      ["Koulamoutou", "Lastoursville", "Pana", "Lebombi"],
+  "Ogooué-Maritime":  ["Port-Gentil", "Gamba", "Omboué", "Ntounga"],
+  "Woleu-Ntem":       ["Oyem", "Bitam", "Mitzic", "Minvoul", "Médouneu", "Aboumi"],
+};
+
+export const CITIES_GABON = Object.values(PROVINCES_GABON).flat();

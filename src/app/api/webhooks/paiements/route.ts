@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProvider, type ProviderId } from "@/lib/payment";
+import { envoyerPushUtilisateurs } from "@/lib/push";
 import type { PlanId } from "@/lib/rules";
 
 type Payload = {
@@ -145,6 +146,34 @@ export async function POST(req: NextRequest) {
       p_commande_id: commande.id,
       p_paiement_id: paiement.id,
     });
+
+    // Push acheteur
+    const { data: cmd } = await admin
+      .from("commandes")
+      .select("utilisateur_id, vendeur_id, code_court")
+      .eq("id", commande.id).single();
+
+    if (cmd?.utilisateur_id) {
+      void envoyerPushUtilisateurs([cmd.utilisateur_id], {
+        title: "Paiement reçu",
+        body: "Votre paiement est confirmé. Le vendeur prépare votre commande.",
+        url: `/commande/${cmd.code_court}`,
+        tag: "paiement-confirme",
+      });
+    }
+    // Push vendeur
+    if (cmd?.vendeur_id) {
+      const { data: v } = await admin
+        .from("vendeurs").select("utilisateur_id").eq("id", cmd.vendeur_id).single();
+      if (v?.utilisateur_id) {
+        void envoyerPushUtilisateurs([v.utilisateur_id], {
+          title: "Nouvelle commande payée",
+          body: `Commande ${cmd.code_court} — paiement reçu. Préparez la commande.`,
+          url: `/vendor/dashboard`,
+          tag: "nouvelle-commande",
+        });
+      }
+    }
   }
 
   if (paiement.commande_id && norm.statut === "echec") {

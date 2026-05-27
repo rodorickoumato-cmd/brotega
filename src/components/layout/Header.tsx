@@ -80,9 +80,9 @@ export function Header() {
     : auth.role === "vendeur"
     ? { href: "/vendor/dashboard", label: "Ma boutique", cls: "bg-[#FFD100] text-[#1A202C]" }
     : auth.role === "admin"
-    ? { href: "/admin", label: "⚙️ Admin", cls: "bg-gray-800 text-white" }
+    ? { href: "/admin", label: "Administration", cls: "bg-gray-800 text-white" }
     : auth.role === "livreur"
-    ? { href: "/livreur", label: "🚚 Livraisons", cls: "bg-blue-500 text-white" }
+    ? { href: "/livreur", label: "Mes livraisons", cls: "bg-blue-600 text-white" }
     : { href: "/vendor/register", label: "Vendre", cls: "bg-[#FFD100] text-[#1A202C]" };
 
   // Lien compte selon auth
@@ -95,14 +95,14 @@ export function Header() {
         { href: "/compte/commandes", label: "Mes commandes" },
         ...(auth.role === "vendeur"
           ? [
-              { href: "/vendor/dashboard", label: "🏪 Dashboard vendeur" },
-              { href: "/vendor/abonnement", label: "💎 Mon abonnement" },
+              { href: "/vendor/dashboard", label: "Ma boutique" },
+              { href: "/vendor/abonnement", label: "Mon abonnement" },
             ]
           : auth.role === "admin"
-          ? [{ href: "/admin", label: "⚙️ Administration" }]
+          ? [{ href: "/admin", label: "Administration" }]
           : auth.role === "livreur"
-          ? [{ href: "/livreur", label: "🚚 Mes livraisons" }]
-          : [{ href: "/vendor/register", label: "🏪 Devenir vendeur" }]),
+          ? [{ href: "/livreur", label: "Mes livraisons" }]
+          : [{ href: "/vendor/register", label: "Devenir vendeur" }]),
       ]
     : [
         { href: "/auth/login", label: "Se connecter" },
@@ -112,8 +112,8 @@ export function Header() {
   return (
     <>
       {/* Top bar */}
-      <div className="bg-[#C1121F] text-white text-xs py-1.5 px-4 text-center">
-        ❤️ La marketplace familiale du Gabon &nbsp;|&nbsp; Paiement sécurisé Airtel Money &amp; Moov Money
+      <div className="bg-[#1A202C] text-gray-300 text-xs py-1.5 px-4 text-center tracking-wide">
+        Livraison partout au Gabon &nbsp;·&nbsp; Paiement sécurisé Airtel &amp; Moov Money &nbsp;·&nbsp; Argent bloqué jusqu&apos;à livraison
       </div>
 
       <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -121,13 +121,15 @@ export function Header() {
           <div className="flex items-center gap-4">
             {/* Logo */}
             <Link href="/" className="flex-shrink-0" aria-label="J'adore la Famille — Accueil">
-              <div className="flex items-center gap-2">
-                <div className="w-9 h-9 bg-[#E63946] rounded-xl flex items-center justify-center">
-                  <span className="text-lg" aria-hidden="true">❤️</span>
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 bg-[#E63946] rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                  </svg>
                 </div>
-                <div>
-                  <span className="font-black text-lg text-[#E63946] leading-tight">J&apos;adore la Famille</span>
-                  <div className="text-[10px] text-gray-400 leading-none -mt-0.5">La Marketplace du Gabon</div>
+                <div className="leading-tight">
+                  <span className="font-black text-base text-[#E63946] block">J&apos;adore la Famille</span>
+                  <span className="text-[10px] text-gray-400 font-medium">Marketplace du Gabon</span>
                 </div>
               </div>
             </Link>

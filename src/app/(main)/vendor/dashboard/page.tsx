@@ -7,7 +7,6 @@ import { formatXAF } from "@/lib/utils";
 import { compresserImage, formatTaille } from "@/lib/imageCompressor";
 import { getMesProduits } from "@/app/actions/produits";
 import { categories } from "@/data/categories";
-import { confirmerCommandeVendeur } from "@/app/actions/commandes";
 import type { Produit, Vendeur, Commande } from "@/lib/supabase/database.types";
 import { PLANS, MAX_PRODUITS_GRATUIT } from "@/lib/rules";
 import { ImageCropModal } from "@/components/ui/ImageCropModal";
@@ -542,9 +541,18 @@ export default function VendorDashboard() {
   };
 
   const handleConfirmerCommande = async (commandeId: string) => {
-    const res = await confirmerCommandeVendeur(commandeId);
-    if (res.erreur) { setErreurGlobale(res.erreur); return; }
-    setCommandes((prev) => prev.map((c) => c.id === commandeId ? { ...c, statut: "confirmee_vendeur" as const } : c));
+    try {
+      const r = await fetch("/api/commandes/confirmer-vendeur", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ commandeId }),
+      });
+      const res = await r.json() as { succes?: boolean; erreur?: string };
+      if (res.erreur) { setErreurGlobale(res.erreur); return; }
+      setCommandes((prev) => prev.map((c) => c.id === commandeId ? { ...c, statut: "confirmee_vendeur" as const } : c));
+    } catch {
+      setErreurGlobale("Erreur réseau. Réessayez.");
+    }
   };
 
   const filtres = produits;

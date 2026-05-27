@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toaster";
 import { formatXAF } from "@/lib/utils";
 import { formaterPhoneGabon } from "@/lib/phone";
-import { getCommandeParCode, confirmerLivraison, type ItemPanier, type AdresseLivraison } from "@/app/actions/commandes";
+import { getCommandeParCode, type ItemPanier, type AdresseLivraison } from "@/app/actions/commandes";
 import type { Commande } from "@/lib/supabase/database.types";
 import { STATUTS_RECLAMATION_OUVRABLE } from "@/lib/rules";
 import type { StatutCommande } from "@/lib/rules";
@@ -74,11 +74,21 @@ export default function PageCommande() {
   const handleConfirmer = async () => {
     if (!confirm("Confirmez-vous avoir bien reçu votre commande en bon état ? Cette action libère le paiement au vendeur.")) return;
     setConfirmLoading(true);
-    const res = await confirmerLivraison(commande.id);
-    setConfirmLoading(false);
-    if (res.erreur) { toast(res.erreur, "error"); return; }
-    toast("✅ Livraison confirmée. Merci de votre confiance !", "success");
-    setCommande({ ...commande, statut: "livree", livree_at: new Date().toISOString() });
+    try {
+      const r = await fetch("/api/commandes/confirmer-livraison", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ commandeId: commande.id }),
+      });
+      const res = await r.json() as { succes?: boolean; erreur?: string };
+      if (res.erreur) { toast(res.erreur, "error"); return; }
+      toast("Livraison confirmée. Merci de votre confiance !", "success");
+      setCommande({ ...commande, statut: "livree", livree_at: new Date().toISOString() });
+    } catch {
+      toast("Erreur réseau. Réessayez.", "error");
+    } finally {
+      setConfirmLoading(false);
+    }
   };
 
   const peutConfirmer = ["payee_escrow", "confirmee_vendeur", "en_livraison"].includes(commande.statut);

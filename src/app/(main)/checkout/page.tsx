@@ -2,11 +2,11 @@
 import { useState } from "react";
 import Image from "next/image";
 import { useCart } from "@/store/cart";
-import { formatXAF, CITIES_GABON } from "@/lib/utils";
+import { formatXAF, PROVINCES_GABON } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toaster";
 import { useRouter } from "next/navigation";
-import { creerCommande } from "@/app/actions/commandes";
+import { fraisLivraison } from "@/lib/rules";
 import { vers241 } from "@/lib/phone";
 
 type Step = "address" | "payment" | "confirm";
@@ -35,7 +35,7 @@ export default function CheckoutPage() {
   };
   const [payMethod, setPayMethod] = useState<PayMethod>("airtel_money");
 
-  const delivery = 2500;
+  const delivery = fraisLivraison(address.city);
   const grandTotal = total + delivery;
 
   const handleOrder = async () => {
@@ -43,25 +43,37 @@ export default function CheckoutPage() {
     if (!phoneAdresse) { toast("Numéro de livraison invalide.", "error"); return; }
 
     setLoading(true);
-    const res = await creerCommande({
-      items: state.items.map((item) => ({
-        produit_id: item.product.id,
-        nom: item.product.name,
-        prix_xaf: item.product.price,
-        quantite: item.quantity,
-        image: item.product.images[0] ?? null,
-        vendeur_id: item.product.vendorId,
-      })),
-      adresse: {
-        nom_complet: address.fullName,
-        telephone: phoneAdresse,
-        ville: address.city,
-        quartier: address.district || undefined,
-        details: address.details || undefined,
-      },
-      mode_paiement: payMethod,
-      telephone_paiement: payMethod === "especes" ? undefined : phoneAdresse,
-    });
+    let res: { succes?: boolean; erreur?: string; code?: string; instructions?: string };
+    try {
+      const r = await fetch("/api/commandes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: state.items.map((item) => ({
+            produit_id: item.product.id,
+            nom: item.product.name,
+            prix_xaf: item.product.price,
+            quantite: item.quantity,
+            image: item.product.images[0] ?? null,
+            vendeur_id: item.product.vendorId,
+          })),
+          adresse: {
+            nom_complet: address.fullName,
+            telephone: phoneAdresse,
+            ville: address.city,
+            quartier: address.district || undefined,
+            details: address.details || undefined,
+          },
+          mode_paiement: payMethod,
+          telephone_paiement: payMethod === "especes" ? undefined : phoneAdresse,
+        }),
+      });
+      res = await r.json() as { succes?: boolean; erreur?: string; code?: string; instructions?: string };
+    } catch {
+      setLoading(false);
+      toast("Erreur réseau. Vérifiez votre connexion.", "error");
+      return;
+    }
     setLoading(false);
 
     if (res.erreur) { toast(res.erreur, "error"); return; }
@@ -157,7 +169,11 @@ export default function CheckoutPage() {
                     onChange={(e) => setAddress({ ...address, city: e.target.value })}
                     className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:border-[#E63946] focus:ring-2 focus:ring-[#E63946]/20 transition-all"
                   >
-                    {CITIES_GABON.map((c) => <option key={c} value={c}>📍 {c}</option>)}
+                    {Object.entries(PROVINCES_GABON).map(([province, villes]) => (
+                      <optgroup key={province} label={province}>
+                        {villes.map((v) => <option key={v} value={v}>{v}</option>)}
+                      </optgroup>
+                    ))}
                   </select>
                 </div>
 

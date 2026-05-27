@@ -3,6 +3,7 @@ import { Footer } from "@/components/layout/Footer";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
 import { ServiceWorkerRegister } from "@/components/sw/ServiceWorkerRegister";
+import { PushPermissionBanner } from "@/components/ui/PushPermissionBanner";
 import { AiChat } from "@/components/ai/AiChat";
 import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
 
@@ -10,6 +11,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
   return (
     <>
       <ServiceWorkerRegister />
+      <PushPermissionBanner />
       <OfflineBanner />
       <Header />
       <main className="flex-1">{children}</main>
