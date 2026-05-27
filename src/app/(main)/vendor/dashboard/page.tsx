@@ -5,12 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatXAF } from "@/lib/utils";
 import { compresserImage, formatTaille } from "@/lib/imageCompressor";
-import {
-  sauvegarderProduit,
-  supprimerProduit,
-  getMesProduits,
-  changerStatutProduit,
-} from "@/app/actions/produits";
+import { getMesProduits } from "@/app/actions/produits";
 import { categories } from "@/data/categories";
 import { confirmerCommandeVendeur } from "@/app/actions/commandes";
 import type { Produit, Vendeur, Commande } from "@/lib/supabase/database.types";
@@ -510,8 +505,13 @@ export default function VendorDashboard() {
   const closeForm = () => { setShowForm(false); setEditing(null); };
 
   const handleSave = async (nom: string, description: string | null, prix: number, unite: string, stock: number | null, categorie: string | null, image: string | null): Promise<string | null> => {
-    const res = await sauvegarderProduit({ id: editing?.id, nom, description, prix, unite, stock, categorie, image });
-    if (res.erreur) return res.erreur; // l'erreur s'affiche dans le modal, pas besoin de le fermer
+    const r = await fetch("/api/produits", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: editing?.id, nom, description, prix, unite, stock, categorie, image }),
+    });
+    const res = await r.json() as { succes?: boolean; erreur?: string };
+    if (res.erreur) return res.erreur;
     closeForm();
     const updated = await getMesProduits();
     setProduits(updated);
@@ -521,7 +521,8 @@ export default function VendorDashboard() {
   const handleToggleStatut = async (p: Produit) => {
     const nvStatut = p.statut === "actif" ? "inactif" : "actif";
     setProduits((prev) => prev.map((x) => x.id === p.id ? { ...x, statut: nvStatut } : x));
-    const res = await changerStatutProduit(p.id, nvStatut);
+    const r = await fetch(`/api/produits?id=${p.id}&statut=${nvStatut}`, { method: "PATCH" });
+    const res = await r.json() as { succes?: boolean; erreur?: string };
     if (res.erreur) {
       setProduits((prev) => prev.map((x) => x.id === p.id ? { ...x, statut: p.statut } : x));
       setErreurGlobale(res.erreur);
@@ -532,7 +533,8 @@ export default function VendorDashboard() {
     const saved = produits.find((p) => p.id === id);
     setProduits((prev) => prev.filter((p) => p.id !== id));
     setDeleteId(null);
-    const res = await supprimerProduit(id);
+    const r = await fetch(`/api/produits?id=${id}`, { method: "DELETE" });
+    const res = await r.json() as { succes?: boolean; erreur?: string };
     if (res.erreur) {
       if (saved) setProduits((prev) => [saved, ...prev]);
       setErreurGlobale(res.erreur);
