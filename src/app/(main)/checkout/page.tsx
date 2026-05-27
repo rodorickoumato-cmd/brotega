@@ -6,7 +6,7 @@ import { formatXAF, PROVINCES_GABON } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toaster";
 import { useRouter } from "next/navigation";
-import { fraisLivraison } from "@/lib/rules";
+import { fraisLivraison, AIRTEL_MONEY_ACTIF, MOOV_MONEY_ACTIF } from "@/lib/rules";
 import { vers241 } from "@/lib/phone";
 
 type Step = "address" | "payment" | "confirm";
@@ -100,8 +100,8 @@ export default function CheckoutPage() {
   }
 
   const payMethods = [
-    { id: "airtel_money" as PayMethod, name: "Airtel Money", icon: "📱", desc: "Validation USSD sur votre téléphone" },
-    { id: "moov_money" as PayMethod, name: "Moov Money", icon: "📲", desc: "Validation USSD sur votre téléphone" },
+    ...(AIRTEL_MONEY_ACTIF ? [{ id: "airtel_money" as PayMethod, name: "Airtel Money", icon: "📱", desc: "Validation USSD sur votre téléphone" }] : []),
+    ...(MOOV_MONEY_ACTIF   ? [{ id: "moov_money"   as PayMethod, name: "Moov Money",   icon: "📲", desc: "Validation USSD sur votre téléphone" }] : []),
     { id: "especes" as PayMethod, name: "Espèces à la livraison", icon: "💵", desc: "Vous payez cash au livreur" },
   ];
 

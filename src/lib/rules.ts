@@ -115,6 +115,12 @@ export function fraisLivraison(ville: string): number {
 // Règle : modèle 100 % abonnement — aucune commission prélevée sur les ventes
 export const TAUX_COMMISSION = 0; // 0 % — revenus via abonnements uniquement
 
+// Règle : modes de paiement actifs
+// Mettre MOOV_MONEY_ACTIF = true dès que PawaPay confirme l'intégration Moov Gabon
+// Vérifier : https://docs.pawapay.io/coverage → Gabon
+export const AIRTEL_MONEY_ACTIF = true;
+export const MOOV_MONEY_ACTIF   = false; // PawaPay Moov Gabon non confirmé
+
 // Règle : statuts possibles d'une commande (dans l'ordre chronologique)
 export const STATUTS_COMMANDE = [
   "en_attente_paiement",
