@@ -124,6 +124,7 @@ export type Database = {
           id?: string;
           vendeur_id: string;
           nom: string;
+          slug?: string;
           description?: string | null;
           prix: number;
           unite?: string;

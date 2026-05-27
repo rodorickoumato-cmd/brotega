@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { PLANS, MAX_PRODUITS_GRATUIT } from "@/lib/rules";
 
+function slugifier(str: string): string {
+  return str.toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as {
@@ -68,9 +74,12 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      const slug = `${slugifier(body.nom)}-${vendeur.id.slice(0, 6)}-${Date.now()}`;
+
       const { error: insertError } = await supabase.from("produits").insert({
         vendeur_id: vendeur.id,
         nom: body.nom,
+        slug,
         description: body.description ?? null,
         prix: body.prix,
         unite: body.unite ?? "piece",
