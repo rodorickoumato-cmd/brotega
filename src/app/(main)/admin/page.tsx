@@ -50,11 +50,12 @@ export default function AdminPage() {
   ] : [];
 
   const sections = [
-    { href: "/admin/commandes", icon: "📦", titre: "Commandes", desc: "Gérer toutes les commandes" },
-    { href: "/admin/vendeurs", icon: "🏪", titre: "Vendeurs", desc: "Valider et suspendre des boutiques" },
-    { href: "/admin/paiements", icon: "💳", titre: "Paiements", desc: "Historique des transactions" },
-    { href: "/admin/livraisons", icon: "🚚", titre: "Livraisons", desc: "Assigner les livreurs" },
-    { href: "/admin/reclamations", icon: "⚠️", titre: "Réclamations", desc: "Résoudre les litiges" },
+    { href: "/admin/vendeurs",     icon: "🏪", titre: "Boutiques",       desc: "Valider, suspendre, supprimer des boutiques" },
+    { href: "/admin/utilisateurs", icon: "👥", titre: "Utilisateurs",    desc: "Bannir emails frauduleux, gérer les comptes" },
+    { href: "/admin/commandes",    icon: "📦", titre: "Commandes",       desc: "Gérer toutes les commandes" },
+    { href: "/admin/paiements",    icon: "💳", titre: "Paiements",       desc: "Historique des transactions PVIT" },
+    { href: "/admin/livraisons",   icon: "🚚", titre: "Livraisons",      desc: "Assigner les livreurs" },
+    { href: "/admin/reclamations", icon: "⚠️", titre: "Réclamations",   desc: "Résoudre les litiges" },
   ];
 
   const couleurMap: Record<string, string> = {

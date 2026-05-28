@@ -86,6 +86,48 @@ function badgeAbo(abo: AboInfo) {
 
 const FILTRES = ["Tous", "en_attente", "verifie", "suspendu"] as const;
 
+type SupprimerModal = { vendeurId: string; nom: string } | null;
+
+function SupprimerModal({ vendeur, onConfirm, onClose, loading }: {
+  vendeur: SupprimerModal;
+  onConfirm: (banEmail: boolean) => void;
+  onClose: () => void;
+  loading: boolean;
+}) {
+  const [banEmail, setBanEmail] = useState(false);
+  if (!vendeur) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-sm">
+        <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center mb-4">
+          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </div>
+        <h3 className="font-black text-lg text-gray-800 mb-2">Supprimer cette boutique ?</h3>
+        <p className="text-sm text-gray-600 mb-4">
+          La boutique <span className="font-bold">"{vendeur.nom}"</span> et tous ses produits seront supprimés définitivement.
+        </p>
+        <label className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl px-4 py-3 cursor-pointer mb-4">
+          <input type="checkbox" checked={banEmail} onChange={(e) => setBanEmail(e.target.checked)}
+            className="w-4 h-4 accent-red-600" />
+          <div>
+            <p className="text-sm font-black text-red-700">Bannir aussi l&apos;email du propriétaire</p>
+            <p className="text-xs text-red-500">Empêche toute reconnexion ou création d&apos;un nouveau compte</p>
+          </div>
+        </label>
+        <div className="flex gap-3">
+          <button onClick={onClose} className="flex-1 py-3 border-2 border-gray-200 rounded-2xl text-sm font-bold text-gray-600">Annuler</button>
+          <button onClick={() => onConfirm(banEmail)} disabled={loading}
+            className="flex-1 py-3 bg-red-600 text-white rounded-2xl text-sm font-black disabled:opacity-40 active:scale-95 transition-all">
+            {loading ? "…" : "Supprimer"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminVendeursPage() {
   const router = useRouter();
   const [vendeurs, setVendeurs] = useState<Vendeur[]>([]);
@@ -93,6 +135,8 @@ export default function AdminVendeursPage() {
   const [filtre, setFiltre] = useState<string>("Tous");
   const [enCours, setEnCours] = useState<string | null>(null);
   const [expirationEnCours, setExpirationEnCours] = useState(false);
+  const [supprimerModal, setSupprimerModal] = useState<SupprimerModal>(null);
+  const [supprimerLoading, setSupprimerLoading] = useState(false);
   const [erreur, setErreur] = useState("");
   const [message, setMessage] = useState("");
 
@@ -155,6 +199,27 @@ export default function AdminVendeursPage() {
     }
   };
 
+  const handleSupprimer = async (banEmail: boolean) => {
+    if (!supprimerModal) return;
+    setSupprimerLoading(true);
+    try {
+      const r = await fetch("/api/admin/vendeurs/supprimer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vendeurId: supprimerModal.vendeurId, banEmail }),
+      });
+      const res = await r.json() as { succes?: boolean; erreur?: string; nomBoutique?: string };
+      if (res.erreur) { setErreur(res.erreur); return; }
+      setVendeurs((prev) => prev.filter((v) => v.id !== supprimerModal.vendeurId));
+      setMessage(`Boutique "${res.nomBoutique}" supprimée${banEmail ? " · Email banni" : ""}.`);
+      setSupprimerModal(null);
+    } catch {
+      setErreur("Erreur réseau.");
+    } finally {
+      setSupprimerLoading(false);
+    }
+  };
+
   const visibles = vendeurs.filter((v) => filtre === "Tous" || v.statut === filtre);
   const nbAttente = vendeurs.filter((v) => v.statut === "en_attente").length;
   const nbAboExpires = vendeurs.filter(
@@ -165,6 +230,12 @@ export default function AdminVendeursPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
+      <SupprimerModal
+        vendeur={supprimerModal}
+        onConfirm={handleSupprimer}
+        onClose={() => setSupprimerModal(null)}
+        loading={supprimerLoading}
+      />
       <div className="bg-[#E63946] px-5 pt-12 pb-6">
         <Link href="/admin" className="text-white/70 text-sm flex items-center gap-1 mb-3">‹ Admin</Link>
         <h1 className="text-2xl font-black text-white">Vendeurs 🏪</h1>
@@ -311,6 +382,15 @@ export default function AdminVendeursPage() {
                   {enCours === v.id ? "…" : "Réactiver"}
                 </button>
               )}
+              <button
+                onClick={() => setSupprimerModal({ vendeurId: v.id, nom: v.nom })}
+                className="text-xs font-bold px-3 py-2 rounded-xl border border-red-200 text-red-600 bg-red-50 active:scale-95 transition-all flex items-center gap-1"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Supprimer
+              </button>
               <Link
                 href={`/vendeur/${v.slug}`}
                 className="text-xs font-bold px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:border-[#E63946]/40 transition-colors"
