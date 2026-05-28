@@ -5,123 +5,35 @@
 // ─── ABONNEMENTS ──────────────────────────────────────────────
 
 export const PLANS = {
-  gratuit:      { label: "Découverte",         prix_xaf: 0,      max_produits: 3,         duree_jours: null },
-  mensuel:      { label: "Business Mensuel",   prix_xaf: 2_000,  max_produits: Infinity,  duree_jours: 30   },
-  trimestriel:  { label: "Business Trimestriel", prix_xaf: 5_000, max_produits: Infinity, duree_jours: 90   },
-  semestriel:   { label: "Business Semestriel", prix_xaf: 8_000, max_produits: Infinity,  duree_jours: 180  },
-  annuel:       { label: "Business Annuel",    prix_xaf: 15_000, max_produits: Infinity,  duree_jours: 365  },
+  gratuit:      { label: "Découverte",           prix_xaf: 0,      max_produits: 3,         duree_jours: null },
+  mensuel:      { label: "Business Mensuel",     prix_xaf: 2_000,  max_produits: Infinity,  duree_jours: 30   },
+  trimestriel:  { label: "Business Trimestriel", prix_xaf: 5_000,  max_produits: Infinity,  duree_jours: 90   },
+  semestriel:   { label: "Business Semestriel",  prix_xaf: 8_000,  max_produits: Infinity,  duree_jours: 180  },
+  annuel:       { label: "Business Annuel",      prix_xaf: 15_000, max_produits: Infinity,  duree_jours: 365  },
 } as const;
 
 export type PlanId = keyof typeof PLANS;
-
-// Règle : un vendeur sans abonnement actif est traité comme "gratuit"
 export const PLAN_DEFAUT: PlanId = "gratuit";
 
 // ─── PRODUITS ─────────────────────────────────────────────────
 
-// Règle : plan gratuit = 3 produits max
 export const MAX_PRODUITS_GRATUIT = 3;
 
-// Règle : produit désactivé automatiquement si vendeur dépasse sa limite
-// (à vérifier côté serveur à chaque publication)
 export function peutAjouterProduit(nbActuels: number, maxPlan: number): boolean {
   return nbActuels < maxPlan;
 }
 
 // ─── VENDEUR ──────────────────────────────────────────────────
 
-// Règle : un vendeur doit être validé par l'admin avant de vendre
-// statut = "en_attente" → "verifie" (admin) ou "suspendu" (admin)
 export const STATUTS_VENDEUR = ["en_attente", "verifie", "suspendu"] as const;
 export type StatutVendeur = typeof STATUTS_VENDEUR[number];
-
-// Règle : un utilisateur = une seule boutique
 export const MAX_BOUTIQUES_PAR_UTILISATEUR = 1;
 
 // ─── COMMANDES ────────────────────────────────────────────────
 
-// Règle : une commande = un seul vendeur (pas de panier multi-vendeur)
 export const MAX_VENDEURS_PAR_COMMANDE = 1;
+export const TAUX_COMMISSION = 0;
 
-// Règle : frais de livraison par ville
-export const FRAIS_LIVRAISON_XAF = 2_000; // Libreville (défaut)
-
-export const FRAIS_LIVRAISON_PAR_VILLE: Record<string, number> = {
-  // ── Estuaire ───────────────────────────────────────────────
-  "Libreville":    2_000,
-  "Owendo":        2_000,
-  "Akanda":        2_000,
-  "Ntoum":         2_500,
-  "Kango":         3_000,
-  "Cocobeach":     3_500,
-  // ── Moyen-Ogooué ───────────────────────────────────────────
-  "Lambaréné":     3_000,
-  "Bifoun":        3_000,
-  "Ndjolé":        3_500,
-  "Sindara":       3_500,
-  "Malinga":       4_000,
-  // ── Ogooué-Maritime ────────────────────────────────────────
-  "Port-Gentil":   3_500,
-  "Omboué":        5_000,
-  "Ntounga":       5_000,
-  "Gamba":         5_500,
-  // ── Haut-Ogooué ────────────────────────────────────────────
-  "Franceville":   4_000,
-  "Moanda":        4_000,
-  "Bongoville":    4_500,
-  "Mounana":       4_500,
-  "Bakoumba":      5_000,
-  "Lekoni":        5_000,
-  "Okondja":       5_000,
-  "Akiéni":        5_000,
-  // ── Ngounié ────────────────────────────────────────────────
-  "Fougamou":      4_500,
-  "Mandji":        4_500,
-  "Mouila":        4_500,
-  "Lebamba":       5_000,
-  "Mimongo":       5_000,
-  "Ndendé":        5_000,
-  "Mbigou":        5_000,
-  // ── Ogooué-Ivindo ──────────────────────────────────────────
-  "Booué":         4_000,
-  "Lopé":          4_000,
-  "Ovan":          5_000,
-  "Makokou":       5_000,
-  "Mékambo":       6_000,
-  // ── Ogooué-Lolo ────────────────────────────────────────────
-  "Lastoursville": 4_500,
-  "Koulamoutou":   5_000,
-  "Pana":          5_000,
-  "Lebombi":       5_500,
-  // ── Woleu-Ntem ─────────────────────────────────────────────
-  "Oyem":          4_000,
-  "Bitam":         4_500,
-  "Mitzic":        4_000,
-  "Médouneu":      4_500,
-  "Aboumi":        5_000,
-  "Minvoul":       5_500,
-  // ── Nyanga ─────────────────────────────────────────────────
-  "Moabi":         5_000,
-  "Tchibanga":     5_000,
-  "Mayumba":       5_500,
-  "Mabanda":       5_500,
-  "Ndindi":        5_500,
-};
-
-export function fraisLivraison(ville: string): number {
-  return FRAIS_LIVRAISON_PAR_VILLE[ville] ?? 6_000;
-}
-
-// Règle : modèle 100 % abonnement — aucune commission prélevée sur les ventes
-export const TAUX_COMMISSION = 0; // 0 % — revenus via abonnements uniquement
-
-// Règle : modes de paiement actifs
-// Mettre MOOV_MONEY_ACTIF = true dès que PawaPay confirme l'intégration Moov Gabon
-// Vérifier : https://docs.pawapay.io/coverage → Gabon
-export const AIRTEL_MONEY_ACTIF = true;
-export const MOOV_MONEY_ACTIF   = false; // PawaPay Moov Gabon non confirmé
-
-// Règle : statuts possibles d'une commande (dans l'ordre chronologique)
 export const STATUTS_COMMANDE = [
   "en_attente_paiement",
   "payee_escrow",
@@ -134,30 +46,124 @@ export const STATUTS_COMMANDE = [
 ] as const;
 export type StatutCommande = typeof STATUTS_COMMANDE[number];
 
-// Règle : paiement espèces → commande confirmée directement (pas d'escrow Mobile Money)
-// Règle : paiement Mobile Money → confirmée seulement après succès webhook PawaPay
+// ─── LIVRAISON — PROVINCES DU GABON ───────────────────────────
+
+export type ProvinceCode = "EST" | "OMA" | "MOY" | "WNT" | "OIV" | "OLO" | "HAO" | "NGO" | "NYA";
+
+export const PROVINCES_INFO: Record<ProvinceCode, { label: string; chef: string }> = {
+  EST: { label: "Estuaire",         chef: "Libreville"   },
+  OMA: { label: "Ogooué-Maritime",  chef: "Port-Gentil"  },
+  MOY: { label: "Moyen-Ogooué",     chef: "Lambaréné"    },
+  WNT: { label: "Woleu-Ntem",       chef: "Oyem"         },
+  OIV: { label: "Ogooué-Ivindo",    chef: "Makokou"      },
+  OLO: { label: "Ogooué-Lolo",      chef: "Koulamoutou"  },
+  HAO: { label: "Haut-Ogooué",      chef: "Franceville"  },
+  NGO: { label: "Ngounié",          chef: "Mouila"       },
+  NYA: { label: "Nyanga",           chef: "Tchibanga"    },
+};
+
+// Mapping ville → province
+export const VILLE_PROVINCE: Record<string, ProvinceCode> = {
+  // ── Estuaire ──────────────────────────────────────────────
+  "Libreville": "EST", "Owendo": "EST", "Akanda": "EST",
+  "Ntoum":      "EST", "Kango":  "EST", "Cocobeach": "EST",
+  // ── Ogooué-Maritime ───────────────────────────────────────
+  "Port-Gentil": "OMA", "Omboué": "OMA", "Ntounga": "OMA", "Gamba": "OMA",
+  // ── Moyen-Ogooué ──────────────────────────────────────────
+  "Lambaréné": "MOY", "Bifoun": "MOY", "Ndjolé": "MOY", "Sindara": "MOY", "Malinga": "MOY",
+  // ── Woleu-Ntem ────────────────────────────────────────────
+  "Oyem": "WNT", "Bitam": "WNT", "Mitzic": "WNT", "Médouneu": "WNT", "Aboumi": "WNT", "Minvoul": "WNT",
+  // ── Ogooué-Ivindo ─────────────────────────────────────────
+  "Booué": "OIV", "Lopé": "OIV", "Ovan": "OIV", "Makokou": "OIV", "Mékambo": "OIV",
+  // ── Ogooué-Lolo ───────────────────────────────────────────
+  "Lastoursville": "OLO", "Koulamoutou": "OLO", "Pana": "OLO", "Lebombi": "OLO",
+  // ── Haut-Ogooué ───────────────────────────────────────────
+  "Franceville": "HAO", "Moanda": "HAO", "Bongoville": "HAO", "Mounana": "HAO",
+  "Bakoumba": "HAO", "Lekoni": "HAO", "Okondja": "HAO", "Akiéni": "HAO",
+  // ── Ngounié ───────────────────────────────────────────────
+  "Fougamou": "NGO", "Mandji": "NGO", "Mouila":   "NGO", "Lebamba": "NGO",
+  "Mimongo":  "NGO", "Ndendé": "NGO", "Mbigou":   "NGO",
+  // ── Nyanga ────────────────────────────────────────────────
+  "Moabi": "NYA", "Tchibanga": "NYA", "Mayumba": "NYA", "Mabanda": "NYA", "Ndindi": "NYA",
+};
+
+// ─── MATRICE TARIFS INTER-PROVINCES (FCFA) ────────────────────
+// Basée sur les routes réelles et distances entre chefs-lieux
+// Ligne = province vendeur, Colonne = province acheteur
+// Valeurs symétriques (A→B = B→A)
+
+const T: Record<ProvinceCode, Record<ProvinceCode, number>> = {
+  //        EST    OMA    MOY    WNT    OIV    OLO    HAO    NGO    NYA
+  EST: { EST:2000, OMA:4500, MOY:2500, WNT:3500, OIV:4000, OLO:5000, HAO:5000, NGO:4000, NYA:6000 },
+  OMA: { EST:4500, OMA:2000, MOY:3500, WNT:6000, OIV:6500, OLO:5500, HAO:6500, NGO:4000, NYA:4500 },
+  MOY: { EST:2500, OMA:3500, MOY:2000, WNT:4000, OIV:3500, OLO:3000, HAO:4500, NGO:2500, NYA:5000 },
+  WNT: { EST:3500, OMA:6000, MOY:4000, WNT:2000, OIV:3000, OLO:5000, HAO:5500, NGO:5000, NYA:6500 },
+  OIV: { EST:4000, OMA:6500, MOY:3500, WNT:3000, OIV:2000, OLO:3000, HAO:3500, NGO:4500, NYA:6000 },
+  OLO: { EST:5000, OMA:5500, MOY:3000, WNT:5000, OIV:3000, OLO:2000, HAO:2500, NGO:3000, NYA:4500 },
+  HAO: { EST:5000, OMA:6500, MOY:4500, WNT:5500, OIV:3500, OLO:2500, HAO:2000, NGO:4000, NYA:5000 },
+  NGO: { EST:4000, OMA:4000, MOY:2500, WNT:5000, OIV:4500, OLO:3000, HAO:4000, NGO:2000, NYA:2500 },
+  NYA: { EST:6000, OMA:4500, MOY:5000, WNT:6500, OIV:6000, OLO:4500, HAO:5000, NGO:2500, NYA:2000 },
+};
+
+// Tarif extra pour les villes excentrées dans leur province (km supplémentaires)
+const SUPPLEMENT_VILLE: Record<string, number> = {
+  "Cocobeach": 1500, "Kango": 500, "Ntoum": 0,
+  "Gamba": 2000, "Ntounga": 1500, "Omboué": 1000,
+  "Malinga": 1500, "Ndjolé": 500, "Sindara": 500,
+  "Minvoul": 1500, "Médouneu": 1000, "Aboumi": 1000,
+  "Mékambo": 2000, "Ovan": 1000,
+  "Lebombi": 1000, "Pana": 500,
+  "Bakoumba": 1500, "Lekoni": 2000, "Akiéni": 1000, "Okondja": 1500,
+  "Mbigou": 1500, "Mimongo": 1000, "Ndendé": 500, "Lebamba": 500,
+  "Mayumba": 1500, "Ndindi": 1000, "Mabanda": 500,
+};
+
+/**
+ * Calcule les frais de livraison selon la province du vendeur et celle de l'acheteur.
+ * @param villeVendeur  Ville où se trouve le vendeur
+ * @param villeAcheteur Ville de livraison choisie par l'acheteur
+ */
+export function fraisLivraison(villeVendeur: string, villeAcheteur: string): number {
+  // Même ville exacte → tarif local fixe
+  if (villeVendeur === villeAcheteur) return 1_500;
+
+  const pV = VILLE_PROVINCE[villeVendeur] ?? "EST"; // défaut : Libreville
+  const pA = VILLE_PROVINCE[villeAcheteur] ?? "EST";
+
+  const base = T[pV][pA];
+  const supp = SUPPLEMENT_VILLE[villeAcheteur] ?? 0;
+
+  return base + supp;
+}
+
+/**
+ * Retourne un libellé clair du trajet de livraison.
+ */
+export function libelleTrajetLivraison(villeVendeur: string, villeAcheteur: string): {
+  zone: "locale" | "intra" | "inter";
+  label: string;
+} {
+  if (villeVendeur === villeAcheteur) {
+    return { zone: "locale", label: `Livraison locale — ${villeVendeur}` };
+  }
+  const pV = VILLE_PROVINCE[villeVendeur] ?? "EST";
+  const pA = VILLE_PROVINCE[villeAcheteur] ?? "EST";
+  const lV = PROVINCES_INFO[pV].label;
+  const lA = PROVINCES_INFO[pA].label;
+  if (pV === pA) {
+    return { zone: "intra", label: `Intra-province — ${lV}` };
+  }
+  return { zone: "inter", label: `${lV} → ${lA}` };
+}
 
 // ─── ESCROW / WALLET ──────────────────────────────────────────
 
-// Règle : l'argent est bloqué (escrow) jusqu'à confirmation de livraison par l'acheteur
-// Règle : auto-libération si l'acheteur ne confirme pas dans ce délai
 export const JOURS_AUTO_LIBERATION_ESCROW = 7;
-
-// Règle : retrait minimum
 export const RETRAIT_MIN_XAF = 5_000;
-
-// Règle : 1 retrait par jour maximum par vendeur
 export const MAX_RETRAITS_PAR_JOUR = 1;
-
-// ─── LIVRAISON ────────────────────────────────────────────────
-
-// Règle : livraison assignée par l'admin après confirmation vendeur
-// Règle : le livreur met à jour le statut (en_livraison → livree)
-// Règle : un livreur ne voit que ses commandes assignées
 
 // ─── RÉCLAMATIONS ─────────────────────────────────────────────
 
-// Règle : réclamation ouvrable uniquement sur commande payée ou livrée
 export const STATUTS_RECLAMATION_OUVRABLE: StatutCommande[] = [
   "payee_escrow",
   "confirmee_vendeur",
@@ -165,18 +171,10 @@ export const STATUTS_RECLAMATION_OUVRABLE: StatutCommande[] = [
   "livree",
 ];
 
-// Règle : réclamation ouverte = escrow bloqué (libération suspendue)
-// Règle : seul l'admin peut résoudre une réclamation
+// ─── MODES DE PAIEMENT ────────────────────────────────────────
 
-// ─── CHAT ─────────────────────────────────────────────────────
+export const AIRTEL_MONEY_ACTIF = true;
+export const MOOV_MONEY_ACTIF   = true; // PVIT supporte Airtel + Moov Gabon
 
-// Règle : chat entre acheteur ↔ vendeur uniquement
-// Règle : chaque conversation est liée à une commande
-// Règle : pas de chat sans commande en cours
-
-// ─── ADMIN ────────────────────────────────────────────────────
-
-// Règle : seul l'admin peut valider un vendeur
-// Règle : seul l'admin peut assigner un livreur à une commande
-// Règle : seul l'admin peut résoudre une réclamation
-// Règle : seul l'admin peut suspendre un vendeur ou un livreur
+// Frais de traitement Mobile Money — facturés au client, reversés au vendeur
+export const FRAIS_MOBILE_MONEY_TAUX = 0.03; // 3 %

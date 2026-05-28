@@ -64,7 +64,8 @@ export async function POST(request: NextRequest) {
       const { count, error: countError } = await supabase
         .from("produits")
         .select("*", { count: "exact", head: true })
-        .eq("vendeur_id", vendeur.id);
+        .eq("vendeur_id", vendeur.id)
+        .eq("statut", "actif");
 
       if (countError) return NextResponse.json({ erreur: countError.message }, { status: 500 });
       if ((count ?? 0) >= max) {

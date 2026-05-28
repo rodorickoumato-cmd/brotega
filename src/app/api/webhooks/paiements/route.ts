@@ -1,4 +1,4 @@
-﻿// Webhook Mobile Money — reçoit les notifications PawaPay pour commandes et abonnements.
+﻿// Webhook Mobile Money — reçoit les callbacks PVIT (Airtel + Moov Gabon) pour commandes et abonnements.
 // Idempotent — peut être rappelé plusieurs fois sans effet secondaire.
 
 import { NextRequest, NextResponse } from "next/server";
@@ -7,30 +7,31 @@ import { getProvider, type ProviderId } from "@/lib/payment";
 import { envoyerPushUtilisateurs } from "@/lib/push";
 import type { PlanId } from "@/lib/rules";
 
-type Payload = {
-  providerRef?: string;
-  statut?: "reussi" | "echec" | "en_attente";
-  commandeId?: string;
-  montantXaf?: number;
-  depositId?: string;
-  status?: string;
-  amount?: string;
-  metadata?: Array<{ fieldName: string; fieldValue: string }>;
-};
+type Payload = Record<string, unknown>;
+
+function mapStatut(s: string): "reussi" | "echec" | "en_attente" {
+  const low = s.toLowerCase();
+  if (["success", "successful", "completed", "reussi"].includes(low)) return "reussi";
+  if (["failed", "failure", "error", "rejected", "cancelled", "echec"].includes(low)) return "echec";
+  return "en_attente";
+}
 
 function normaliser(payload: Payload): {
   providerRef: string;
   statut: "reussi" | "echec" | "en_attente";
 } | null {
-  if (payload.providerRef && payload.statut) {
-    return { providerRef: payload.providerRef, statut: payload.statut };
+  // Format interne (mock / test direct)
+  if (typeof payload["providerRef"] === "string" && typeof payload["statut"] === "string") {
+    return { providerRef: payload["providerRef"], statut: mapStatut(payload["statut"]) };
   }
-  if (payload.depositId && payload.status) {
-    const map: Record<string, "reussi" | "echec" | "en_attente"> = {
-      COMPLETED: "reussi", FAILED: "echec", REJECTED: "echec",
-      ACCEPTED: "en_attente", SUBMITTED: "en_attente", ENQUEUED: "en_attente",
-    };
-    return { providerRef: payload.depositId, statut: map[payload.status] ?? "en_attente" };
+  // Format PVIT : { reference, transaction_id, status, ... }
+  const pvitRef = (payload["transaction_id"] ?? payload["reference"]) as string | undefined;
+  if (pvitRef && typeof payload["status"] === "string") {
+    return { providerRef: pvitRef, statut: mapStatut(payload["status"]) };
+  }
+  // Format PawaPay : { depositId, status }
+  if (typeof payload["depositId"] === "string" && typeof payload["status"] === "string") {
+    return { providerRef: payload["depositId"], statut: mapStatut(payload["status"]) };
   }
   return null;
 }
@@ -38,14 +39,20 @@ function normaliser(payload: Payload): {
 export async function POST(req: NextRequest) {
   const rawBody = await req.text();
 
-  // 1. Identifier le provider via l'en-tête signature
-  const signaturePawapay = req.headers.get("signature");
-  const signatureMock    = req.headers.get("x-mock-signature");
-  const providerId: ProviderId = signaturePawapay ? "airtel" : "mock";
+  // 1. Récupérer signature selon le provider actif
+  const providerEnv  = process.env.PAYMENT_PROVIDER ?? "mock";
+  const sigPvit      = req.headers.get("x-pvit-signature") ?? req.headers.get("x-signature");
+  const sigPawapay   = req.headers.get("signature");
+  const sigMock      = req.headers.get("x-mock-signature");
+
+  const providerId: ProviderId =
+    providerEnv === "pvit"    ? "airtel" :
+    providerEnv === "pawapay" ? "airtel" :
+    "mock";
 
   // 2. Vérifier signature HMAC
   const provider = getProvider(providerId);
-  const sig = signaturePawapay ?? signatureMock;
+  const sig = sigPvit ?? sigPawapay ?? sigMock;
   if (!provider.verifierSignature(rawBody, sig)) {
     return NextResponse.json({ erreur: "Signature invalide" }, { status: 401 });
   }

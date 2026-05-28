@@ -8,9 +8,9 @@ import type { ProviderId } from "@/lib/payment";
 import { vers241 } from "@/lib/phone";
 import { headers } from "next/headers";
 import { envoyerEmailConfirmationCommande, envoyerEmailNouvelleCommande } from "@/lib/email";
-import { TAUX_COMMISSION, FRAIS_LIVRAISON_XAF } from "@/lib/rules";
+import { TAUX_COMMISSION, fraisLivraison } from "@/lib/rules";
 
-const FRAIS_LIVRAISON_DEFAUT = FRAIS_LIVRAISON_XAF;
+const FRAIS_LIVRAISON_DEFAUT = fraisLivraison("Libreville", "Libreville");
 
 export type ItemPanier = {
   produit_id: string;

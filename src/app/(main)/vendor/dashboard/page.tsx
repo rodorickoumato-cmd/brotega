@@ -8,8 +8,10 @@ import { compresserImage, formatTaille } from "@/lib/imageCompressor";
 import { getMesProduits } from "@/app/actions/produits";
 import { categories } from "@/data/categories";
 import type { Produit, Vendeur, Commande } from "@/lib/supabase/database.types";
-import { PLANS, MAX_PRODUITS_GRATUIT } from "@/lib/rules";
+import { PLANS, MAX_PRODUITS_GRATUIT, FRAIS_MOBILE_MONEY_TAUX } from "@/lib/rules";
 import { ImageCropModal } from "@/components/ui/ImageCropModal";
+import { formaterPhoneGabon } from "@/lib/phone";
+import type { ItemPanier, AdresseLivraison } from "@/app/actions/commandes";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -363,6 +365,23 @@ function ProductFormModal({
                 {formatXAF(Number(form.prix))} / {UNITES.find(u => u.val === form.unite)?.hint ?? form.unite}
               </p>
             )}
+            {/* Avertissement frais Mobile Money */}
+            <div className="mt-3 flex items-start gap-2.5 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2.5">
+              <svg className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="text-xs font-black text-blue-800">Frais Mobile Money</p>
+                <p className="text-xs text-blue-700 mt-0.5">
+                  Pour les paiements Airtel Money, {(FRAIS_MOBILE_MONEY_TAUX * 100).toFixed(0)}% de frais de traitement sont ajoutés automatiquement au montant payé par le client. Vous recevez votre prix intégral.
+                </p>
+                {form.prix && Number(form.prix) > 0 && (
+                  <p className="text-xs font-bold text-blue-800 mt-1.5">
+                    Client Airtel paiera : {formatXAF(Math.ceil(Number(form.prix) * (1 + FRAIS_MOBILE_MONEY_TAUX)))} (+{formatXAF(Math.ceil(Number(form.prix) * FRAIS_MOBILE_MONEY_TAUX))} frais)
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Stock disponible */}
@@ -419,6 +438,111 @@ function ProductFormModal({
   );
 }
 
+// ─── Modal upgrade abonnement ─────────────────────────────────────────────────
+
+function UpgradeModal({ onClose }: { onClose: () => void }) {
+  const plans = [
+    { id: "mensuel",     label: "Business Mensuel",     prix: 2_000,  duree: "30 jours",  populaire: false },
+    { id: "trimestriel", label: "Business Trimestriel", prix: 5_000,  duree: "3 mois",    populaire: true  },
+    { id: "semestriel",  label: "Business Semestriel",  prix: 8_000,  duree: "6 mois",    populaire: false },
+    { id: "annuel",      label: "Business Annuel",      prix: 15_000, duree: "1 an",       populaire: false },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-md max-h-[92vh] flex flex-col overflow-hidden">
+
+        {/* En-tête */}
+        <div className="bg-gradient-to-br from-[#E63946] to-[#c1121f] px-6 py-6 flex-shrink-0">
+          <div className="flex items-start justify-between">
+            <div>
+              <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-3">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h2 className="text-white font-black text-xl leading-tight">Limite atteinte</h2>
+              <p className="text-white/80 text-sm mt-1">Votre plan Découverte est limité à 3 produits.</p>
+            </div>
+            <button onClick={onClose} className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center text-white flex-shrink-0 mt-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="mt-4 bg-white/15 rounded-2xl px-4 py-3 flex items-center gap-3">
+            <svg className="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-white text-sm font-medium">Avec un abonnement Business : <span className="font-black">produits illimités</span></p>
+          </div>
+        </div>
+
+        {/* Plans */}
+        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3">
+          <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">Choisissez votre plan</p>
+
+          {plans.map((p) => (
+            <div key={p.id} className={`relative rounded-2xl border-2 p-4 transition-all ${
+              p.populaire ? "border-[#E63946] bg-[#FEF2F2]" : "border-gray-200"
+            }`}>
+              {p.populaire && (
+                <span className="absolute -top-2.5 left-4 bg-[#E63946] text-white text-xs font-black px-3 py-0.5 rounded-full">
+                  Le plus choisi
+                </span>
+              )}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`font-black text-base ${p.populaire ? "text-[#E63946]" : "text-gray-800"}`}>{p.label}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{p.duree} · Produits illimités</p>
+                </div>
+                <div className="text-right flex-shrink-0 ml-3">
+                  <p className={`font-black text-lg ${p.populaire ? "text-[#E63946]" : "text-gray-800"}`}>
+                    {p.prix.toLocaleString("fr-FR")}
+                  </p>
+                  <p className="text-xs text-gray-400">FCFA</p>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-2 text-xs text-gray-600">
+                <svg className="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Produits illimités</span>
+                <svg className="w-3.5 h-3.5 text-green-500 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Boutique visible</span>
+                <svg className="w-3.5 h-3.5 text-green-500 flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+                <span>Support prioritaire</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Pied */}
+        <div className="px-5 pb-5 pt-3 border-t border-gray-100 flex-shrink-0 space-y-2.5 bg-white">
+          <Link
+            href="/vendor/abonnement"
+            onClick={onClose}
+            className="w-full bg-[#E63946] text-white font-black py-4 rounded-2xl text-base text-center block active:scale-95 transition-all"
+          >
+            Voir tous les abonnements →
+          </Link>
+          <button
+            onClick={onClose}
+            className="w-full border-2 border-gray-200 text-gray-600 font-bold py-3 rounded-2xl text-sm active:scale-95 transition-all"
+          >
+            Plus tard
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 // ─── Dialog suppression ───────────────────────────────────────────────────────
 
 function DeleteConfirm({ nom, onConfirm, onCancel }: {
@@ -448,6 +572,194 @@ function DeleteConfirm({ nom, onConfirm, onCancel }: {
 }
 
 
+// ─── Fiche expédition ─────────────────────────────────────────────────────────
+
+function FicheExpedition({
+  commande,
+  onConfirmer,
+  onClose,
+}: {
+  commande: Commande;
+  onConfirmer: (id: string) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const articles = commande.articles as ItemPanier[];
+  const adresse  = commande.adresse  as AdresseLivraison;
+  const peutConfirmer = commande.statut === "payee_escrow";
+
+  const handleConfirmer = async () => {
+    setLoading(true);
+    await onConfirmer(commande.id);
+    setLoading(false);
+    onClose();
+  };
+
+  const modeLabel: Record<string, string> = {
+    airtel_money: "Airtel Money",
+    moov_money:   "Moov Money",
+    especes:      "Espèces à la livraison",
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full sm:max-w-lg max-h-[92vh] flex flex-col overflow-hidden">
+
+        {/* En-tête */}
+        <div className="bg-[#1A202C] px-5 py-4 flex items-center justify-between flex-shrink-0">
+          <div>
+            <p className="text-white/60 text-xs uppercase tracking-widest">Fiche expédition</p>
+            <p className="text-white font-black text-xl tracking-widest mt-0.5">{commande.code_court}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="font-black text-[#E63946] text-base">{formatXAF(commande.total)}</span>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Corps */}
+        <div className="overflow-y-auto flex-1 divide-y divide-gray-50">
+
+          {/* Articles à préparer */}
+          <div className="px-5 py-4">
+            <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">
+              Articles à préparer — {articles.length} article{articles.length > 1 ? "s" : ""}
+            </p>
+            <div className="space-y-3">
+              {articles.map((it) => (
+                <div key={it.produit_id} className="flex items-center gap-3">
+                  {it.image ? (
+                    <img src={it.image} alt={it.nom} className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border border-gray-100" />
+                  ) : (
+                    <div className="w-14 h-14 rounded-xl bg-gray-100 flex-shrink-0 flex items-center justify-center">
+                      <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                      </svg>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-gray-800 text-sm leading-tight">{it.nom}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{formatXAF(it.prix_xaf)} × {it.quantite}</p>
+                  </div>
+                  <div className="flex-shrink-0 text-right">
+                    <span className="bg-[#E63946] text-white font-black text-sm px-2.5 py-1 rounded-lg">
+                      ×{it.quantite}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Adresse de livraison */}
+          <div className="px-5 py-4">
+            <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Livrer à</p>
+            <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 space-y-2.5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <p className="font-black text-gray-800">{adresse.nom_complet}</p>
+              </div>
+
+              <a
+                href={`tel:${adresse.telephone}`}
+                className="flex items-center gap-2.5 bg-white rounded-xl px-3 py-2.5 border border-blue-200 active:scale-95 transition-all"
+              >
+                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="font-black text-gray-800 text-sm">{formaterPhoneGabon(adresse.telephone)}</p>
+                  <p className="text-xs text-green-600 font-medium">Appuyer pour appeler</p>
+                </div>
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+
+              <div className="flex items-start gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-bold text-gray-800 text-sm">{adresse.ville}{adresse.quartier ? ` — ${adresse.quartier}` : ""}</p>
+                  {adresse.details && (
+                    <p className="text-xs text-gray-500 italic mt-0.5">{adresse.details}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mode de paiement */}
+          <div className="px-5 py-4">
+            <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Paiement</p>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-semibold text-gray-600">
+                {commande.mode_paiement ? (modeLabel[commande.mode_paiement] ?? commande.mode_paiement) : ""}
+              </span>
+              <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                commande.statut === "payee_escrow" || commande.statut === "confirmee_vendeur"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-yellow-100 text-yellow-700"
+              }`}>
+                {commande.statut === "en_attente_paiement" ? "En attente" : "Paiement reçu"}
+              </span>
+            </div>
+            {commande.mode_paiement === "especes" && (
+              <p className="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 mt-2">
+                Collectez {formatXAF(commande.total)} en espèces lors de la remise au client.
+              </p>
+            )}
+          </div>
+
+          {/* Date */}
+          <div className="px-5 py-3">
+            <p className="text-xs text-gray-400">
+              Commande du {new Date(commande.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+            </p>
+          </div>
+        </div>
+
+        {/* Pied */}
+        <div className="px-5 py-4 border-t border-gray-100 bg-white flex-shrink-0 space-y-3">
+          {peutConfirmer && (
+            <button
+              onClick={handleConfirmer}
+              disabled={loading}
+              className="w-full bg-[#E63946] text-white font-black py-4 rounded-2xl text-base disabled:opacity-50 active:scale-95 transition-all"
+            >
+              {loading ? "Confirmation…" : "Confirmer — je prépare cette commande"}
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="w-full border-2 border-gray-200 text-gray-600 font-bold py-3 rounded-2xl text-sm active:scale-95 transition-all"
+          >
+            Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 // ─── Dashboard principal ──────────────────────────────────────────────────────
 
 export default function VendorDashboard() {
@@ -461,6 +773,8 @@ export default function VendorDashboard() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Produit | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [ficheCommande, setFicheCommande] = useState<Commande | null>(null);
+  const [showUpgrade,  setShowUpgrade]   = useState(false);
   const [erreurGlobale, setErreurGlobale] = useState("");
 
   useEffect(() => {
@@ -499,7 +813,10 @@ export default function VendorDashboard() {
     })();
   }, [router]);
 
-  const openAdd = () => { setEditing(null); setShowForm(true); setErreurGlobale(""); };
+  const openAdd = () => {
+    if (limiteAtteinte) { setShowUpgrade(true); return; }
+    setEditing(null); setShowForm(true); setErreurGlobale("");
+  };
   const openEdit = (p: Produit) => { setEditing(p); setShowForm(true); setErreurGlobale(""); };
   const closeForm = () => { setShowForm(false); setEditing(null); };
 
@@ -585,6 +902,17 @@ export default function VendorDashboard() {
           onCancel={() => setDeleteId(null)}
         />
       )}
+      {ficheCommande && (
+        <FicheExpedition
+          commande={ficheCommande}
+          onConfirmer={async (id) => {
+            await handleConfirmerCommande(id);
+            setFicheCommande((prev) => prev?.id === id ? { ...prev, statut: "confirmee_vendeur" as const } : prev);
+          }}
+          onClose={() => setFicheCommande(null)}
+        />
+      )}
+      {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
 
       {/* Header */}
       <div className="bg-[#E63946] px-5 pt-12 pb-10">
@@ -630,39 +958,83 @@ export default function VendorDashboard() {
         {/* Bannière plan gratuit */}
         {planActif === "gratuit" && (
           <div className={`rounded-2xl p-4 flex items-center gap-3 ${
-            limiteAtteinte ? "bg-red-50 border border-red-200" : "bg-amber-50 border border-amber-200"
+            limiteAtteinte ? "bg-red-50 border-2 border-[#E63946]/40" : "bg-amber-50 border border-amber-200"
           }`}>
-            <span className="text-2xl">{limiteAtteinte ? "🔒" : "⚡"}</span>
-            <div className="flex-1 min-w-0">
-              <p className={`text-base font-black ${limiteAtteinte ? "text-red-700" : "text-amber-700"}`}>
-                {limiteAtteinte
-                  ? "Vous avez atteint la limite (3 produits)"
-                  : `${produits.length} / ${maxProduits} produits`}
-              </p>
-              {limiteAtteinte && (
-                <p className="text-sm text-gray-600 mt-0.5">Abonnez-vous pour vendre plus.</p>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
+              limiteAtteinte ? "bg-[#E63946]" : "bg-amber-200"
+            }`}>
+              {limiteAtteinte ? (
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
               )}
             </div>
-            {limiteAtteinte && (
-              <Link href="/vendor/abonnement"
-                className="flex-shrink-0 bg-[#E63946] text-white text-sm font-black px-4 py-2.5 rounded-xl active:scale-95 transition-all">
-                S&apos;abonner
-              </Link>
-            )}
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm font-black ${limiteAtteinte ? "text-[#E63946]" : "text-amber-700"}`}>
+                {limiteAtteinte
+                  ? "Limite atteinte — 3 produits sur 3"
+                  : `Plan Découverte — ${produits.length} / ${maxProduits} produits`}
+              </p>
+              <p className={`text-xs mt-0.5 ${limiteAtteinte ? "text-gray-600" : "text-amber-600"}`}>
+                {limiteAtteinte
+                  ? "Passez Business pour ajouter des produits illimités"
+                  : "Passez Business pour vendre sans limite"}
+              </p>
+            </div>
+            <button
+              onClick={() => setShowUpgrade(true)}
+              className={`flex-shrink-0 text-sm font-black px-4 py-2.5 rounded-xl active:scale-95 transition-all ${
+                limiteAtteinte
+                  ? "bg-[#E63946] text-white"
+                  : "bg-amber-200 text-amber-800"
+              }`}>
+              {limiteAtteinte ? "S&apos;abonner" : "Voir les offres"}
+            </button>
           </div>
         )}
 
         {/* Onglets */}
         <div className="flex bg-white rounded-2xl p-1.5 shadow-sm gap-1">
           {[
-            { id: "produits" as const, label: "🛍️ Mes produits" },
-            { id: "commandes" as const, label: "📦 Commandes" },
+            {
+              id: "produits" as const,
+              label: "Mes produits",
+              count: produits.length,
+              icon: (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+              ),
+            },
+            {
+              id: "commandes" as const,
+              label: "Commandes",
+              count: commandes.filter((c) => c.statut === "payee_escrow").length || commandes.length,
+              badge: commandes.filter((c) => c.statut === "payee_escrow").length,
+              icon: (
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              ),
+            },
           ].map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${
+              className={`relative flex-1 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 ${
                 tab === t.id ? "bg-[#E63946] text-white shadow-sm" : "text-gray-500"
               }`}>
+              {t.icon}
               {t.label}
+              {t.badge && t.badge > 0 && (
+                <span className={`absolute -top-1 -right-1 w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center ${
+                  tab === t.id ? "bg-white text-[#E63946]" : "bg-[#E63946] text-white"
+                }`}>
+                  {t.badge}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -671,13 +1043,26 @@ export default function VendorDashboard() {
         {tab === "produits" && (
           <div className="space-y-3">
             {/* Bouton ajouter */}
-            {!limiteAtteinte && (
-              <button
-                onClick={openAdd}
-                className="w-full bg-[#E63946] text-white font-black py-4 rounded-2xl text-base active:scale-95 transition-all flex items-center justify-center gap-2">
-                <span className="text-xl">+</span> Ajouter un produit
-              </button>
-            )}
+            <button
+              onClick={openAdd}
+              className={`w-full font-black py-4 rounded-2xl text-base active:scale-95 transition-all flex items-center justify-center gap-2 ${
+                limiteAtteinte
+                  ? "bg-gray-100 text-gray-500 border-2 border-dashed border-gray-300"
+                  : "bg-[#E63946] text-white"
+              }`}>
+              {limiteAtteinte ? (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  Limite atteinte — S&apos;abonner pour ajouter plus
+                </>
+              ) : (
+                <>
+                  <span className="text-xl">+</span> Ajouter un produit
+                </>
+              )}
+            </button>
 
             {/* Liste produits */}
             {produits.length === 0 ? (
@@ -753,39 +1138,98 @@ export default function VendorDashboard() {
         {/* ── Onglet Commandes ── */}
         {tab === "commandes" && (
           <div className="space-y-3">
+            {/* Alerte commandes à confirmer */}
+            {commandes.filter((c) => c.statut === "payee_escrow").length > 0 && (
+              <div className="bg-[#FEF2F2] border border-[#E63946]/30 rounded-2xl px-4 py-3 flex items-center gap-3">
+                <div className="w-9 h-9 bg-[#E63946] rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="font-black text-[#E63946] text-sm">
+                    {commandes.filter((c) => c.statut === "payee_escrow").length} commande{commandes.filter((c) => c.statut === "payee_escrow").length > 1 ? "s" : ""} à confirmer
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">Appuyez sur "Fiche" pour voir les détails et confirmer</p>
+                </div>
+              </div>
+            )}
+
             {commandes.length === 0 ? (
               <div className="bg-white rounded-3xl p-10 text-center shadow-sm">
-                <div className="text-5xl mb-3">📦</div>
+                <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
                 <p className="font-black text-gray-700 mb-1">Aucune commande</p>
-                <p className="text-sm text-gray-400">Vos commandes apparaîtront ici.</p>
+                <p className="text-sm text-gray-400">Vos commandes apparaîtront ici dès qu&apos;un client achète.</p>
               </div>
             ) : (
               commandes.map((c) => {
                 const s = STATUT_COMMANDE[c.statut] ?? { label: c.statut, cls: "bg-gray-100 text-gray-600" };
+                const articles = c.articles as ItemPanier[];
+                const adresse = c.adresse as AdresseLivraison;
+                const urgent = c.statut === "payee_escrow";
+
                 return (
-                  <div key={c.id} className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-                    <Link href={`/commande/${c.code_court}`} className="flex items-center gap-4 active:scale-98 transition-all">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-black text-gray-800">{c.code_court ?? c.id.slice(0, 8)}</p>
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${s.cls}`}>{s.label}</span>
-                        </div>
-                        <p className="text-xs text-gray-400">
-                          {new Date(c.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}
-                        </p>
+                  <div key={c.id} className={`bg-white rounded-2xl shadow-sm overflow-hidden border ${
+                    urgent ? "border-[#E63946]/30" : "border-gray-100"
+                  }`}>
+                    {/* Bande urgence */}
+                    {urgent && (
+                      <div className="bg-[#E63946] px-4 py-2 flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                        <p className="text-white font-black text-xs">À confirmer — paiement reçu</p>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="font-black text-[#E63946]">{formatXAF(c.total)}</p>
-                        <p className="text-gray-300 text-lg">›</p>
-                      </div>
-                    </Link>
-                    {c.statut === "payee_escrow" && (
-                      <button
-                        onClick={() => handleConfirmerCommande(c.id)}
-                        className="w-full bg-[#E63946] text-white font-black py-3 rounded-xl text-sm active:scale-95 transition-all">
-                        ✅ Confirmer la commande
-                      </button>
                     )}
+
+                    <div className="p-4">
+                      {/* Ligne principale */}
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-black text-gray-800 text-base">{c.code_court}</p>
+                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${s.cls}`}>{s.label}</span>
+                          </div>
+                          <p className="text-xs text-gray-400">
+                            {new Date(c.created_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" })}
+                            &nbsp;·&nbsp;{articles.length} article{articles.length > 1 ? "s" : ""}
+                          </p>
+                        </div>
+                        <p className="font-black text-[#E63946] flex-shrink-0">{formatXAF(c.total)}</p>
+                      </div>
+
+                      {/* Aperçu adresse */}
+                      {adresse && (
+                        <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 mb-3">
+                          <svg className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <p className="text-xs text-gray-600 font-medium truncate">
+                            {adresse.nom_complet} — {adresse.ville}{adresse.quartier ? `, ${adresse.quartier}` : ""}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setFicheCommande(c)}
+                          className={`flex-1 font-black py-3 rounded-xl text-sm active:scale-95 transition-all flex items-center justify-center gap-2 ${
+                            urgent
+                              ? "bg-[#E63946] text-white"
+                              : "bg-gray-100 text-gray-700"
+                          }`}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                          </svg>
+                          Fiche expédition
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 );
               })

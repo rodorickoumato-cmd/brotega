@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { getVendeursAdmin, changerStatutVendeur, traiterAbonnementsExpires } from "@/app/actions/admin";
+import { getVendeursAdmin, traiterAbonnementsExpires } from "@/app/actions/admin";
 import Link from "next/link";
 
 type AboInfo = {
@@ -118,15 +118,25 @@ export default function AdminVendeursPage() {
   const handleStatut = async (vendeurId: string, statut: "verifie" | "suspendu" | "en_attente") => {
     setErreur(""); setMessage("");
     setEnCours(vendeurId);
-    const res = await changerStatutVendeur(vendeurId, statut);
-    setEnCours(null);
-    if (res.erreur) { setErreur(res.erreur); return; }
-    setVendeurs((prev) => prev.map((v) => v.id === vendeurId ? { ...v, statut } : v));
-    setMessage(
-      statut === "verifie" ? "✓ Boutique validée — le vendeur peut maintenant vendre." :
-      statut === "suspendu" ? "Boutique suspendue." :
-      "Boutique remise en attente."
-    );
+    try {
+      const r = await fetch("/api/admin/vendeurs/statut", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vendeurId, statut }),
+      });
+      const res = await r.json() as { succes?: boolean; erreur?: string };
+      if (res.erreur) { setErreur(res.erreur); return; }
+      setVendeurs((prev) => prev.map((v) => v.id === vendeurId ? { ...v, statut } : v));
+      setMessage(
+        statut === "verifie" ? "Boutique validée — le vendeur peut maintenant vendre." :
+        statut === "suspendu" ? "Boutique suspendue." :
+        "Boutique remise en attente."
+      );
+    } catch {
+      setErreur("Erreur réseau. Réessayez.");
+    } finally {
+      setEnCours(null);
+    }
   };
 
   const handleTraiterExpirations = async () => {

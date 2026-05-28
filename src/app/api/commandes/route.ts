@@ -5,7 +5,7 @@ import { genererCodeCommande } from "@/lib/orderCode";
 import { getProvider } from "@/lib/payment";
 import type { ProviderId } from "@/lib/payment";
 import { vers241 } from "@/lib/phone";
-import { fraisLivraison, TAUX_COMMISSION } from "@/lib/rules";
+import { fraisLivraison, TAUX_COMMISSION, FRAIS_MOBILE_MONEY_TAUX } from "@/lib/rules";
 import { envoyerEmailConfirmationCommande, envoyerEmailNouvelleCommande } from "@/lib/email";
 
 type ItemPanier = {
@@ -80,7 +80,13 @@ export async function POST(request: NextRequest) {
       .from("produits").select("id, nom, prix, vendeur_id, image").in("id", produitIds).eq("statut", "actif");
 
     if (errProduits || !produitsDB || produitsDB.length !== produitIds.length) {
-      return NextResponse.json({ erreur: "Un ou plusieurs produits sont indisponibles." }, { status: 400 });
+      const trouvesIds = (produitsDB ?? []).map((p) => p.id);
+      const manquants = produitIds.filter((id) => !trouvesIds.includes(id));
+      return NextResponse.json({
+        erreur: manquants.length
+          ? `Produit(s) indisponible(s) ou introuvable(s) dans votre panier. Retournez au panier pour actualiser.`
+          : "Un ou plusieurs produits sont indisponibles.",
+      }, { status: 400 });
     }
 
     const produitMap = new Map(produitsDB.map((p) => [p.id, p]));
@@ -95,10 +101,18 @@ export async function POST(request: NextRequest) {
       return { produit_id: it.produit_id, nom: db.nom, prix_xaf: db.prix, quantite: Math.max(1, Math.floor(it.quantite)), image: db.image ?? null, vendeur_id: db.vendeur_id };
     });
 
-    const sousTotal = itemsVerifies.reduce((s, it) => s + it.prix_xaf * it.quantite, 0);
-    const livraison = fraisLivraison(input.adresse.ville);
-    const total = sousTotal + livraison;
-    const commission = Math.round(sousTotal * TAUX_COMMISSION);
+    // Récupérer la ville du vendeur pour le calcul des frais de livraison
+    const { data: vendeurInfo } = await admin
+      .from("vendeurs").select("ville").eq("id", vendeurId).single();
+    const villeVendeur = vendeurInfo?.ville ?? "Libreville";
+
+    const sousTotal  = itemsVerifies.reduce((s, it) => s + it.prix_xaf * it.quantite, 0);
+    const livraison  = fraisLivraison(villeVendeur, input.adresse.ville);
+    const estMM      = input.mode_paiement === "airtel_money" || input.mode_paiement === "moov_money";
+    const fraisMM    = estMM ? Math.round((sousTotal + livraison) * FRAIS_MOBILE_MONEY_TAUX) : 0;
+    const total      = sousTotal + livraison + fraisMM;
+    // commission_xaf stocke les frais plateforme (Mobile Money inclus) — déduits de l'escrow
+    const commission = Math.round(sousTotal * TAUX_COMMISSION) + fraisMM;
 
     const isMM = input.mode_paiement === "airtel_money" || input.mode_paiement === "moov_money";
     let phoneMM: string | null = null;
@@ -128,7 +142,8 @@ export async function POST(request: NextRequest) {
         mode_paiement: input.mode_paiement as "airtel_money" | "moov_money" | "especes",
         telephone_paiement: phoneMM,
         adresse: input.adresse,
-        statut: "en_attente_paiement",
+        // Espèces : pas d'escrow mais le vendeur doit pouvoir confirmer → payee_escrow d'emblée
+        statut: input.mode_paiement === "especes" ? "payee_escrow" : "en_attente_paiement",
         statut_paiement: "en_attente",
       })
       .select("id, code_court")
