@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
 
   const { userId, action, motif } = await req.json() as {
     userId: string;
-    action: "bannir" | "debannir" | "supprimer";
+    action: "bannir" | "debannir" | "supprimer" | "suspendre" | "reactiver";
     motif?: string;
   };
 
@@ -53,6 +53,22 @@ export async function POST(req: NextRequest) {
     // Supprimer l'utilisateur auth (irréversible)
     await admin.auth.admin.deleteUser(userId);
     return NextResponse.json({ succes: true, action: "supprimé" });
+  }
+
+  if (action === "suspendre") {
+    await admin.from("utilisateurs").update({
+      suspendu: true,
+      motif_suspension: motif ?? "décision admin",
+    }).eq("id", userId);
+    return NextResponse.json({ succes: true, action: "suspendu" });
+  }
+
+  if (action === "reactiver") {
+    await admin.from("utilisateurs").update({
+      suspendu: false,
+      motif_suspension: null,
+    }).eq("id", userId);
+    return NextResponse.json({ succes: true, action: "réactivé" });
   }
 
   return NextResponse.json({ erreur: "Action inconnue" }, { status: 400 });

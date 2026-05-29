@@ -19,7 +19,8 @@ type Utilisateur = {
 
 type ActionModal = {
   user: Utilisateur;
-  type: "bannir" | "debannir" | "supprimer" | "supprimer_boutique";
+  type: "bannir" | "debannir" | "supprimer" | "supprimer_boutique" | "changer_role";
+  nouveauRole?: string;
 } | null;
 
 const ROLE_STYLE: Record<string, string> = {
@@ -78,6 +79,13 @@ function ConfirmModal({
       desc: `Supprime la boutique "${action.user.boutique?.nom}" et tous ses produits. L'utilisateur conserve son compte.`,
       couleur: "bg-red-600",
       label: "Supprimer la boutique",
+      motifRequis: false,
+    },
+    changer_role: {
+      titre: "Changer le rôle",
+      desc: `${action.user.nom} aura le rôle : ${action.nouveauRole ?? "acheteur"}.`,
+      couleur: "bg-indigo-600",
+      label: "Confirmer le changement",
       motifRequis: false,
     },
   };
@@ -169,6 +177,9 @@ export default function AdminUtilisateursPage() {
       if (actionModal.type === "supprimer_boutique") {
         url = "/api/admin/vendeurs/supprimer";
         body = { vendeurId: actionModal.user.boutique?.id, banEmail: false };
+      } else if (actionModal.type === "changer_role") {
+        url = "/api/admin/utilisateurs/changer-role";
+        body = { userId: actionModal.user.id, role: actionModal.nouveauRole ?? "acheteur" };
       }
 
       const r = await fetch(url, {
@@ -378,15 +389,32 @@ export default function AdminUtilisateursPage() {
                 )}
 
                 {u.role !== "admin" && (
-                  <button
-                    onClick={() => setActionModal({ user: u, type: "supprimer" })}
-                    className="text-xs font-bold px-3 py-2 rounded-xl bg-gray-50 text-gray-600 border border-gray-200 active:scale-95 transition-all flex items-center gap-1"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    Suppr. compte
-                  </button>
+                  <>
+                    {/* Changer rôle */}
+                    <select
+                      value={u.role}
+                      onChange={(e) => {
+                        const r = e.target.value;
+                        if (r !== u.role) setActionModal({ user: u, type: "changer_role", nouveauRole: r });
+                      }}
+                      className="text-xs font-bold px-2 py-2 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 focus:outline-none cursor-pointer"
+                    >
+                      <option value="acheteur">acheteur</option>
+                      <option value="vendeur">vendeur</option>
+                      <option value="livreur">livreur</option>
+                      <option value="admin">admin</option>
+                    </select>
+
+                    <button
+                      onClick={() => setActionModal({ user: u, type: "supprimer" })}
+                      className="text-xs font-bold px-3 py-2 rounded-xl bg-gray-50 text-gray-600 border border-gray-200 active:scale-95 transition-all flex items-center gap-1"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      Suppr. compte
+                    </button>
+                  </>
                 )}
               </div>
             </div>

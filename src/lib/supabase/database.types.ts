@@ -13,6 +13,8 @@ export type Database = {
           whatsapp: string | null;
           marketing_opt_in: boolean;
           role: "acheteur" | "vendeur" | "livreur" | "admin";
+          suspendu: boolean | null;
+          motif_suspension: string | null;
           created_at: string;
         };
         Insert: {
@@ -24,6 +26,8 @@ export type Database = {
           whatsapp?: string | null;
           marketing_opt_in?: boolean;
           role?: "acheteur" | "vendeur" | "livreur" | "admin";
+          suspendu?: boolean | null;
+          motif_suspension?: string | null;
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["utilisateurs"]["Insert"]>;
@@ -231,6 +235,11 @@ export type Database = {
           livreur_id: string | null;
           statut: "en_attente" | "assignee" | "en_route" | "livree" | "echec";
           note_livreur: string | null;
+          code_confirmation: string | null;
+          code_utilise_at: string | null;
+          remuneration_xaf: number | null;
+          client_telephone: string | null;
+          notes: string | null;
           assignee_at: string | null;
           livree_at: string | null;
           created_at: string;
@@ -242,6 +251,11 @@ export type Database = {
           livreur_id?: string | null;
           statut?: "en_attente" | "assignee" | "en_route" | "livree" | "echec";
           note_livreur?: string | null;
+          code_confirmation?: string | null;
+          code_utilise_at?: string | null;
+          remuneration_xaf?: number | null;
+          client_telephone?: string | null;
+          notes?: string | null;
           assignee_at?: string | null;
           livree_at?: string | null;
           created_at?: string;

@@ -51,10 +51,11 @@ export default function AdminPage() {
 
   const sections = [
     { href: "/admin/vendeurs",     icon: "🏪", titre: "Boutiques",       desc: "Valider, suspendre, supprimer des boutiques" },
-    { href: "/admin/utilisateurs", icon: "👥", titre: "Utilisateurs",    desc: "Bannir emails frauduleux, gérer les comptes" },
-    { href: "/admin/commandes",    icon: "📦", titre: "Commandes",       desc: "Gérer toutes les commandes" },
+    { href: "/admin/utilisateurs", icon: "👥", titre: "Utilisateurs",    desc: "Changer rôle, bannir, gérer les comptes" },
+    { href: "/admin/livreurs",     icon: "🛵", titre: "Livreurs",        desc: "Stats, gains, suspendre des livreurs" },
+    { href: "/admin/commandes",    icon: "📦", titre: "Commandes",       desc: "Modifier statut, rembourser, libérer escrow" },
     { href: "/admin/paiements",    icon: "💳", titre: "Paiements",       desc: "Historique des transactions PVIT" },
-    { href: "/admin/livraisons",   icon: "🚚", titre: "Livraisons",      desc: "Assigner les livreurs" },
+    { href: "/admin/livraisons",   icon: "🚚", titre: "Livraisons",      desc: "Assigner les livreurs aux commandes" },
     { href: "/admin/reclamations", icon: "⚠️", titre: "Réclamations",   desc: "Résoudre les litiges" },
   ];
 

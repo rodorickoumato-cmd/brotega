@@ -89,6 +89,7 @@ export default function PageCommande() {
   const [commande, setCommande] = useState<Commande | null>(null);
   const [chargement, setChargement] = useState(true);
   const [confirmLoading, setConfirmLoading] = useState(false);
+  const [codeConfirmation, setCodeConfirmation] = useState<string | null>(null);
 
   const charger = useCallback(async () => {
     const c = await getCommandeParCode(code);
@@ -106,6 +107,18 @@ export default function PageCommande() {
     const interval = setInterval(() => { charger(); }, 5000);
     return () => clearInterval(interval);
   }, [commande?.statut, charger]);
+
+  // Récupérer le code de confirmation quand la commande est en livraison
+  useEffect(() => {
+    if (!commande?.id || commande.statut !== "en_livraison") {
+      setCodeConfirmation(null);
+      return;
+    }
+    fetch(`/api/livraisons/code-client?commandeId=${commande.id}`)
+      .then(r => r.json())
+      .then((d: { code?: string | null }) => setCodeConfirmation(d.code ?? null))
+      .catch(() => null);
+  }, [commande?.id, commande?.statut]);
 
   if (chargement) {
     return (
@@ -238,6 +251,34 @@ export default function PageCommande() {
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* ── Code de confirmation livraison ── */}
+      {statut === "en_livraison" && codeConfirmation && (
+        <div className="bg-[#1A202C] rounded-2xl p-5">
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-8 h-8 rounded-full bg-[#E63946] flex items-center justify-center flex-shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </div>
+            <div>
+              <p className="text-white font-black text-sm">Code de remise</p>
+              <p className="text-white/50 text-xs">Montrez ce code au livreur à l&apos;arrivée</p>
+            </div>
+          </div>
+          <div className="flex justify-center gap-2 mb-4">
+            {codeConfirmation.split("").map((chiffre, i) => (
+              <div key={i} className="w-10 h-12 bg-white/10 rounded-xl flex items-center justify-center border border-white/20">
+                <span className="text-white font-black text-xl tracking-widest">{chiffre}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-white/40 text-xs">
+            Ne partagez ce code qu&apos;avec le livreur en face de vous
+          </p>
         </div>
       )}
 
