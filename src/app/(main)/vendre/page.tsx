@@ -47,7 +47,7 @@ export default function VendrePage() {
     <div className="max-w-4xl mx-auto px-4 py-10">
       {/* Hero */}
       <div className="bg-gradient-to-br from-[#E63946] to-[#C1121F] rounded-3xl p-8 text-white text-center mb-10">
-        <h1 className="text-3xl md:text-4xl font-black mb-3">Vendez sur Brotega 🇬🇦</h1>
+        <h1 className="text-3xl md:text-4xl font-black mb-3">Vendez sur J'adore la Famille 🇬🇦</h1>
         <p className="text-white/80 text-lg mb-6 max-w-xl mx-auto">
           Rejoignez plus de 500 vendeurs et touchez des milliers de clients dans tout le Gabon.
         </p>
@@ -83,7 +83,7 @@ export default function VendrePage() {
 
       {/* Avantages */}
       <div className="mb-10">
-        <h2 className="text-2xl font-black text-gray-800 mb-6 text-center">Pourquoi vendre sur Brotega ?</h2>
+        <h2 className="text-2xl font-black text-gray-800 mb-6 text-center">Pourquoi vendre sur J'adore la Famille ?</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {avantages.map((a) => (
             <div key={a.title} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 text-center">

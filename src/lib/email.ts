@@ -3,7 +3,7 @@
 const BREVO_URL  = "https://api.brevo.com/v3/smtp/email";
 const API_KEY    = process.env.BREVO_API_KEY ?? "";
 const SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL ?? "noreply@brotega.com";
-const SENDER_NAME  = process.env.BREVO_SENDER_NAME  ?? "Brotega";
+const SENDER_NAME  = process.env.BREVO_SENDER_NAME  ?? "J'adore la Famille";
 
 async function envoyerEmail(to: string, subject: string, html: string): Promise<void> {
   if (!API_KEY) return; // best-effort — ne crash jamais si clé absente
@@ -60,7 +60,7 @@ function lignesArticles(articles: { nom: string; quantite: number; prix: number 
     .join("");
 }
 
-const FOOTER = `<p style="color:#888;font-size:12px;text-align:center;margin-top:24px">Brotega — Votre marketplace gabonaise</p>`;
+const FOOTER = `<p style="color:#888;font-size:12px;text-align:center;margin-top:24px">J'adore la Famille — Votre marketplace gabonaise</p>`;
 
 export async function envoyerEmailConfirmationCommande(params: EmailCommandeParams) {
   const html = `
@@ -72,7 +72,7 @@ export async function envoyerEmailConfirmationCommande(params: EmailCommandePara
         </p>
       </div>
       <p style="color:#333">Bonjour ${params.nom},</p>
-      <p style="color:#555">Votre commande a bien été enregistrée sur Brotega.</p>
+      <p style="color:#555">Votre commande a bien été enregistrée sur J'adore la Famille.</p>
       <table style="width:100%;border-collapse:collapse;margin:16px 0">
         ${lignesArticles(params.articles)}
       </table>
@@ -91,7 +91,7 @@ export async function envoyerEmailConfirmationCommande(params: EmailCommandePara
       ${FOOTER}
     </div>
   `;
-  await envoyerEmail(params.to, `Commande ${params.codeCourt} confirmée — Brotega`, html);
+  await envoyerEmail(params.to, `Commande ${params.codeCourt} confirmée — J'adore la Famille`, html);
 }
 
 export async function envoyerEmailNouvelleCommande(params: EmailVendeurParams) {
@@ -104,7 +104,7 @@ export async function envoyerEmailNouvelleCommande(params: EmailVendeurParams) {
         </p>
       </div>
       <p style="color:#333">Bonjour ${params.nomVendeur},</p>
-      <p style="color:#555">Vous avez reçu une nouvelle commande sur Brotega.</p>
+      <p style="color:#555">Vous avez reçu une nouvelle commande sur J'adore la Famille.</p>
       <table style="width:100%;border-collapse:collapse;margin:16px 0">
         ${lignesArticles(params.articles)}
       </table>
@@ -118,7 +118,7 @@ export async function envoyerEmailNouvelleCommande(params: EmailVendeurParams) {
       ${FOOTER}
     </div>
   `;
-  await envoyerEmail(params.to, `Nouvelle commande ${params.codeCourt} — Brotega`, html);
+  await envoyerEmail(params.to, `Nouvelle commande ${params.codeCourt} — J'adore la Famille`, html);
 }
 
 // ── Emails post-paiement (déclenchés par le webhook PVIT) ──────────────────

@@ -5,7 +5,7 @@ export default function AProposPage() {
     <div className="max-w-3xl mx-auto px-4 py-10">
       <div className="mb-8">
         <Link href="/" className="text-sm text-gray-400 hover:text-[#E63946] transition-colors">← Retour à l'accueil</Link>
-        <h1 className="text-3xl font-black text-gray-800 mt-3 mb-2">À propos de Brotega</h1>
+        <h1 className="text-3xl font-black text-gray-800 mt-3 mb-2">À propos de J'adore la Famille</h1>
         <p className="text-gray-500">La première marketplace 100% gabonaise.</p>
       </div>
 
@@ -14,12 +14,12 @@ export default function AProposPage() {
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center text-2xl font-black text-white">B</div>
             <div>
-              <h2 className="text-2xl font-black">Brotega</h2>
+              <h2 className="text-2xl font-black">J'adore la Famille</h2>
               <p className="text-white/70 text-sm">La Marketplace du Gabon 🇬🇦</p>
             </div>
           </div>
           <p className="text-white/90 leading-relaxed">
-            Brotega est la première plateforme de commerce en ligne conçue spécifiquement pour le marché gabonais. Notre mission est de connecter acheteurs et vendeurs à travers tout le Gabon, en facilitant l'accès aux produits locaux et en soutenant l'économie gabonaise.
+            J'adore la Famille est la première plateforme de commerce en ligne conçue spécifiquement pour le marché gabonais. Notre mission est de connecter acheteurs et vendeurs à travers tout le Gabon, en facilitant l'accès aux produits locaux et en soutenant l'économie gabonaise.
           </p>
         </div>
 
@@ -51,7 +51,7 @@ export default function AProposPage() {
 
         {/* Chiffres clés */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-xl font-black text-gray-800 mb-5">Brotega en chiffres</h2>
+          <h2 className="text-xl font-black text-gray-800 mb-5">J'adore la Famille en chiffres</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               { value: "500+", label: "Vendeurs actifs" },
@@ -68,7 +68,7 @@ export default function AProposPage() {
         </div>
 
         <div className="text-center pt-4">
-          <p className="text-gray-500 mb-4">Rejoignez la communauté Brotega dès aujourd'hui</p>
+          <p className="text-gray-500 mb-4">Rejoignez la communauté J'adore la Famille dès aujourd'hui</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/auth/register" className="bg-[#E63946] text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-[#C1121F] transition-colors">
               Créer un compte

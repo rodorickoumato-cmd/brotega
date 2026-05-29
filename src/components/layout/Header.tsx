@@ -206,7 +206,7 @@ export function Header() {
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center gap-4">
             {/* Logo */}
-            <Link href="/" className="flex-shrink-0" aria-label="Brotega — Accueil">
+            <Link href="/" className="flex-shrink-0" aria-label="J'adore la Famille — Accueil">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 bg-[#E63946] rounded-xl flex items-center justify-center flex-shrink-0">
                   <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -214,7 +214,7 @@ export function Header() {
                   </svg>
                 </div>
                 <div className="leading-tight">
-                  <span className="font-black text-base text-[#E63946] block">Brotega</span>
+                  <span className="font-black text-base text-[#E63946] block">J'adore la Famille</span>
                   <span className="text-[10px] text-gray-400 font-medium">Marketplace du Gabon</span>
                 </div>
               </div>

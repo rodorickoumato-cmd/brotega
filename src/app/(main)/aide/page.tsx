@@ -11,14 +11,14 @@ const faqs = [
   },
   {
     q: "Dans quelles villes livrez-vous ?",
-    a: "Brotega livre dans toutes les grandes villes du Gabon : Libreville, Port-Gentil, Franceville, Oyem, Moanda, Mouila, Lambaréné, Tchibanga, Koulamoutou, Makokou, Bitam et Gamba.",
+    a: "J'adore la Famille livre dans toutes les grandes villes du Gabon : Libreville, Port-Gentil, Franceville, Oyem, Moanda, Mouila, Lambaréné, Tchibanga, Koulamoutou, Makokou, Bitam et Gamba.",
   },
   {
     q: "Quel est le délai de livraison ?",
     a: "À Libreville, comptez 24 à 48h. Pour les autres villes du Gabon, le délai est de 2 à 5 jours ouvrés selon votre localisation.",
   },
   {
-    q: "Comment devenir vendeur sur Brotega ?",
+    q: "Comment devenir vendeur sur J'adore la Famille ?",
     a: "Cliquez sur « Vendre » dans la barre de navigation, puis suivez les 4 étapes d'inscription. Votre boutique est créée gratuitement en moins de 5 minutes.",
   },
   {
@@ -41,7 +41,7 @@ export default function AidePage() {
       <div className="mb-8">
         <Link href="/" className="text-sm text-gray-400 hover:text-[#E63946] transition-colors">← Retour à l'accueil</Link>
         <h1 className="text-3xl font-black text-gray-800 mt-3 mb-2">Centre d'aide</h1>
-        <p className="text-gray-500">Trouvez les réponses à vos questions sur Brotega.</p>
+        <p className="text-gray-500">Trouvez les réponses à vos questions sur J'adore la Famille.</p>
       </div>
 
       {/* Contact rapide */}
@@ -52,7 +52,7 @@ export default function AidePage() {
           <p className="text-sm text-gray-600">Notre équipe répond sur WhatsApp du lundi au samedi de 8h à 20h.</p>
         </div>
         <a
-          href="https://wa.me/24101234567?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20sur%20Brotega."
+          href="https://wa.me/24101234567?text=Bonjour%2C%20j%27ai%20besoin%20d%27aide%20sur%20J'adore la Famille."
           target="_blank"
           rel="noopener noreferrer"
           className="bg-[#25D366] text-white font-semibold px-4 py-2 rounded-xl text-sm hover:bg-[#1da851] transition-colors whitespace-nowrap"

@@ -69,7 +69,7 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
       <div className="bg-[#E63946] px-5 pt-12 pb-6">
-        <p className="text-white/70 text-sm">Brotega</p>
+        <p className="text-white/70 text-sm">J'adore la Famille</p>
         <h1 className="text-2xl font-black text-white">Dashboard Admin</h1>
         <p className="text-white/70 text-sm mt-1">Vue d'ensemble de la plateforme</p>
       </div>

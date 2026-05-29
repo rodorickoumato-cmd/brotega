@@ -3,14 +3,14 @@
 const WHATSAPP_SUPPORT = process.env.NEXT_PUBLIC_WHATSAPP_SUPPORT ?? "24100000000";
 
 export function WhatsAppButton() {
-  const href = `https://wa.me/${WHATSAPP_SUPPORT}?text=${encodeURIComponent("Bonjour, j'ai besoin d'aide sur Brotega.")}`;
+  const href = `https://wa.me/${WHATSAPP_SUPPORT}?text=${encodeURIComponent("Bonjour, j'ai besoin d'aide sur J'adore la Famille.")}`;
 
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Contacter le support Brotega sur WhatsApp"
+      aria-label="Contacter le support J'adore la Famille sur WhatsApp"
       className="fixed bottom-6 right-4 z-50 w-14 h-14 bg-[#25D366] hover:bg-[#1EBE5C] text-white rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-all active:scale-90"
     >
       <svg viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7" aria-hidden="true">

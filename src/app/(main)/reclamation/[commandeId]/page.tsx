@@ -110,7 +110,7 @@ export default function ReclamationPage() {
             )}
             {!reclamation.resolution && (
               <p className="text-xs text-center mt-3 opacity-70">
-                L&apos;équipe Brotega examine votre réclamation. Vous serez notifié(e) de la décision.
+                L&apos;équipe J'adore la Famille examine votre réclamation. Vous serez notifié(e) de la décision.
               </p>
             )}
           </div>
@@ -158,7 +158,7 @@ export default function ReclamationPage() {
             </button>
 
             <p className="text-xs text-center text-gray-400">
-              🛡️ L&apos;équipe Brotega traitera votre réclamation sous 48h
+              🛡️ L&apos;équipe J'adore la Famille traitera votre réclamation sous 48h
             </p>
           </div>
         )}
@@ -169,7 +169,7 @@ export default function ReclamationPage() {
             <div className="text-5xl mb-3">✅</div>
             <h2 className="font-black text-gray-800 text-xl mb-2">Réclamation soumise</h2>
             <p className="text-sm text-gray-500 mb-6">
-              Votre réclamation a été enregistrée. L&apos;équipe Brotega vous contactera sous 48h.
+              Votre réclamation a été enregistrée. L&apos;équipe J'adore la Famille vous contactera sous 48h.
             </p>
           </div>
         )}

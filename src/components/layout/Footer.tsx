@@ -13,7 +13,7 @@ export function Footer() {
               <div className="w-8 h-8 bg-[#E63946] rounded-lg flex items-center justify-center">
                 <span className="text-lg">❤️</span>
               </div>
-              <span className="font-black text-xl text-white">Brotega</span>
+              <span className="font-black text-xl text-white">J'adore la Famille</span>
             </div>
             <p className="text-sm leading-relaxed text-gray-400">
               La marketplace du Gabon. Achetez local, soutenez les entrepreneurs gabonais.
@@ -88,7 +88,7 @@ export function Footer() {
             <h3 className="text-white font-bold mb-4">Informations</h3>
             <ul className="space-y-2 text-sm mb-6">
               {[
-                ["À propos de Brotega", "/a-propos"],
+                ["À propos de J'adore la Famille", "/a-propos"],
                 ["Conditions d'utilisation", "/conditions"],
                 ["Politique de confidentialité", "/confidentialite"],
                 ["Comment vendre", "/vendre"],
@@ -112,7 +112,7 @@ export function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-white/10 py-4 px-4">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500">
-          <p>© 2026 Brotega — Fait avec ❤️ au Gabon 🇬🇦</p>
+          <p>© 2026 J'adore la Famille — Fait avec ❤️ au Gabon 🇬🇦</p>
           <p>Tous droits réservés · Libreville, Gabon</p>
         </div>
       </div>

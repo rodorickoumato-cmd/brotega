@@ -229,5 +229,5 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  return NextResponse.json({ webhook: "Brotega Paiements", ok: true });
+  return NextResponse.json({ webhook: "J'adore la Famille Paiements", ok: true });
 }

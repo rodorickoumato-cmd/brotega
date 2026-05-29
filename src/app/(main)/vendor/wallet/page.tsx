@@ -12,7 +12,7 @@ import type { Wallet, WalletTransaction } from "@/lib/supabase/database.types";
 const TYPE_AFFICHAGE: Record<WalletTransaction["type"], { label: string; couleur: string; emoji: string }> = {
   credit_escrow:  { label: "Vente reçue (escrow)",     couleur: "blue",   emoji: "🔒" },
   liberation:     { label: "Libération après livraison", couleur: "green", emoji: "💰" },
-  commission:     { label: "Commission Brotega",       couleur: "gray",   emoji: "🏷️" },
+  commission:     { label: "Commission J'adore la Famille",       couleur: "gray",   emoji: "🏷️" },
   retrait:        { label: "Retrait Mobile Money",     couleur: "amber",  emoji: "📤" },
   remboursement:  { label: "Remboursement",            couleur: "red",    emoji: "↩️" },
   ajustement:     { label: "Ajustement",                couleur: "gray",   emoji: "⚙️" },
@@ -157,7 +157,7 @@ export default function PageWallet() {
         <ol className="text-xs space-y-1 list-decimal list-inside">
           <li>Un client paye → l&apos;argent va dans &quot;En attente livraison&quot;</li>
           <li>Le client confirme la réception (ou auto-confirmé après 7 jours)</li>
-          <li>L&apos;argent passe dans &quot;Disponible&quot; (- 5% de commission Brotega)</li>
+          <li>L&apos;argent passe dans &quot;Disponible&quot; (- 5% de commission J'adore la Famille)</li>
           <li>Vous retirez vers Airtel Money ou Moov Money en 24h max</li>
         </ol>
       </div>

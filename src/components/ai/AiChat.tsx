@@ -23,7 +23,7 @@ export function AiChat() {
     if (ouvert && messages.length === 0) {
       setMessages([{
         role: "assistant",
-        content: "Bonjour ! Je suis Broto, l'assistant Brotega 🇬🇦\n\nComment puis-je vous aider aujourd'hui ?",
+        content: "Bonjour ! Je suis Broto, l'assistant J'adore la Famille 🇬🇦\n\nComment puis-je vous aider aujourd'hui ?",
       }]);
     }
     if (ouvert) setTimeout(() => inputRef.current?.focus(), 300);
@@ -88,7 +88,7 @@ export function AiChat() {
       <button
         onClick={() => setOuvert((o) => !o)}
         className="fixed bottom-20 right-4 z-40 w-14 h-14 bg-[#E63946] rounded-full shadow-lg flex items-center justify-center active:scale-90 transition-all"
-        aria-label="Assistant IA Brotega"
+        aria-label="Assistant IA J'adore la Famille"
       >
         {ouvert ? (
           <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,7 +111,7 @@ export function AiChat() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white font-black text-sm">Broto</p>
-              <p className="text-white/70 text-xs">Assistant Brotega · Toujours disponible</p>
+              <p className="text-white/70 text-xs">Assistant J'adore la Famille · Toujours disponible</p>
             </div>
             <button
               onClick={effacer}

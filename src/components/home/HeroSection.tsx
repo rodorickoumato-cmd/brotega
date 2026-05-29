@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 
 const slides = [
   {
-    title: "Bienvenue sur Brotega",
+    title: "Bienvenue sur J'adore la Famille",
     subtitle: "La Marketplace du Gabon 🇬🇦",
     description: "Achetez et vendez en toute confiance. Produits locaux et internationaux livrés partout au Gabon.",
     cta: "Découvrir les produits",
@@ -25,7 +25,7 @@ const slides = [
   {
     title: "Devenez Vendeur",
     subtitle: "Développez votre business",
-    description: "Rejoignez plus de 500 vendeurs sur Brotega. Créez votre boutique gratuitement et vendez dans tout le Gabon.",
+    description: "Rejoignez plus de 500 vendeurs sur J'adore la Famille. Créez votre boutique gratuitement et vendez dans tout le Gabon.",
     cta: "Commencer à vendre",
     ctaLink: "/vendor/register",
     bg: "from-[#FFD100] to-[#E6A800]",
@@ -67,7 +67,7 @@ export function HeroSection() {
                   size="lg"
                   className={slide.dark ? "" : "text-white border-white/40 hover:bg-white/20 hover:text-white"}
                 >
-                  Vendre sur Brotega
+                  Vendre sur J'adore la Famille
                 </Button>
               </Link>
             </div>
