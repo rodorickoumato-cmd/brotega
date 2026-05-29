@@ -70,6 +70,8 @@ export class PvitProvider implements PaiementProvider {
     };
 
     try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(`${BASE_URL}/v2/${REST_TOKEN}/rest`, {
         method: "POST",
         headers: {
@@ -77,7 +79,9 @@ export class PvitProvider implements PaiementProvider {
           "X-Secret": SECRET,
         },
         body: JSON.stringify(body),
+        signal: controller.signal,
       });
+      clearTimeout(timer);
 
       const json = await res.json().catch(() => ({})) as Record<string, unknown>;
 
