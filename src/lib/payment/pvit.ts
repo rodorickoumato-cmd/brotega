@@ -87,8 +87,10 @@ export class PvitProvider implements PaiementProvider {
 
       if (!res.ok) {
         const msg = (json["message"] ?? json["error"] ?? json["erreur"] ?? `HTTP ${res.status}`) as string;
+        console.error("PVIT erreur HTTP", res.status, JSON.stringify(json));
         return { ok: false, erreur: String(msg) };
       }
+      console.log("PVIT réponse OK", JSON.stringify(json));
 
       const status = String(json["status"] ?? json["state"] ?? "pending").toLowerCase();
       if (["failed", "error", "rejected", "cancelled", "echec"].includes(status)) {
