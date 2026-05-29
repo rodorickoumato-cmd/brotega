@@ -64,8 +64,8 @@ export class PvitProvider implements PaiementProvider {
       service:                         "RESTFUL",
       callback_url_code:               CALLBACK_CODE,
       reference,
-      product:                         `MYCSSECRET ${p.commandeCode}`.slice(0, 50),
-      free_info:                       `Commande ${p.commandeCode}`,
+      product:                         p.commandeCode.slice(0, 15),
+      free_info:                       p.commandeCode.slice(0, 15),
     };
 
     try {
