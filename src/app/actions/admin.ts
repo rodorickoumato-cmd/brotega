@@ -81,8 +81,35 @@ export async function changerStatutVendeur(vendeurId: string, statut: "verifie" 
   const { erreur } = await verifierAdmin();
   if (erreur) return { erreur };
   const admin = createAdminClient();
+
+  // Récupère l'utilisateur lié à cette boutique
+  const { data: vendeur, error: fetchError } = await admin
+    .from("vendeurs").select("utilisateur_id").eq("id", vendeurId).single();
+  if (fetchError || !vendeur) return { erreur: "Boutique introuvable." };
+
   const { error } = await admin.from("vendeurs").update({ statut }).eq("id", vendeurId);
   if (error) return { erreur: error.message };
+
+  // Approbation → promouvoir le rôle utilisateur à "vendeur"
+  if (statut === "verifie") {
+    await admin.from("utilisateurs")
+      .update({ role: "vendeur" })
+      .eq("id", vendeur.utilisateur_id);
+    await admin.auth.admin.updateUserById(vendeur.utilisateur_id, {
+      app_metadata: { role: "vendeur" },
+    });
+  }
+
+  // Suspension → rétrograder à "acheteur" (boutique inactive, rôle révoqué)
+  if (statut === "suspendu") {
+    await admin.from("utilisateurs")
+      .update({ role: "acheteur" })
+      .eq("id", vendeur.utilisateur_id);
+    await admin.auth.admin.updateUserById(vendeur.utilisateur_id, {
+      app_metadata: { role: "acheteur" },
+    });
+  }
+
   return { succes: true };
 }
 

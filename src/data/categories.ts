@@ -111,4 +111,15 @@ export const categories: Category[] = [
     productCount: 74,
     subcategories: ["Football", "Fitness", "Natation", "Jeux & Jouets"],
   },
+  {
+    id: "11",
+    name: "Brocante",
+    slug: "brocante",
+    icon: "🏺",
+    color: "#92400E",
+    bg: "#FEF3C7",
+    image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=120&h=120&fit=crop&auto=format&q=70",
+    productCount: 0,
+    subcategories: ["Articles d'occasion", "Meubles anciens", "Électroménager", "Vêtements d'occasion", "Livres & CD", "Objets de collection"],
+  },
 ];

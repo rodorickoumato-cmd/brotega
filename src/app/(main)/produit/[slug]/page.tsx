@@ -15,13 +15,13 @@ export async function generateMetadata(
   if (UUID_RE.test(slug)) {
     const supabase = await createClient();
     const { data } = await supabase.from("produits").select("nom").eq("id", slug).single();
-    return { title: data ? `${data.nom} — J'adore la Famille` : "Produit — J'adore la Famille" };
+    return { title: data ? `${data.nom} — Brotega` : "Produit — Brotega" };
   }
 
   const product = getProductBySlug(slug);
-  if (!product) return { title: "Produit introuvable — J'adore la Famille" };
+  if (!product) return { title: "Produit introuvable — Brotega" };
   return {
-    title: `${product.name} — J'adore la Famille`,
+    title: `${product.name} — Brotega`,
     description: product.description,
     openGraph: {
       title: product.name,

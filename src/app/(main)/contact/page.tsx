@@ -30,7 +30,7 @@ export default function ContactPage() {
           {[
             { icon: "📱", label: "WhatsApp", value: "+241 01 23 45 67", href: "https://wa.me/24101234567" },
             { icon: "📞", label: "Téléphone", value: "+241 01 23 45 67", href: "tel:+24101234567" },
-            { icon: "📧", label: "Email", value: "support@J'adore la Famille.ga", href: "mailto:support@J'adore la Famille.ga" },
+            { icon: "📧", label: "Email", value: "support@brotegafrica.org", href: "mailto:support@brotegafrica.org" },
             { icon: "📍", label: "Adresse", value: "Libreville, Gabon", href: undefined },
           ].map((c) => (
             <div key={c.label} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">

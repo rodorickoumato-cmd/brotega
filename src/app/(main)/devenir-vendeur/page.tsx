@@ -115,7 +115,7 @@ const PLANS_MARKETING = [
       "Accès prioritaire aux nouveautés",
       "Support VIP",
     ],
-    note: "Idéal pour transformer J'adore la Famille en véritable source de revenus.",
+    note: "Idéal pour transformer Brotega en véritable source de revenus.",
     cta: "Passer au niveau Premium",
     ctaHref: "/vendor/abonnement",
     ctaStyle: "premium",
@@ -244,7 +244,7 @@ export default function DevenirVendeurPage() {
             <span className="text-white text-xs font-bold">Offre de lancement — places limitées</span>
           </div>
           <h1 className="text-2xl font-black text-white leading-tight">
-            Développez votre business avec J'adore la Famille 🇬🇦
+            Développez votre business avec Brotega 🇬🇦
           </h1>
           <p className="text-white/80 text-sm mt-3 leading-relaxed">
             Vendez vos produits partout au Gabon, trouvez de nouveaux clients chaque jour et transformez votre activité en véritable source de revenus.

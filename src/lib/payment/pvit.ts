@@ -1,6 +1,9 @@
 // Provider PVIT — agrégateur Mobile Money Gabon (Airtel Money + Moov Money)
-// Documentation : https://api.mypvit.pro
-// Authentification : slug + secret passés dans le corps de la requête
+// Champs réels découverts via tests API le 29/05/2026 :
+// - Header : X-Secret (pas Authorization Bearer)
+// - operator_code (pas operator), customer_account_number, merchant_operation_account_code,
+//   transaction_type=PAYMENT, owner_charge=MERCHANT, callback_url_code, service=RESTFUL
+// - reference : alphanumérique uniquement, max 20 chars
 
 import { createHmac, timingSafeEqual } from "crypto";
 import type {
@@ -8,13 +11,14 @@ import type {
   StatutDistantParams, StatutDistantResult, ProviderId,
 } from "./types";
 
-const BASE_URL     = process.env.PVIT_BASE_URL     ?? "https://api.mypvit.pro";
-const SLUG         = process.env.PVIT_SLUG         ?? "";
-const REST_TOKEN   = process.env.PVIT_REST_TOKEN   ?? "";
-const STATUS_TOKEN = process.env.PVIT_STATUS_TOKEN ?? "";
-const SECRET       = process.env.PVIT_SECRET       ?? "";
+const BASE_URL        = process.env.PVIT_BASE_URL          ?? "https://api.mypvit.pro";
+const SLUG            = process.env.PVIT_SLUG              ?? "";
+const ACCOUNT_CODE    = process.env.PVIT_ACCOUNT_CODE      ?? "";
+const REST_TOKEN      = process.env.PVIT_REST_TOKEN        ?? "";
+const STATUS_TOKEN    = process.env.PVIT_STATUS_TOKEN      ?? "";
+const SECRET          = process.env.PVIT_SECRET            ?? "";
+const CALLBACK_CODE   = process.env.PVIT_CALLBACK_URL_CODE ?? "";
 
-// Opérateurs PVIT — vérifiez via GET /operators si les noms changent
 const OPERATOR_MAP: Record<ProviderId, string> = {
   airtel: "AIRTEL_MONEY",
   moov:   "MOOV_MONEY",
@@ -22,31 +26,42 @@ const OPERATOR_MAP: Record<ProviderId, string> = {
   mock:   "",
 };
 
+// reference PVIT : alphanumérique + underscore, max 20 chars, pas de tirets
+function toRef(key: string): string {
+  return key.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 20).toUpperCase();
+}
+
 export class PvitProvider implements PaiementProvider {
   id: ProviderId;
 
   constructor(id: ProviderId = "airtel") { this.id = id; }
 
   async initier(p: InitierPaiementParams): Promise<InitierPaiementResult> {
-    if (!SLUG || !REST_TOKEN) {
-      return { ok: false, erreur: "PVIT_SLUG ou PVIT_REST_TOKEN manquant dans .env" };
+    if (!SLUG || !REST_TOKEN || !ACCOUNT_CODE || !CALLBACK_CODE) {
+      return { ok: false, erreur: "Variables PVIT manquantes dans .env (SLUG, REST_TOKEN, ACCOUNT_CODE, CALLBACK_CODE)" };
     }
 
-    const operator = OPERATOR_MAP[p.provider];
-    if (!operator) return { ok: false, erreur: "Opérateur non supporté : " + p.provider };
+    const operator_code = OPERATOR_MAP[p.provider];
+    if (!operator_code) return { ok: false, erreur: "Opérateur non supporté : " + p.provider };
 
-    // PVIT attend le numéro sans le "+"
-    const phone = p.telephone.replace(/^\+/, "");
+    // PVIT attend 9 chiffres sans préfixe pays (ex: 066393247, pas 241066393247)
+    const phone = p.telephone.replace(/^\+?241/, "").replace(/^\+/, "");
+    const reference = toRef(p.idempotencyKey);
 
     const body: Record<string, unknown> = {
-      slug:         SLUG,
-      phone,
-      amount:       p.montantXaf,
-      currency:     "XAF",
-      operator,
-      description:  `MYC'S SECRET ${p.commandeCode}`.slice(0, 50),
-      reference:    p.idempotencyKey,
-      callback_url: p.webhookUrl,
+      agent:                           SLUG,
+      merchant_operation_account_code: ACCOUNT_CODE,
+      customer_account_number:         phone,
+      operator_code,
+      amount:                          p.montantXaf,
+      transaction_type:                "PAYMENT",
+      owner_charge:                    "MERCHANT",
+      owner_charge_operator:           "MERCHANT",
+      service:                         "RESTFUL",
+      callback_url_code:               CALLBACK_CODE,
+      reference,
+      product:                         `MYCSSECRET ${p.commandeCode}`.slice(0, 50),
+      free_info:                       `Commande ${p.commandeCode}`,
     };
 
     try {
@@ -54,7 +69,7 @@ export class PvitProvider implements PaiementProvider {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${SECRET}`,
+          "X-Secret": SECRET,
         },
         body: JSON.stringify(body),
       });
@@ -67,14 +82,12 @@ export class PvitProvider implements PaiementProvider {
       }
 
       const status = String(json["status"] ?? json["state"] ?? "pending").toLowerCase();
-      const estEchec = ["failed", "error", "rejected", "cancelled", "echec"].includes(status);
-      if (estEchec) {
+      if (["failed", "error", "rejected", "cancelled", "echec"].includes(status)) {
         return { ok: false, erreur: String(json["message"] ?? `Statut PVIT: ${status}`) };
       }
 
-      // PVIT retourne transaction_id ou utilise notre référence comme clé
       const transId = String(
-        json["transaction_id"] ?? json["transactionId"] ?? json["id"] ?? p.idempotencyKey
+        json["reference_id"] ?? json["transaction_id"] ?? json["transactionId"] ?? json["id"] ?? reference
       );
 
       return {
@@ -94,7 +107,7 @@ export class PvitProvider implements PaiementProvider {
     try {
       const params = new URLSearchParams({ reference: p.providerRef, slug: SLUG });
       const res = await fetch(`${BASE_URL}/v1/${STATUS_TOKEN}/status?${params}`, {
-        headers: { "Authorization": `Bearer ${SECRET}` },
+        headers: { "X-Secret": SECRET },
       });
       const json = await res.json().catch(() => ({})) as Record<string, unknown>;
       if (!res.ok) return { ok: false, erreur: `HTTP ${res.status}` };
@@ -113,7 +126,6 @@ export class PvitProvider implements PaiementProvider {
   }
 
   verifierSignature(rawBody: string, signature: string | null): boolean {
-    // Si pas de secret configuré → accepter (mode test)
     if (!SECRET) return true;
     if (!signature) return false;
     try {

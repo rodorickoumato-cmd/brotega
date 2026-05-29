@@ -1,4 +1,4 @@
-// ─── RÈGLES BUSINESS J'ADORE LA FAMILLE V1 ───────────────────────────────
+// ─── RÈGLES BUSINESS BROTEGA V1 ───────────────────────────────────────────
 // Ce fichier est la loi interne. Toute logique métier s'appuie ici.
 // Ne jamais hardcoder ces valeurs ailleurs dans le code.
 

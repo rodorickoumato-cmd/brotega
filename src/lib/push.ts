@@ -6,7 +6,7 @@ let pushActif = false;
 try {
   const pub  = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
   const priv = process.env.VAPID_PRIVATE_KEY ?? "";
-  const mail = process.env.ADMIN_EMAIL ?? "admin@jadoelafamille.com";
+  const mail = process.env.ADMIN_EMAIL ?? "admin@brotegafrica.org";
   if (pub && priv) {
     webpush.setVapidDetails(`mailto:${mail}`, pub, priv);
     pushActif = true;

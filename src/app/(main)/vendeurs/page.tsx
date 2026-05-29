@@ -9,7 +9,7 @@ export default function VendeursPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-black text-gray-800 mb-2">Tous les Vendeurs</h1>
-        <p className="text-gray-500">Découvrez les boutiques de confiance sur J'adore la Famille</p>
+        <p className="text-gray-500">Découvrez les boutiques de confiance sur Brotega</p>
       </div>
 
       {/* Filters */}

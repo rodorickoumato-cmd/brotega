@@ -3,10 +3,24 @@ import { NextRequest } from "next/server";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const SYSTEM_PROMPT = `Tu es l'assistant IA de J'adore la Famille, la marketplace gabonaise de référence. Tu t'appelles "Broto".
+// Simple in-memory rate limiter: max 20 req / IP / minute
+const rateLimitMap = new Map<string, { count: number; reset: number }>();
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.reset) {
+    rateLimitMap.set(ip, { count: 1, reset: now + 60_000 });
+    return false;
+  }
+  if (entry.count >= 20) return true;
+  entry.count++;
+  return false;
+}
 
-## Qui est J'adore la Famille ?
-J'adore la Famille est une marketplace e-commerce gabonaise. Elle connecte des acheteurs et des vendeurs au Gabon. Les paiements se font via Mobile Money (Airtel Money, Moov Money). Les livraisons sont assurées par des livreurs partenaires.
+const SYSTEM_PROMPT = `Tu es l'assistant IA de Brotega, la marketplace gabonaise de référence. Tu t'appelles "Broto".
+
+## Qui est Brotega ?
+Brotega (brotegafrica.org) est une marketplace e-commerce gabonaise. Elle connecte des acheteurs et des vendeurs au Gabon. Les paiements se font via Mobile Money (Airtel Money, Moov Money). Les livraisons sont assurées par des livreurs partenaires.
 
 ## Rôles sur la plateforme
 - **Acheteur** : parcourt le catalogue, passe des commandes, suit ses livraisons
@@ -25,7 +39,7 @@ J'adore la Famille est une marketplace e-commerce gabonaise. Elle connecte des a
 - Paiement par Airtel Money ou Moov Money
 - Système escrow : l'argent est sécurisé jusqu'à confirmation de livraison
 - L'argent est libéré automatiquement après 7 jours si l'acheteur ne confirme pas
-- Commission J'adore la Famille : 5% prélevée à la libération de l'escrow
+- Commission Brotega : 5% prélevée à la libération de l'escrow
 
 ## Livraison
 - Frais de livraison fixes : 2 500 FCFA
@@ -54,12 +68,17 @@ J'adore la Famille est une marketplace e-commerce gabonaise. Elle connecte des a
 - Réponds toujours en français, de façon courte et claire
 - Si tu ne sais pas, dis-le honnêtement et oriente vers le support
 - Ne promets jamais ce que la plateforme ne fait pas
-- Pour les problèmes techniques urgents, dis à l'utilisateur d'envoyer un email à support@J'adore la Famille.ga
+- Pour les problèmes techniques urgents, dis à l'utilisateur d'envoyer un email à support@brotegafrica.org
 - Sois chaleureux, professionnel, adapté au contexte gabonais
 - Utilise des emojis avec modération`;
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+    if (isRateLimited(ip)) {
+      return new Response("Trop de requêtes. Réessayez dans une minute.", { status: 429 });
+    }
+
     const { messages } = await req.json() as {
       messages: { role: "user" | "assistant"; content: string }[];
     };

@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProvider, type ProviderId } from "@/lib/payment";
 import { envoyerPushUtilisateurs } from "@/lib/push";
+import { envoyerEmailConfirmationPaiement, envoyerEmailNouvelleCommandePaiement } from "@/lib/email";
 import type { PlanId } from "@/lib/rules";
 
 type Payload = Record<string, unknown>;
@@ -24,8 +25,8 @@ function normaliser(payload: Payload): {
   if (typeof payload["providerRef"] === "string" && typeof payload["statut"] === "string") {
     return { providerRef: payload["providerRef"], statut: mapStatut(payload["statut"]) };
   }
-  // Format PVIT : { reference, transaction_id, status, ... }
-  const pvitRef = (payload["transaction_id"] ?? payload["reference"]) as string | undefined;
+  // Format PVIT callback : { transactionId, merchantReferenceId, status, ... }
+  const pvitRef = (payload["transactionId"] ?? payload["reference_id"] ?? payload["transaction_id"] ?? payload["reference"]) as string | undefined;
   if (pvitRef && typeof payload["status"] === "string") {
     return { providerRef: pvitRef, statut: mapStatut(payload["status"]) };
   }
@@ -79,7 +80,7 @@ export async function POST(req: NextRequest) {
 
   // 5. Idempotence
   if (paiement.statut === "reussi" || paiement.statut === "echec") {
-    return NextResponse.json({ ok: true, deja_traite: true });
+    return NextResponse.json({ responseCode: 200, transactionId: norm.providerRef });
   }
 
   // 6. Mise à jour statut paiement
@@ -123,7 +124,7 @@ export async function POST(req: NextRequest) {
         .eq("id", paiement.abonnement_id);
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ responseCode: 200, transactionId: norm.providerRef });
   }
 
   // 7b. Paiement de COMMANDE
@@ -154,31 +155,66 @@ export async function POST(req: NextRequest) {
       p_paiement_id: paiement.id,
     });
 
-    // Push acheteur
+    // Récupère détails pour notifications + emails
     const { data: cmd } = await admin
       .from("commandes")
-      .select("utilisateur_id, vendeur_id, code_court")
+      .select("utilisateur_id, vendeur_id, code_court, articles, total, mode_paiement")
       .eq("id", commande.id).single();
 
     if (cmd?.utilisateur_id) {
+      // Push acheteur
       void envoyerPushUtilisateurs([cmd.utilisateur_id], {
-        title: "Paiement reçu",
-        body: "Votre paiement est confirmé. Le vendeur prépare votre commande.",
+        title: "Paiement confirmé ✓",
+        body: "Votre paiement est reçu. Le vendeur prépare votre commande.",
         url: `/commande/${cmd.code_court}`,
         tag: "paiement-confirme",
       });
+
+      // Email Brevo acheteur — confirmation paiement
+      const { data: acheteur } = await admin
+        .from("utilisateurs").select("nom, email").eq("id", cmd.utilisateur_id).single();
+      if (acheteur?.email) {
+        const articles = Array.isArray(cmd.articles)
+          ? (cmd.articles as { nom: string; quantite: number; prix_xaf: number }[])
+              .map((a) => ({ nom: a.nom, quantite: a.quantite, prix: a.prix_xaf }))
+          : [];
+        void envoyerEmailConfirmationPaiement({
+          to: acheteur.email,
+          nom: acheteur.nom ?? "Client",
+          codeCourt: cmd.code_court ?? "",
+          total: commande.total,
+          articles,
+          modePaiement: cmd.mode_paiement ?? "mobile_money",
+        });
+      }
     }
-    // Push vendeur
+
+    // Push + email vendeur
     if (cmd?.vendeur_id) {
       const { data: v } = await admin
-        .from("vendeurs").select("utilisateur_id").eq("id", cmd.vendeur_id).single();
+        .from("vendeurs").select("utilisateur_id, nom").eq("id", cmd.vendeur_id).single();
       if (v?.utilisateur_id) {
         void envoyerPushUtilisateurs([v.utilisateur_id], {
-          title: "Nouvelle commande payée",
+          title: "Nouvelle commande payée 🛍️",
           body: `Commande ${cmd.code_court} — paiement reçu. Préparez la commande.`,
           url: `/vendor/dashboard`,
           tag: "nouvelle-commande",
         });
+
+        const { data: vendeurUser } = await admin.auth.admin.getUserById(v.utilisateur_id);
+        if (vendeurUser.user?.email) {
+          const articles = Array.isArray(cmd.articles)
+            ? (cmd.articles as { nom: string; quantite: number; prix_xaf: number }[])
+                .map((a) => ({ nom: a.nom, quantite: a.quantite, prix: a.prix_xaf }))
+            : [];
+          void envoyerEmailNouvelleCommandePaiement({
+            to: vendeurUser.user.email,
+            nomVendeur: v.nom ?? "Vendeur",
+            codeCourt: cmd.code_court ?? "",
+            total: commande.total,
+            articles,
+          });
+        }
       }
     }
   }
@@ -189,9 +225,9 @@ export async function POST(req: NextRequest) {
       .eq("id", paiement.commande_id);
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ responseCode: 200, transactionId: norm.providerRef });
 }
 
 export async function GET() {
-  return NextResponse.json({ webhook: "J'adore la Famille Paiements", ok: true });
+  return NextResponse.json({ webhook: "Brotega Paiements", ok: true });
 }

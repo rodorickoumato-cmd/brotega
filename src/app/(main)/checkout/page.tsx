@@ -319,15 +319,14 @@ export default function CheckoutPage() {
               </h2>
               <p className="text-xs text-gray-500 mb-5 pl-9">Sécurisé · Argent bloqué jusqu&apos;à livraison</p>
 
-              {/* Info Moov */}
-              <div className="flex items-start gap-2.5 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mb-4">
-                <svg className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              {/* Info Mobile Money */}
+              <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-4">
+                <svg className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
-                <p className="text-xs text-gray-600">
-                  <span className="font-bold">Client Moov Money ?</span>{" "}
-                  Le paiement Moov en ligne n&apos;est pas disponible actuellement.
-                  Choisissez <span className="font-bold">Espèces à la livraison</span>.
+                <p className="text-xs text-blue-700">
+                  <span className="font-bold">Airtel Money &amp; Moov Money acceptés.</span>{" "}
+                  Votre argent est bloqué jusqu&apos;à confirmation de livraison.
                 </p>
               </div>
 
@@ -345,7 +344,7 @@ export default function CheckoutPage() {
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${
                       payMethod === pm.id ? "bg-[#E63946]" : "bg-gray-100"
                     }`}>
-                      {pm.id === "airtel_money" && (
+                      {(pm.id === "airtel_money" || pm.id === "moov_money") && (
                         <svg className={`w-5 h-5 ${payMethod === pm.id ? "text-white" : "text-gray-500"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
                         </svg>
@@ -369,15 +368,15 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              {/* Explication Airtel Money */}
-              {payMethod === "airtel_money" && (
+              {/* Explication Mobile Money (Airtel ou Moov) */}
+              {(payMethod === "airtel_money" || payMethod === "moov_money") && (
                 <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-4">
                   <p className="font-black text-blue-800 text-sm mb-3">Comment ça se passe</p>
                   <div className="space-y-2.5">
                     {[
                       { n: "1", t: "Vous confirmez la commande" },
-                      { n: "2", t: "Une demande USSD arrive sur votre téléphone Airtel" },
-                      { n: "3", t: "Saisissez votre code PIN Airtel Money" },
+                      { n: "2", t: `Une demande de paiement arrive sur votre téléphone ${payMethod === "airtel_money" ? "Airtel" : "Moov"}` },
+                      { n: "3", t: `Saisissez votre code PIN ${payMethod === "airtel_money" ? "Airtel" : "Moov"} Money` },
                       { n: "4", t: `Montant débité : ${formatXAF(grandTotal)}` },
                     ].map((s) => (
                       <div key={s.n} className="flex items-start gap-2.5">
@@ -547,7 +546,7 @@ export default function CheckoutPage() {
               <div className="flex justify-between text-gray-500">
                 <div>
                   <p>Traitement Mobile Money</p>
-                  <p className="text-[10px] font-bold mt-0.5 text-blue-600">{(FRAIS_MOBILE_MONEY_TAUX * 100).toFixed(0)}% · Airtel Money</p>
+                  <p className="text-[10px] font-bold mt-0.5 text-blue-600">{(FRAIS_MOBILE_MONEY_TAUX * 100).toFixed(0)}% · {payMethod === "moov_money" ? "Moov Money" : "Airtel Money"}</p>
                 </div>
                 <span className="font-semibold">{formatXAF(fraisMM)}</span>
               </div>

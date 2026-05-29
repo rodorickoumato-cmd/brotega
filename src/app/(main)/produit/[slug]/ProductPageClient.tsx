@@ -183,7 +183,7 @@ export function ProductPageClient({ product, related }: { product: Product; rela
           {/* WhatsApp */}
           {product.vendor.whatsapp && (
             <a
-              href={`https://wa.me/${product.vendor.whatsapp}?text=${encodeURIComponent(`Bonjour, je suis intéressé par "${product.name}" sur J'adore la Famille.`)}`}
+              href={`https://wa.me/${product.vendor.whatsapp}?text=${encodeURIComponent(`Bonjour, je suis intéressé par "${product.name}" sur Brotega.`)}`}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 w-full border-2 border-gray-200 hover:border-[#25D366] hover:bg-[#25D366]/5 text-gray-700 hover:text-[#25D366] font-semibold py-3 px-4 rounded-xl transition-all text-sm mb-5"

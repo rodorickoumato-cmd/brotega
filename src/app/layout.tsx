@@ -7,11 +7,11 @@ import { Toaster } from "@/components/ui/Toaster";
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "J'adore la Famille – La Marketplace du Gabon",
+  title: "Brotega – La Marketplace du Gabon",
   description: "Achetez et vendez en toute confiance au Gabon. Produits locaux et internationaux livrés chez vous.",
-  keywords: "marketplace gabon, e-commerce gabon, acheter gabon, vendre gabon, j'adore la famille, famille gabon",
+  keywords: "marketplace gabon, e-commerce gabon, acheter gabon, vendre gabon, brotega, brotegafrica",
   openGraph: {
-    title: "J'adore la Famille – La Marketplace du Gabon",
+    title: "Brotega – La Marketplace du Gabon",
     description: "Achetez et vendez en toute confiance au Gabon.",
     locale: "fr_GA",
     type: "website",

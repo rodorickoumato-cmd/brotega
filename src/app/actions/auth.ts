@@ -1,6 +1,7 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { Database } from "@/lib/supabase/database.types";
@@ -122,7 +123,14 @@ export async function sInscrire(input: {
 
 export async function reinitialiserMotDePasse(email: string) {
   const supabase = await createClient();
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  // Détecte l'environnement pour construire l'URL de redirection correcte
+  const hdrs = await headers();
+  const host = hdrs.get("host") ?? "localhost:3000";
+  const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
+  const appUrl = isLocal
+    ? `http://${host}`
+    : (process.env.NEXT_PUBLIC_APP_URL ?? `https://${host}`);
+
   const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
     redirectTo: `${appUrl}/auth/callback?next=/auth/reset-password`,
   });
@@ -218,20 +226,13 @@ export async function devenirVendeur(data: { nomBoutique: string; ville: string 
   const admin = createAdminClient();
 
   if (dejaVendeur) {
-    // Boutique existe mais rôle pas encore "vendeur" (incident précédent) → on corrige
-    const { error: roleError } = await admin
-      .from("utilisateurs").update({ role: "vendeur" }).eq("id", user.id);
-    if (roleError) return { erreur: "Erreur mise à jour du rôle : " + roleError.message };
-    await admin.auth.admin.updateUserById(user.id, {
-      app_metadata: { role: "vendeur" },
-    });
-    revalidatePath("/");
-    return { succes: true };
+    // Boutique déjà en attente de validation admin
+    return { succes: true, enAttente: true };
   }
 
   const slug = `${slugifier(data.nomBoutique)}-${user.id.slice(0, 6)}`;
 
-  // INSERT vendeur avec le client utilisateur (RLS : chacun ne peut créer que sa boutique)
+  // Création boutique — statut "en_attente" jusqu'à validation admin
   const { data: vendeurCree, error: vendeurError } = await supabase
     .from("vendeurs")
     .insert({
@@ -248,25 +249,16 @@ export async function devenirVendeur(data: { nomBoutique: string; ville: string 
     .single();
   if (vendeurError) return { erreur: "Erreur création boutique : " + vendeurError.message };
 
-  // Création du wallet (admin client — contournement RLS nécessaire et intentionnel)
+  // Wallet créé en avance (admin client — RLS bypass intentionnel)
   await admin.from("wallets").upsert({
     vendeur_id: vendeurCree.id,
     balance_available_xaf: 0,
     balance_pending_xaf: 0,
   }, { onConflict: "vendeur_id", ignoreDuplicates: true });
 
-  // Changement de rôle en DB — opération privilégiée via admin client
-  const { error: roleError } = await admin
-    .from("utilisateurs").update({ role: "vendeur" }).eq("id", user.id);
-  if (roleError) return { erreur: "Erreur mise à jour du rôle : " + roleError.message };
-
-  // Rôle gravé dans le JWT (app_metadata) — synchronisé avec la DB
-  await admin.auth.admin.updateUserById(user.id, {
-    app_metadata: { role: "vendeur" },
-  });
-
+  // Rôle reste "acheteur" — l'admin active le compte vendeur via le dashboard
   revalidatePath("/");
-  return { succes: true };
+  return { succes: true, enAttente: true };
 }
 
 export async function modifierProfil(data: {

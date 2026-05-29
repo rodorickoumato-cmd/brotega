@@ -49,7 +49,7 @@ const ETAPES_NORMALES: Etape[] = [
 
 // Statuts hors flux normal
 const STATUTS_SPECIAUX: Record<string, { label: string; couleur: string; icone: string; description: string }> = {
-  litige:     { label: "Litige en cours", couleur: "red",    icone: "!", description: "Un litige est ouvert sur cette commande. L'équipe J'adore la Famille traite votre réclamation." },
+  litige:     { label: "Litige en cours", couleur: "red",    icone: "!", description: "Un litige est ouvert sur cette commande. L'équipe Brotega traite votre réclamation." },
   remboursee: { label: "Remboursée",      couleur: "gray",   icone: "↩", description: "Cette commande a été remboursée intégralement." },
   annulee:    { label: "Annulée",         couleur: "gray",   icone: "×", description: "Cette commande a été annulée." },
 };

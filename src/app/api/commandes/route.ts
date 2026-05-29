@@ -80,13 +80,28 @@ export async function POST(request: NextRequest) {
       .from("produits").select("id, nom, prix, vendeur_id, image").in("id", produitIds).eq("statut", "actif");
 
     if (errProduits || !produitsDB || produitsDB.length !== produitIds.length) {
-      const trouvesIds = (produitsDB ?? []).map((p) => p.id);
-      const manquants = produitIds.filter((id) => !trouvesIds.includes(id));
-      return NextResponse.json({
-        erreur: manquants.length
-          ? `Produit(s) indisponible(s) ou introuvable(s) dans votre panier. Retournez au panier pour actualiser.`
-          : "Un ou plusieurs produits sont indisponibles.",
-      }, { status: 400 });
+      // Diagnostic : chercher sans filtre statut pour distinguer "inexistant" vs "inactif"
+      const { data: tousProduits } = await admin
+        .from("produits").select("id, nom, statut").in("id", produitIds);
+      const trouvesActifsIds = (produitsDB ?? []).map((p) => p.id);
+      const manquants = produitIds.filter((id) => !trouvesActifsIds.includes(id));
+      const inactifs = (tousProduits ?? []).filter((p) => p.statut !== "actif");
+      const inexistants = manquants.filter((id) => !(tousProduits ?? []).find((p) => p.id === id));
+
+      if (errProduits) {
+        return NextResponse.json({ erreur: `Erreur base de données : ${errProduits.message}` }, { status: 500 });
+      }
+      if (inactifs.length > 0) {
+        return NextResponse.json({
+          erreur: `"${inactifs[0].nom}" n'est plus disponible. Retirez-le du panier et réessayez.`,
+        }, { status: 400 });
+      }
+      if (inexistants.length > 0) {
+        return NextResponse.json({
+          erreur: `Produit introuvable dans votre panier. Videz le panier, retournez au catalogue et ajoutez à nouveau le produit.`,
+        }, { status: 400 });
+      }
+      return NextResponse.json({ erreur: "Un ou plusieurs produits sont indisponibles." }, { status: 400 });
     }
 
     const produitMap = new Map(produitsDB.map((p) => [p.id, p]));

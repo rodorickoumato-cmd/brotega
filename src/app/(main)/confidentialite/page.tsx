@@ -13,7 +13,7 @@ export default function ConfidentialitePage() {
         {[
           {
             title: "1. Données collectées",
-            content: "J'adore la Famille collecte les données suivantes lors de votre inscription et utilisation de la plateforme : nom, numéro de téléphone, adresse email (optionnelle), ville de résidence, historique des commandes et préférences d'achat. Ces données sont nécessaires au bon fonctionnement du service.",
+            content: "Brotega collecte les données suivantes lors de votre inscription et utilisation de la plateforme : nom, numéro de téléphone, adresse email (optionnelle), ville de résidence, historique des commandes et préférences d'achat. Ces données sont nécessaires au bon fonctionnement du service.",
           },
           {
             title: "2. Utilisation des données",
@@ -21,7 +21,7 @@ export default function ConfidentialitePage() {
           },
           {
             title: "3. Protection des données",
-            content: "J'adore la Famille met en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données contre tout accès non autorisé, modification, divulgation ou destruction. Les mots de passe sont chiffrés et les transactions sont sécurisées.",
+            content: "Brotega met en œuvre des mesures techniques et organisationnelles appropriées pour protéger vos données contre tout accès non autorisé, modification, divulgation ou destruction. Les mots de passe sont chiffrés et les transactions sont sécurisées.",
           },
           {
             title: "4. Partage des données",
@@ -29,15 +29,15 @@ export default function ConfidentialitePage() {
           },
           {
             title: "5. Cookies",
-            content: "J'adore la Famille utilise des cookies techniques indispensables au fonctionnement de la plateforme (session, panier). Nous pouvons également utiliser des cookies analytiques anonymisés pour améliorer votre expérience. Vous pouvez désactiver les cookies non essentiels dans les paramètres de votre navigateur.",
+            content: "Brotega utilise des cookies techniques indispensables au fonctionnement de la plateforme (session, panier). Nous pouvons également utiliser des cookies analytiques anonymisés pour améliorer votre expérience. Vous pouvez désactiver les cookies non essentiels dans les paramètres de votre navigateur.",
           },
           {
             title: "6. Vos droits",
-            content: "Conformément à la législation en vigueur, vous disposez d'un droit d'accès, de rectification et de suppression de vos données personnelles. Pour exercer ces droits, contactez-nous à : privacy@J'adore la Famille.ga ou via notre service client.",
+            content: "Conformément à la législation en vigueur, vous disposez d'un droit d'accès, de rectification et de suppression de vos données personnelles. Pour exercer ces droits, contactez-nous à : privacy@brotegafrica.org ou via notre service client.",
           },
           {
             title: "7. Conservation des données",
-            content: "Vos données sont conservées pendant toute la durée de votre relation avec J'adore la Famille, plus une période de 3 ans après la clôture de votre compte, conformément aux obligations légales en matière de comptabilité et de lutte contre la fraude.",
+            content: "Vos données sont conservées pendant toute la durée de votre relation avec Brotega, plus une période de 3 ans après la clôture de votre compte, conformément aux obligations légales en matière de comptabilité et de lutte contre la fraude.",
           },
         ].map((s) => (
           <div key={s.title} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">

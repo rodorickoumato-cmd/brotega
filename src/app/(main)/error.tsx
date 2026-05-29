@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
-    console.error("Erreur J'adore la Famille:", error);
+    console.error("Erreur Brotega:", error);
   }, [error]);
 
   return (
