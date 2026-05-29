@@ -11,13 +11,17 @@ import type {
   StatutDistantParams, StatutDistantResult, ProviderId,
 } from "./types";
 
-const BASE_URL        = process.env.PVIT_BASE_URL          ?? "https://api.mypvit.pro";
-const SLUG            = process.env.PVIT_SLUG              ?? "";
-const ACCOUNT_CODE    = process.env.PVIT_ACCOUNT_CODE      ?? "";
-const REST_TOKEN      = process.env.PVIT_REST_TOKEN        ?? "";
-const STATUS_TOKEN    = process.env.PVIT_STATUS_TOKEN      ?? "";
-const SECRET          = process.env.PVIT_SECRET            ?? "";
-const CALLBACK_CODE   = process.env.PVIT_CALLBACK_URL_CODE ?? "";
+function getEnv() {
+  return {
+    BASE_URL:      process.env.PVIT_BASE_URL          ?? "https://api.mypvit.pro",
+    SLUG:          process.env.PVIT_SLUG              ?? "",
+    ACCOUNT_CODE:  process.env.PVIT_ACCOUNT_CODE      ?? "",
+    REST_TOKEN:    process.env.PVIT_REST_TOKEN        ?? "",
+    STATUS_TOKEN:  process.env.PVIT_STATUS_TOKEN      ?? "",
+    SECRET:        process.env.PVIT_SECRET            ?? "",
+    CALLBACK_CODE: process.env.PVIT_CALLBACK_URL_CODE ?? "",
+  };
+}
 
 const OPERATOR_MAP: Record<ProviderId, string> = {
   airtel: "AIRTEL_MONEY",
@@ -37,6 +41,7 @@ export class PvitProvider implements PaiementProvider {
   constructor(id: ProviderId = "airtel") { this.id = id; }
 
   async initier(p: InitierPaiementParams): Promise<InitierPaiementResult> {
+    const { SLUG, REST_TOKEN, ACCOUNT_CODE, CALLBACK_CODE, BASE_URL, SECRET } = getEnv();
     if (!SLUG || !REST_TOKEN || !ACCOUNT_CODE || !CALLBACK_CODE) {
       return { ok: false, erreur: "Variables PVIT manquantes dans .env (SLUG, REST_TOKEN, ACCOUNT_CODE, CALLBACK_CODE)" };
     }
@@ -102,6 +107,7 @@ export class PvitProvider implements PaiementProvider {
   }
 
   async verifierStatut(p: StatutDistantParams): Promise<StatutDistantResult> {
+    const { STATUS_TOKEN, BASE_URL, SECRET, SLUG } = getEnv();
     if (!STATUS_TOKEN) return { ok: false, erreur: "PVIT_STATUS_TOKEN manquant" };
 
     try {
@@ -126,6 +132,7 @@ export class PvitProvider implements PaiementProvider {
   }
 
   verifierSignature(rawBody: string, signature: string | null): boolean {
+    const { SECRET } = getEnv();
     if (!SECRET) return true;
     if (!signature) return false;
     try {
