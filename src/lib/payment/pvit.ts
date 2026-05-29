@@ -61,7 +61,6 @@ export class PvitProvider implements PaiementProvider {
       amount:                          p.montantXaf,
       transaction_type:                "PAYMENT",
       owner_charge:                    "MERCHANT",
-      owner_charge_operator:           "MERCHANT",
       service:                         "RESTFUL",
       callback_url_code:               CALLBACK_CODE,
       reference,
@@ -86,7 +85,8 @@ export class PvitProvider implements PaiementProvider {
       const json = await res.json().catch(() => ({})) as Record<string, unknown>;
 
       if (!res.ok) {
-        const msg = (json["message"] ?? json["error"] ?? json["erreur"] ?? `HTTP ${res.status}`) as string;
+        const detail = Array.isArray(json["messages"]) ? (json["messages"] as string[]).join("; ") : null;
+        const msg = detail ?? (json["message"] ?? json["error"] ?? json["erreur"] ?? `HTTP ${res.status}`) as string;
         console.error("PVIT erreur HTTP", res.status, JSON.stringify(json));
         return { ok: false, erreur: String(msg) };
       }
