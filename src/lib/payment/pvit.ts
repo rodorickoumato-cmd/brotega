@@ -49,8 +49,10 @@ export class PvitProvider implements PaiementProvider {
     const operator_code = OPERATOR_MAP[p.provider];
     if (!operator_code) return { ok: false, erreur: "Opérateur non supporté : " + p.provider };
 
-    // PVIT attend 9 chiffres sans préfixe pays (ex: 066393247, pas 241066393247)
-    const phone = p.telephone.replace(/^\+?241/, "").replace(/^\+/, "");
+    // PVIT attend 9 chiffres sans préfixe pays (ex: 074590041, 066393247)
+    // vers241 retourne +241XXXXXXXX (8 chiffres) — PVIT veut 9 chiffres avec le 0 initial
+    let phone = p.telephone.replace(/^\+?241/, "").replace(/^\+/, "");
+    if (/^[0-9]{8}$/.test(phone)) phone = "0" + phone;
     const reference = toRef(p.idempotencyKey);
 
     const body: Record<string, unknown> = {
