@@ -133,14 +133,14 @@ export default function ReclamationPage() {
               </label>
               <textarea
                 value={motif}
-                onChange={(e) => { setMotif(e.target.value); setErreur(""); }}
+                onChange={(e) => { if (e.target.value.length <= 5000) { setMotif(e.target.value); setErreur(""); } }}
                 placeholder="Ex : Je n'ai pas reçu ma commande, le produit est endommagé, le colis est incomplet..."
                 rows={5}
                 className={`w-full border-2 rounded-2xl px-4 py-3 text-sm focus:outline-none transition-colors resize-none ${
                   erreur ? "border-red-400 bg-red-50" : "border-gray-200 focus:border-[#E63946]"
                 }`}
               />
-              <p className="text-xs text-gray-400 mt-1">{motif.length} / 10 min</p>
+              <p className="text-xs text-gray-400 mt-1">{motif.length} / 5000 caractères</p>
             </div>
 
             {erreur && (

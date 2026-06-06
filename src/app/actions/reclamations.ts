@@ -80,7 +80,9 @@ export async function getReclamationsAdmin() {
     .from("utilisateurs").select("role").eq("id", user.id).single();
   if (profil?.role !== "admin") return [];
 
-  const { data } = await supabase
+  // Utilise l'admin client pour bypasser RLS (aucune policy admin SELECT sur reclamations)
+  const admin = createAdminClient();
+  const { data } = await admin
     .from("reclamations")
     .select("*")
     .order("created_at", { ascending: false });
