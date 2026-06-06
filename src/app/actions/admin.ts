@@ -165,6 +165,25 @@ export async function traiterAbonnementsExpires() {
   return { succes: true, nb: vendeurIds.length };
 }
 
+// ── Commandes par période (stats analytiques) ──────────────────
+export async function getCommandesPeriode(nbJours: number) {
+  const { erreur } = await verifierAdmin();
+  if (erreur) return { erreur, commandes: null };
+  const admin = createAdminClient();
+
+  const depuis = new Date();
+  depuis.setDate(depuis.getDate() - nbJours);
+
+  const { data, error } = await admin
+    .from("commandes")
+    .select("id, total, statut, created_at")
+    .gte("created_at", depuis.toISOString())
+    .order("created_at", { ascending: true });
+
+  if (error) return { erreur: error.message, commandes: null };
+  return { erreur: null, commandes: data };
+}
+
 // ── Stats dashboard ────────────────────────────────────────────
 export async function getStatsAdmin() {
   const { erreur } = await verifierAdmin();
