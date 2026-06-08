@@ -132,8 +132,28 @@ export async function PATCH(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const produitId = searchParams.get("id");
-    const statut = searchParams.get("statut") as "actif" | "inactif" | null;
-    if (!produitId || !statut) return NextResponse.json({ erreur: "Paramètres manquants." }, { status: 400 });
+    const statut    = searchParams.get("statut") as "actif" | "inactif" | null;
+    const stockStr  = searchParams.get("stock");
+
+    if (!produitId) return NextResponse.json({ erreur: "Paramètres manquants." }, { status: 400 });
+
+    // Mise à jour du stock seul
+    if (stockStr !== null && !statut) {
+      const stock = stockStr === "" ? null : parseInt(stockStr, 10);
+      if (stockStr !== "" && isNaN(stock as number)) {
+        return NextResponse.json({ erreur: "Stock invalide." }, { status: 400 });
+      }
+      const supabase = await createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return NextResponse.json({ erreur: "Non authentifié." }, { status: 401 });
+      const { data: vendeur } = await supabase.from("vendeurs").select("id").eq("utilisateur_id", user.id).single();
+      if (!vendeur) return NextResponse.json({ erreur: "Boutique introuvable." }, { status: 404 });
+      const { error } = await supabase.from("produits").update({ stock }).eq("id", produitId).eq("vendeur_id", vendeur.id);
+      if (error) return NextResponse.json({ erreur: error.message }, { status: 500 });
+      return NextResponse.json({ succes: true });
+    }
+
+    if (!statut) return NextResponse.json({ erreur: "Paramètres manquants." }, { status: 400 });
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();

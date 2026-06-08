@@ -121,6 +121,9 @@ export type Database = {
           categorie: string | null;
           image: string | null;
           statut: "actif" | "inactif";
+          prix_promo: number | null;
+          promo_actif: boolean;
+          promo_fin: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -136,6 +139,9 @@ export type Database = {
           categorie?: string | null;
           image?: string | null;
           statut?: "actif" | "inactif";
+          prix_promo?: number | null;
+          promo_actif?: boolean;
+          promo_fin?: string | null;
           created_at?: string;
           updated_at?: string;
         };
