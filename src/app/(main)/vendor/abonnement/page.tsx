@@ -9,6 +9,7 @@ import {
   verifierStatutPaiementAbonnement,
 } from "@/app/actions/abonnements";
 import { formaterPhoneGabon, vers241 } from "@/lib/phone";
+import { createClient } from "@/lib/supabase/client";
 
 const PLANS_LISTE: { id: PlanId; emoji: string; badge?: string }[] = [
   { id: "gratuit",     emoji: "🌱" },
@@ -31,6 +32,7 @@ export default function AbonnementPage() {
   const [ecran, setEcran] = useState<Ecran>("selection");
   const [loading, setLoading] = useState(false);
   const [erreur, setErreur] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Paiement
   const [telephone, setTelephone] = useState("");
@@ -40,6 +42,13 @@ export default function AbonnementPage() {
   useEffect(() => {
     getAbonnementActuel().then((abo) => {
       if (abo) setPlanActif(abo.plan as PlanId);
+    });
+    // Vérifier rôle admin
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      const { data } = await supabase.from("utilisateurs").select("role").eq("id", user.id).single();
+      if (data?.role === "admin") setIsAdmin(true);
     });
   }, []);
 
@@ -90,6 +99,48 @@ export default function AbonnementPage() {
 
   const plan = PLANS[planSelectionne];
   const estActif = planSelectionne === planActif;
+
+  // ── Écran admin ──────────────────────────────────────────────────────────
+  if (isAdmin) return (
+    <div className="min-h-screen bg-[#F7F8FA]">
+      <div className="bg-[#E63946] px-5 pt-5 pb-8">
+        <Link href="/vendor/dashboard" className="text-white/70 text-sm">← Dashboard</Link>
+        <h1 className="text-2xl font-black text-white mt-2">Abonnement</h1>
+      </div>
+      <div className="px-4 -mt-4 pb-10">
+        <div className="bg-white rounded-3xl p-6 shadow-sm text-center">
+          <div className="w-20 h-20 bg-yellow-400 rounded-3xl flex items-center justify-center mx-auto mb-5">
+            <span className="text-4xl">👑</span>
+          </div>
+          <h2 className="font-black text-gray-800 text-xl mb-2">Accès Administrateur</h2>
+          <p className="text-gray-500 text-sm mb-5">
+            En tant qu&apos;administrateur de la plateforme, vous bénéficiez d&apos;un accès illimité et gratuit à tous les services.
+          </p>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 text-left space-y-2.5 mb-6">
+            {[
+              "Produits illimités",
+              "Toutes les fonctionnalités Business",
+              "Statistiques avancées",
+              "Gestion stock et promotions",
+              "Support prioritaire",
+            ].map((f) => (
+              <div key={f} className="flex items-center gap-2.5">
+                <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <span className="text-sm font-bold text-gray-700">{f}</span>
+              </div>
+            ))}
+          </div>
+          <Link href="/vendor/dashboard" className="block w-full bg-[#E63946] text-white font-black py-4 rounded-2xl text-base active:scale-95 transition-all">
+            Retour au dashboard
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
 
   // ── Sélection du plan ────────────────────────────────────────────────────
   if (ecran === "selection") return (

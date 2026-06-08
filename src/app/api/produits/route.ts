@@ -32,6 +32,11 @@ export async function POST(request: NextRequest) {
       .single();
     if (!vendeur) return NextResponse.json({ erreur: "Aucune boutique trouvée." }, { status: 404 });
 
+    // Admin = accès illimité
+    const { data: profil } = await supabase
+      .from("utilisateurs").select("role").eq("id", user.id).single();
+    const isAdmin = profil?.role === "admin";
+
     if (body.id) {
       const { error } = await supabase
         .from("produits")
@@ -48,31 +53,33 @@ export async function POST(request: NextRequest) {
         .eq("vendeur_id", vendeur.id);
       if (error) return NextResponse.json({ erreur: error.message }, { status: 500 });
     } else {
-      const { data: abo } = await supabase
-        .from("abonnements")
-        .select("plan")
-        .eq("vendeur_id", vendeur.id)
-        .eq("statut", "actif")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      if (!isAdmin) {
+        const { data: abo } = await supabase
+          .from("abonnements")
+          .select("plan")
+          .eq("vendeur_id", vendeur.id)
+          .eq("statut", "actif")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      const planId = (abo?.plan ?? "gratuit") as keyof typeof PLANS;
-      const planMax = PLANS[planId]?.max_produits ?? MAX_PRODUITS_GRATUIT;
-      const max = Number.isFinite(planMax) ? (planMax as number) : 9999;
+        const planId = (abo?.plan ?? "gratuit") as keyof typeof PLANS;
+        const planMax = PLANS[planId]?.max_produits ?? MAX_PRODUITS_GRATUIT;
+        const max = Number.isFinite(planMax) ? (planMax as number) : 9999;
 
-      const { count, error: countError } = await supabase
-        .from("produits")
-        .select("*", { count: "exact", head: true })
-        .eq("vendeur_id", vendeur.id)
-        .eq("statut", "actif");
+        const { count, error: countError } = await supabase
+          .from("produits")
+          .select("*", { count: "exact", head: true })
+          .eq("vendeur_id", vendeur.id)
+          .eq("statut", "actif");
 
-      if (countError) return NextResponse.json({ erreur: countError.message }, { status: 500 });
-      if ((count ?? 0) >= max) {
-        return NextResponse.json(
-          { erreur: `Limite atteinte (${max} produits max). Passez à un abonnement supérieur.` },
-          { status: 400 }
-        );
+        if (countError) return NextResponse.json({ erreur: countError.message }, { status: 500 });
+        if ((count ?? 0) >= max) {
+          return NextResponse.json(
+            { erreur: `Limite atteinte (${max} produits max). Passez à un abonnement supérieur.` },
+            { status: 400 }
+          );
+        }
       }
 
       const slug = `${slugifier(body.nom)}-${vendeur.id.slice(0, 6)}-${Date.now()}`;

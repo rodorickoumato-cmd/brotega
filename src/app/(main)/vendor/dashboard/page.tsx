@@ -948,6 +948,7 @@ export default function VendorDashboard() {
   const [statsCommandes, setStatsCommandes] = useState<CmdStat[]>([]);
   const [chargementStats, setChargementStats] = useState(false);
   const [maxProduits, setMaxProduits] = useState(MAX_PRODUITS_GRATUIT);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [chargement, setChargement] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Produit | null>(null);
@@ -990,10 +991,20 @@ export default function VendorDashboard() {
             .order("created_at", { ascending: false }).limit(20),
         ]);
 
+        // Vérifier si l'utilisateur est admin
+        const { data: profilUtilisateur } = await supabase
+          .from("utilisateurs").select("role").eq("id", user.id).single();
+        const adminRole = profilUtilisateur?.role === "admin";
+        setIsAdmin(adminRole);
+
         setProduits(prodData);
-        const planId = (aboData.data?.plan ?? "gratuit") as keyof typeof PLANS;
-        const planMax = PLANS[planId]?.max_produits ?? MAX_PRODUITS_GRATUIT;
-        setMaxProduits(Number.isFinite(planMax) ? (planMax as number) : 9999);
+        if (adminRole) {
+          setMaxProduits(9999); // Admin = produits illimités
+        } else {
+          const planId = (aboData.data?.plan ?? "gratuit") as keyof typeof PLANS;
+          const planMax = PLANS[planId]?.max_produits ?? MAX_PRODUITS_GRATUIT;
+          setMaxProduits(Number.isFinite(planMax) ? (planMax as number) : 9999);
+        }
         setCommandes(cmdData.data ?? []);
       } catch { setErreurGlobale("Erreur de chargement. Actualisez la page."); }
       finally { setChargement(false); }
@@ -1092,6 +1103,7 @@ export default function VendorDashboard() {
             <p className="text-white/70 text-sm mt-0.5">📍 {vendeur?.ville}</p>
             {vendeur?.statut === "verifie" && <span className="inline-block mt-1.5 text-xs font-bold bg-white text-[#E63946] px-2 py-0.5 rounded-full">✓ Boutique vérifiée</span>}
             {vendeur?.statut === "suspendu" && <span className="inline-block mt-1.5 text-xs font-bold bg-red-400 text-white px-2 py-0.5 rounded-full">Boutique suspendue</span>}
+            {isAdmin && <span className="inline-block mt-1.5 text-xs font-bold bg-yellow-400 text-gray-900 px-2 py-0.5 rounded-full">👑 Administrateur — Accès illimité</span>}
           </div>
         </div>
         <div className="grid grid-cols-3 gap-2.5 mt-5">
@@ -1116,7 +1128,7 @@ export default function VendorDashboard() {
           </div>
         )}
 
-        {planActif === "gratuit" && (
+        {planActif === "gratuit" && !isAdmin && (
           <div className={`rounded-2xl p-4 flex items-center gap-3 ${limiteAtteinte ? "bg-red-50 border-2 border-[#E63946]/40" : "bg-amber-50 border border-amber-200"}`}>
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${limiteAtteinte ? "bg-[#E63946]" : "bg-amber-200"}`}>
               {limiteAtteinte ? <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg> : <svg className="w-5 h-5 text-amber-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}

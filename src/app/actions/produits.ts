@@ -26,6 +26,11 @@ export async function sauvegarderProduit(produit: ProduitInput) {
       .single();
     if (!vendeur) return { erreur: "Aucune boutique trouvée." };
 
+    // Admin = accès illimité sans vérification d'abonnement
+    const { data: profil } = await supabase
+      .from("utilisateurs").select("role").eq("id", user.id).single();
+    const isAdmin = profil?.role === "admin";
+
     if (produit.id) {
       const { error } = await supabase
         .from("produits")
@@ -42,27 +47,29 @@ export async function sauvegarderProduit(produit: ProduitInput) {
         .eq("vendeur_id", vendeur.id);
       if (error) return { erreur: error.message };
     } else {
-      const { data: abo } = await supabase
-        .from("abonnements")
-        .select("plan")
-        .eq("vendeur_id", vendeur.id)
-        .eq("statut", "actif")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      if (!isAdmin) {
+        const { data: abo } = await supabase
+          .from("abonnements")
+          .select("plan")
+          .eq("vendeur_id", vendeur.id)
+          .eq("statut", "actif")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      const planId = (abo?.plan ?? "gratuit") as keyof typeof PLANS;
-      const planMax = PLANS[planId]?.max_produits ?? MAX_PRODUITS_GRATUIT;
-      const max = Number.isFinite(planMax) ? (planMax as number) : 9999;
+        const planId = (abo?.plan ?? "gratuit") as keyof typeof PLANS;
+        const planMax = PLANS[planId]?.max_produits ?? MAX_PRODUITS_GRATUIT;
+        const max = Number.isFinite(planMax) ? (planMax as number) : 9999;
 
-      const { count, error: countError } = await supabase
-        .from("produits")
-        .select("*", { count: "exact", head: true })
-        .eq("vendeur_id", vendeur.id);
+        const { count, error: countError } = await supabase
+          .from("produits")
+          .select("*", { count: "exact", head: true })
+          .eq("vendeur_id", vendeur.id);
 
-      if (countError) return { erreur: countError.message };
-      if ((count ?? 0) >= max) {
-        return { erreur: `Limite atteinte (${max} produits max). Passez à un abonnement supérieur.` };
+        if (countError) return { erreur: countError.message };
+        if ((count ?? 0) >= max) {
+          return { erreur: `Limite atteinte (${max} produits max). Passez à un abonnement supérieur.` };
+        }
       }
 
       const { error: insertError } = await supabase.from("produits").insert({
