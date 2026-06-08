@@ -77,7 +77,7 @@ export default function ProfilPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
-      <div className="bg-[#E63946] px-5 pt-12 pb-8">
+      <div className="bg-[#E63946] px-5 pt-5 pb-8">
         <Link href="/compte" className="text-white/70 text-sm">← Mon compte</Link>
         <h1 className="text-2xl font-black text-white mt-2">Mon profil</h1>
       </div>

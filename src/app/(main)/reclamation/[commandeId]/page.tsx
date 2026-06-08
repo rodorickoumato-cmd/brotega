@@ -81,7 +81,7 @@ export default function ReclamationPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
-      <div className="bg-white px-5 pt-12 pb-5 border-b border-gray-100 flex items-center gap-3">
+      <div className="bg-white px-5 pt-4 pb-4 border-b border-gray-100 flex items-center gap-3">
         <Link href={`/commande/${commande?.code_court}`} className="text-gray-500 text-xl">←</Link>
         <div>
           <h1 className="text-lg font-black text-gray-800">Réclamation</h1>

@@ -64,7 +64,7 @@ export default function ComptePage() {
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
       {/* Header */}
-      <div className="bg-[#E63946] px-5 pt-12 pb-10">
+      <div className="bg-[#E63946] px-5 pt-5 pb-10">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-white font-black text-xl flex-shrink-0">
             {initiales}

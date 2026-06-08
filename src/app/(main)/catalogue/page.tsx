@@ -184,43 +184,6 @@ function CatalogueContent() {
             )}
           </div>
 
-          {/* Catégories */}
-          {catsPresentes.length > 0 && (
-            <div className="flex gap-2.5 overflow-x-auto pb-0.5 scrollbar-hide -mx-4 px-4">
-
-              {/* Tous */}
-              <button onClick={() => setFiltre(null)} className="flex flex-col items-center gap-1 flex-shrink-0">
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${
-                  !catParam ? "bg-[#E63946] shadow-md shadow-red-200" : "bg-gray-100"
-                }`}>
-                  <svg className={`w-6 h-6 ${!catParam ? "text-white" : "text-gray-500"}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                </div>
-                <span className={`text-[10px] font-bold ${!catParam ? "text-[#E63946]" : "text-gray-400"}`}>Tous</span>
-              </button>
-
-              {catsPresentes.map((slug) => {
-                const cat    = categories.find((c) => c.slug === slug);
-                const active = catParam === slug;
-                if (!cat) return null;
-                return (
-                  <button key={slug} onClick={() => setFiltre(active ? null : slug)}
-                    className="flex flex-col items-center gap-1 flex-shrink-0">
-                    <div className={`w-14 h-14 rounded-2xl overflow-hidden transition-all ${
-                      active ? "ring-2 ring-[#E63946] ring-offset-1 shadow-md shadow-red-100" : ""
-                    }`}>
-                      <Image src={cat.image} alt={cat.name} width={56} height={56}
-                        className="w-full h-full object-cover" unoptimized />
-                    </div>
-                    <span className={`text-[10px] font-bold max-w-[56px] text-center leading-tight ${
-                      active ? "text-[#E63946]" : "text-gray-400"
-                    }`}>{cat.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
         </div>
       </div>
 

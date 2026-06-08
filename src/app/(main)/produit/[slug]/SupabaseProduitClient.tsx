@@ -93,7 +93,7 @@ export function SupabaseProduitClient({
     <div className="min-h-screen bg-[#F7F8FA] pb-32">
 
       {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="bg-white px-4 pt-12 pb-3 flex items-center gap-3 border-b border-gray-100">
+      <div className="bg-white px-4 pt-4 pb-3 flex items-center gap-3 border-b border-gray-100">
         <Link href="/catalogue"
           className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95 transition-all">
           <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,7 +103,7 @@ export function SupabaseProduitClient({
         <p className="font-bold text-sm text-gray-800 flex-1 truncate">{produit.nom}</p>
         <button onClick={handleShare}
           className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95 transition-all">
-          <svg className="w-4.5 h-4.5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
           </svg>
@@ -228,7 +228,7 @@ export function SupabaseProduitClient({
       </div>
 
       {/* ── Barre CTA sticky ──────────────────────────────────────── */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-sm border-t border-gray-100 px-4 py-3 shadow-xl">
+      <div className="fixed bottom-0 left-0 right-0 z-[55] bg-white/95 backdrop-blur-sm border-t border-gray-100 px-4 pt-3 pb-safe shadow-xl">
         <div className="flex items-center gap-3 max-w-xl mx-auto">
           <div className="flex-shrink-0 text-center">
             <p className="text-[11px] text-gray-400 leading-none">Total</p>

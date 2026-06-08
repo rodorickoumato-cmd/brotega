@@ -88,7 +88,7 @@ export default function AdminReclamationsPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
-      <div className="bg-[#E63946] px-5 pt-12 pb-6">
+      <div className="bg-[#E63946] px-5 pt-5 pb-6">
         <p className="text-white/70 text-sm">Admin</p>
         <h1 className="text-2xl font-black text-white">Réclamations ⚠️</h1>
         <p className="text-white/70 text-sm mt-1">Gérer les litiges acheteurs</p>

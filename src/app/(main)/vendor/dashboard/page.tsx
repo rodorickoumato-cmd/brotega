@@ -915,7 +915,7 @@ export default function VendorDashboard() {
       {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
 
       {/* Header */}
-      <div className="bg-[#E63946] px-5 pt-12 pb-10">
+      <div className="bg-[#E63946] px-5 pt-5 pb-10">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-white font-black text-xl flex-shrink-0">
             {initiales}

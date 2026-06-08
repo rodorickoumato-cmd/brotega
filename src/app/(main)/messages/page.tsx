@@ -118,7 +118,7 @@ export default function MessagesPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
-      <div className="bg-white px-5 pt-12 pb-5 border-b border-gray-100">
+      <div className="bg-white px-5 pt-5 pb-5 border-b border-gray-100">
         <h1 className="text-2xl font-black text-gray-800">Messages</h1>
         <p className="text-sm text-gray-500 mt-0.5">Vos conversations liées à vos commandes</p>
       </div>

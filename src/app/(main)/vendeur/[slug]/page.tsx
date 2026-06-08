@@ -61,7 +61,7 @@ export default async function VendeurPage({ params }: { params: Promise<{ slug: 
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
       {/* Header */}
-      <div className="bg-[#E63946] px-5 pt-12 pb-10">
+      <div className="bg-[#E63946] px-5 pt-5 pb-10">
         <Link href="/catalogue" className="text-white/70 text-sm">← Catalogue</Link>
 
         <div className="flex items-center gap-4 mt-4">

@@ -218,7 +218,7 @@ export default function AdminUtilisateursPage() {
       <ConfirmModal action={actionModal} onConfirm={executerAction} onClose={() => setActionModal(null)} loading={enCours} />
 
       {/* Header */}
-      <div className="bg-[#E63946] px-5 pt-12 pb-6">
+      <div className="bg-[#E63946] px-5 pt-5 pb-6">
         <Link href="/admin" className="text-white/70 text-sm flex items-center gap-1 mb-3">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

@@ -78,3 +78,11 @@ a { text-decoration: none; color: inherit; }
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Cacher la scrollbar tout en gardant le scroll fonctionnel */
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* Safe area inset pour les barres sticky sur iPhone */
+.pb-safe { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+.bottom-safe { bottom: env(safe-area-inset-bottom, 0px); }

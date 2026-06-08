@@ -198,7 +198,7 @@ export function Header() {
   return (
     <>
       {/* Top bar */}
-      <div className="bg-[#1A202C] text-gray-300 text-xs py-1.5 px-4 text-center tracking-wide">
+      <div className="bg-[#1A202C] text-gray-300 text-xs py-1.5 px-4 text-center tracking-wide hidden sm:block">
         Livraison partout au Gabon &nbsp;·&nbsp; Paiement sécurisé Airtel Money &nbsp;·&nbsp; Argent bloqué jusqu&apos;à livraison
       </div>
 

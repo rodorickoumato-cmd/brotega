@@ -94,7 +94,7 @@ export default function AbonnementPage() {
   // ── Sélection du plan ────────────────────────────────────────────────────
   if (ecran === "selection") return (
     <div className="min-h-screen bg-[#F7F8FA]">
-      <div className="bg-[#E63946] px-5 pt-12 pb-8">
+      <div className="bg-[#E63946] px-5 pt-5 pb-8">
         <Link href="/vendor/dashboard" className="text-white/70 text-sm">← Dashboard</Link>
         <h1 className="text-2xl font-black text-white mt-2">Abonnement</h1>
         {planActif && (
