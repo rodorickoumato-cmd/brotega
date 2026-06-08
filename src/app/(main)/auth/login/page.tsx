@@ -7,12 +7,18 @@ import { seConnecter, reinitialiserMotDePasse } from "@/app/actions/auth";
 function LoginContent() {
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") ?? "/";
+  const erreurParam = searchParams.get("error");
 
   const [email, setEmail] = useState("");
   const [motDePasse, setMotDePasse] = useState("");
   const [loading, setLoading] = useState(false);
-  const [erreur, setErreur] = useState("");
-  const [oublie, setOublie] = useState(false);
+  const [erreur, setErreur] = useState(
+    erreurParam === "lien_expire"   ? "Le lien a expiré. Entrez votre email et cliquez « Mot de passe oublié ? » pour en recevoir un nouveau." :
+    erreurParam === "lien_invalide" ? "Lien invalide. Recommencez la procédure de réinitialisation." : ""
+  );
+  const [oublie, setOublie] = useState(
+    erreurParam === "lien_expire" || erreurParam === "lien_invalide"
+  );
   const [resetEnvoye, setResetEnvoye] = useState(false);
   const [voirMdp, setVoirMdp] = useState(false);
 
