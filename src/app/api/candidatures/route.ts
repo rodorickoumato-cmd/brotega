@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
   await admin.from("candidatures_livreur").insert({
     utilisateur_id: user.id,
-    vehicule,
+    vehicule: vehicule as "moto" | "velo" | "voiture" | "autre",
     zone: zone.trim(),
     message: message?.trim() || null,
   });
