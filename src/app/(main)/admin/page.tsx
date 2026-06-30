@@ -60,6 +60,7 @@ export default function AdminPage() {
     { href: "/admin/configuration",    icon: "⚙️",  titre: "Configuration",       desc: "Tarifs, paiements, maintenance, bannière" },
     { href: "/admin/categories",       icon: "🏷️",  titre: "Catégories",          desc: "Ajouter, modifier, réorganiser les catégories" },
     { href: "/admin/tarifs-livraison", icon: "🗺️",  titre: "Tarifs Livraison",    desc: "Modifier les prix inter-provinces et villes" },
+    { href: "/admin/candidatures",     icon: "🏍️",  titre: "Candidatures Livreur", desc: "Approuver les demandes de nouveaux livreurs" },
   ];
 
   const couleurMap: Record<string, string> = {

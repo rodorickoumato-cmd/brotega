@@ -11,6 +11,7 @@ type Stats = {
   livrees: number;
   gains_total: number;
   gains_en_attente: number;
+  gains_non_verses: number;
 };
 
 type Livreur = {
@@ -117,6 +118,7 @@ export default function AdminLivreursPage() {
   const [filtreSuspendu, setFiltreSuspendu] = useState(false);
   const [actionModal, setActionModal] = useState<ActionModal>(null);
   const [enCours, setEnCours] = useState(false);
+  const [paymentEnCours, setPaymentEnCours] = useState<string | null>(null);
   const [message, setMessage] = useState<{ texte: string; type: "ok" | "err" } | null>(null);
 
   const charger = useCallback(async () => {
@@ -375,6 +377,31 @@ export default function AdminLivreursPage() {
                 >
                   Retirer rôle livreur
                 </button>
+
+                {l.stats.gains_non_verses > 0 && (
+                  <button
+                    onClick={async () => {
+                      setPaymentEnCours(l.id);
+                      const res = await fetch("/api/admin/livreurs/payer", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ livreur_id: l.id }),
+                      });
+                      const data = await res.json() as { succes?: boolean; montant_verse?: number; erreur?: string };
+                      setPaymentEnCours(null);
+                      if (data.succes) {
+                        setMessage({ texte: `${formatXAF(data.montant_verse ?? 0)} marqués comme versés.`, type: "ok" });
+                        await charger();
+                      } else {
+                        setMessage({ texte: data.erreur ?? "Erreur", type: "err" });
+                      }
+                    }}
+                    disabled={paymentEnCours === l.id}
+                    className="text-xs font-bold px-3 py-2 rounded-xl bg-green-50 text-green-700 border border-green-200 active:scale-95 transition-all disabled:opacity-50"
+                  >
+                    {paymentEnCours === l.id ? "…" : `💰 Verser ${formatXAF(l.stats.gains_non_verses)}`}
+                  </button>
+                )}
               </div>
             </div>
           </div>

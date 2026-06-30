@@ -25,7 +25,7 @@ export async function GET() {
 
   const { data: livraisons } = await admin
     .from("livraisons")
-    .select("livreur_id, statut, remuneration_xaf")
+    .select("livreur_id, statut, remuneration_xaf, remuneration_versee")
     .in("livreur_id", livreurIds);
 
   const statsParLivreur: Record<string, {
@@ -33,17 +33,21 @@ export async function GET() {
     livrees: number;
     gains_total: number;
     gains_en_attente: number;
+    gains_non_verses: number;
   }> = {};
 
   for (const l of livraisons ?? []) {
     if (!l.livreur_id) continue;
     if (!statsParLivreur[l.livreur_id]) {
-      statsParLivreur[l.livreur_id] = { en_cours: 0, livrees: 0, gains_total: 0, gains_en_attente: 0 };
+      statsParLivreur[l.livreur_id] = { en_cours: 0, livrees: 0, gains_total: 0, gains_en_attente: 0, gains_non_verses: 0 };
     }
     const s = statsParLivreur[l.livreur_id];
     if (l.statut === "livree") {
       s.livrees++;
       s.gains_total += l.remuneration_xaf ?? 0;
+      if (!(l as { remuneration_versee?: boolean }).remuneration_versee) {
+        s.gains_non_verses += l.remuneration_xaf ?? 0;
+      }
     } else if (["assignee", "en_route"].includes(l.statut)) {
       s.en_cours++;
       s.gains_en_attente += l.remuneration_xaf ?? 0;

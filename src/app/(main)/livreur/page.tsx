@@ -8,6 +8,7 @@ import { formaterPhoneGabon } from "@/lib/phone";
 import type { Livraison, Commande } from "@/lib/supabase/database.types";
 
 type LivraisonRiche = Livraison & {
+  remuneration_versee: boolean;
   commande: Pick<Commande, "id" | "code_court" | "total" | "adresse"> | null;
 };
 
@@ -21,11 +22,15 @@ const STATUT_STYLE: Record<string, { label: string; bg: string; texte: string }>
   echec:      { label: "Échec",       bg: "bg-red-50 border-red-200",       texte: "text-red-600"    },
 };
 
-function ModalCodeConfirmation({
-  livraisonId,
-  onSuccess,
-  onClose,
-}: {
+const RAISONS_INCIDENT = [
+  { value: "client_absent",      label: "Client absent" },
+  { value: "adresse_incorrecte", label: "Adresse incorrecte" },
+  { value: "client_injoignable", label: "Client injoignable" },
+  { value: "autre",              label: "Autre" },
+] as const;
+
+// ─── Modal code confirmation ──────────────────────────────────────
+function ModalCodeConfirmation({ livraisonId, onSuccess, onClose }: {
   livraisonId: string;
   onSuccess: () => void;
   onClose: () => void;
@@ -33,7 +38,6 @@ function ModalCodeConfirmation({
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
   const [erreur, setErreur] = useState("");
   const [loading, setLoading] = useState(false);
-
   const code = digits.join("");
 
   const handleDigit = (i: number, val: string) => {
@@ -41,9 +45,7 @@ function ModalCodeConfirmation({
     const next = [...digits];
     next[i] = val;
     setDigits(next);
-    if (val && i < 5) {
-      document.getElementById(`digit-${i + 1}`)?.focus();
-    }
+    if (val && i < 5) document.getElementById(`digit-${i + 1}`)?.focus();
   };
 
   const handleKeyDown = (i: number, e: React.KeyboardEvent) => {
@@ -80,9 +82,7 @@ function ModalCodeConfirmation({
             <span className="text-3xl">🔐</span>
           </div>
           <h3 className="text-lg font-black text-gray-800">Code de confirmation</h3>
-          <p className="text-sm text-gray-500 mt-1">
-            Demandez au client le code affiché sur son téléphone
-          </p>
+          <p className="text-sm text-gray-500 mt-1">Demandez au client le code affiché sur son téléphone</p>
         </div>
 
         <div className="flex gap-2 justify-center mb-4">
@@ -102,9 +102,7 @@ function ModalCodeConfirmation({
         </div>
 
         {erreur && (
-          <p className="text-sm text-red-600 font-medium text-center mb-3 bg-red-50 rounded-xl py-2 px-3">
-            {erreur}
-          </p>
+          <p className="text-sm text-red-600 font-medium text-center mb-3 bg-red-50 rounded-xl py-2 px-3">{erreur}</p>
         )}
 
         <button
@@ -114,10 +112,7 @@ function ModalCodeConfirmation({
         >
           {loading ? "Vérification..." : "✅ Valider la livraison"}
         </button>
-        <button
-          onClick={onClose}
-          className="w-full text-gray-500 font-medium py-2 text-sm"
-        >
+        <button onClick={onClose} className="w-full text-gray-500 font-medium py-2 text-sm">
           Annuler
         </button>
       </div>
@@ -125,13 +120,102 @@ function ModalCodeConfirmation({
   );
 }
 
+// ─── Modal incident ───────────────────────────────────────────────
+function ModalIncident({ livraisonId, onSuccess, onClose }: {
+  livraisonId: string;
+  onSuccess: () => void;
+  onClose: () => void;
+}) {
+  const [raison, setRaison] = useState<string>("");
+  const [note, setNote] = useState("");
+  const [erreur, setErreur] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!raison) { setErreur("Choisissez une raison"); return; }
+    setLoading(true);
+    setErreur("");
+    try {
+      const res = await fetch(`/api/livraisons/${livraisonId}/echec`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ raison, note }),
+      });
+      const data = await res.json() as { succes?: boolean; erreur?: string };
+      if (data.erreur) { setErreur(data.erreur); return; }
+      onSuccess();
+    } catch {
+      setErreur("Erreur réseau. Réessayez.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-end justify-center p-4">
+      <div className="bg-white rounded-3xl w-full max-w-sm p-6">
+        <div className="text-center mb-5">
+          <div className="w-14 h-14 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-3">
+            <span className="text-3xl">⚠️</span>
+          </div>
+          <h3 className="text-lg font-black text-gray-800">Signaler un incident</h3>
+          <p className="text-sm text-gray-500 mt-1">L'admin et le client seront notifiés</p>
+        </div>
+
+        <div className="space-y-2 mb-4">
+          {RAISONS_INCIDENT.map((r) => (
+            <button
+              key={r.value}
+              onClick={() => setRaison(r.value)}
+              className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-semibold transition-all ${
+                raison === r.value
+                  ? "border-orange-400 bg-orange-50 text-orange-700"
+                  : "border-gray-200 text-gray-600"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+
+        {raison === "autre" && (
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Décrivez le problème..."
+            rows={3}
+            className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-orange-400 mb-3 resize-none"
+          />
+        )}
+
+        {erreur && (
+          <p className="text-sm text-red-600 font-medium text-center mb-3 bg-red-50 rounded-xl py-2 px-3">{erreur}</p>
+        )}
+
+        <button
+          onClick={handleSubmit}
+          disabled={loading || !raison}
+          className="w-full bg-orange-500 text-white font-black py-4 rounded-2xl text-base disabled:opacity-50 active:scale-95 transition-all mb-3"
+        >
+          {loading ? "Envoi..." : "Signaler l'incident"}
+        </button>
+        <button onClick={onClose} className="w-full text-gray-500 font-medium py-2 text-sm">
+          Annuler
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Page principale ──────────────────────────────────────────────
 export default function LivreurPage() {
   const router = useRouter();
   const [livraisons, setLivraisons] = useState<LivraisonRiche[]>([]);
   const [chargement, setChargement] = useState(true);
   const [onglet, setOnglet] = useState<"actives" | "terminees">("actives");
   const [loading, setLoading] = useState<string | null>(null);
-  const [modalLivraisonId, setModalLivraisonId] = useState<string | null>(null);
+  const [modalConfirm, setModalConfirm] = useState<string | null>(null);
+  const [modalIncident, setModalIncident] = useState<string | null>(null);
   const [nom, setNom] = useState("");
 
   useEffect(() => {
@@ -147,7 +231,7 @@ export default function LivreurPage() {
 
       const { data: livs } = await supabase
         .from("livraisons")
-        .select("*, remuneration_xaf, client_telephone, code_confirmation")
+        .select("*, remuneration_xaf, remuneration_versee, client_telephone")
         .eq("livreur_id", user.id)
         .order("created_at", { ascending: false });
 
@@ -157,7 +241,11 @@ export default function LivreurPage() {
         : { data: [] };
 
       const cmdMap = new Map((cmds ?? []).map((c) => [c.id, c]));
-      setLivraisons((livs ?? []).map((l) => ({ ...l, commande: cmdMap.get(l.commande_id) ?? null })));
+      setLivraisons((livs ?? []).map((l) => ({
+        ...l,
+        remuneration_versee: (l as { remuneration_versee?: boolean }).remuneration_versee ?? false,
+        commande: cmdMap.get(l.commande_id) ?? null,
+      })));
       setChargement(false);
     })();
   }, [router]);
@@ -167,6 +255,8 @@ export default function LivreurPage() {
   const liste     = onglet === "actives" ? actives : terminees;
 
   const totalGagne    = terminees.filter((l) => l.statut === "livree").reduce((s, l) => s + (l.remuneration_xaf ?? 0), 0);
+  const gainsVersés   = terminees.filter((l) => l.statut === "livree" && l.remuneration_versee).reduce((s, l) => s + (l.remuneration_xaf ?? 0), 0);
+  const gainsEnAttente = totalGagne - gainsVersés;
   const gainsPendants = actives.reduce((s, l) => s + (l.remuneration_xaf ?? 0), 0);
 
   const demarrer = async (livraisonId: string) => {
@@ -186,19 +276,33 @@ export default function LivreurPage() {
   };
 
   const onLivree = (livraisonId: string) => {
-    setModalLivraisonId(null);
+    setModalConfirm(null);
     setLivraisons((prev) => prev.map((l) =>
-      l.id === livraisonId ? { ...l, statut: "livree" } : l
+      l.id === livraisonId ? { ...l, statut: "livree", remuneration_versee: false } : l
+    ));
+  };
+
+  const onIncident = (livraisonId: string) => {
+    setModalIncident(null);
+    setLivraisons((prev) => prev.map((l) =>
+      l.id === livraisonId ? { ...l, statut: "echec" } : l
     ));
   };
 
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
-      {modalLivraisonId && (
+      {modalConfirm && (
         <ModalCodeConfirmation
-          livraisonId={modalLivraisonId}
-          onSuccess={() => onLivree(modalLivraisonId)}
-          onClose={() => setModalLivraisonId(null)}
+          livraisonId={modalConfirm}
+          onSuccess={() => onLivree(modalConfirm)}
+          onClose={() => setModalConfirm(null)}
+        />
+      )}
+      {modalIncident && (
+        <ModalIncident
+          livraisonId={modalIncident}
+          onSuccess={() => onIncident(modalIncident)}
+          onClose={() => setModalIncident(null)}
         />
       )}
 
@@ -217,17 +321,32 @@ export default function LivreurPage() {
             <p className="text-white/70 text-xs mt-0.5">Livrées</p>
           </div>
           <div className="bg-white/15 rounded-2xl px-3 py-3 text-center">
-            <p className="text-lg font-black text-white">{formatXAF(totalGagne)}</p>
-            <p className="text-white/70 text-xs mt-0.5">Gains</p>
+            <p className="text-base font-black text-white">{formatXAF(totalGagne)}</p>
+            <p className="text-white/70 text-xs mt-0.5">Total gagné</p>
           </div>
         </div>
 
-        {gainsPendants > 0 && (
-          <div className="mt-3 bg-white/20 rounded-xl px-4 py-2 flex items-center justify-between">
-            <span className="text-white/80 text-sm">À percevoir</span>
-            <span className="text-white font-black text-sm">{formatXAF(gainsPendants)}</span>
-          </div>
-        )}
+        {/* Résumé financier */}
+        <div className="mt-3 space-y-1.5">
+          {gainsEnAttente > 0 && (
+            <div className="bg-white/20 rounded-xl px-4 py-2 flex items-center justify-between">
+              <span className="text-white/80 text-sm">En attente de versement</span>
+              <span className="text-white font-black text-sm">{formatXAF(gainsEnAttente)}</span>
+            </div>
+          )}
+          {gainsPendants > 0 && (
+            <div className="bg-white/10 rounded-xl px-4 py-2 flex items-center justify-between">
+              <span className="text-white/60 text-sm">Livraisons en cours</span>
+              <span className="text-white/80 font-bold text-sm">{formatXAF(gainsPendants)}</span>
+            </div>
+          )}
+          {gainsVersés > 0 && (
+            <div className="bg-green-500/30 rounded-xl px-4 py-2 flex items-center justify-between">
+              <span className="text-white/80 text-sm">✅ Versés</span>
+              <span className="text-white font-black text-sm">{formatXAF(gainsVersés)}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Onglets */}
@@ -271,11 +390,17 @@ export default function LivreurPage() {
             <div key={l.id} className="bg-white rounded-2xl shadow-sm overflow-hidden">
               <div className="px-4 pt-4 pb-3">
                 <div className="flex items-start justify-between mb-2">
-                  <div>
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-black text-base text-gray-800">{l.commande?.code_court ?? "—"}</span>
                     {remun > 0 && (
-                      <span className="ml-2 text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                        +{formatXAF(remun)}
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                        l.remuneration_versee
+                          ? "bg-green-100 text-green-700"
+                          : l.statut === "livree"
+                            ? "bg-orange-100 text-orange-700"
+                            : "bg-gray-100 text-gray-600"
+                      }`}>
+                        {l.remuneration_versee ? "✅ Versé" : `+${formatXAF(remun)}`}
                       </span>
                     )}
                   </div>
@@ -299,11 +424,17 @@ export default function LivreurPage() {
                 {l.commande?.total && (
                   <p className="text-sm font-black text-[#E63946]">{formatXAF(l.commande.total)}</p>
                 )}
+
+                {l.statut === "echec" && l.note_livreur && (
+                  <p className="text-xs text-red-500 mt-1 bg-red-50 rounded-lg px-2 py-1">
+                    {l.note_livreur.replace("_", " ")}
+                  </p>
+                )}
               </div>
 
-              {/* Actions */}
+              {/* Actions livraison active */}
               {estActive && (
-                <div className="px-4 pb-3 border-t border-gray-50 pt-3">
+                <div className="px-4 pb-3 border-t border-gray-50 pt-3 space-y-2">
                   <div className="flex gap-2">
                     {l.statut === "assignee" && (
                       <button
@@ -317,7 +448,7 @@ export default function LivreurPage() {
 
                     {l.statut === "en_route" && (
                       <button
-                        onClick={() => setModalLivraisonId(l.id)}
+                        onClick={() => setModalConfirm(l.id)}
                         className="flex-1 bg-[#E63946] text-white font-bold py-3 rounded-xl text-sm active:scale-95 transition-all"
                       >
                         🔐 Saisir le code client
@@ -326,7 +457,7 @@ export default function LivreurPage() {
 
                     {telephone && (
                       <a
-                        href={`tel:${telephone}`}
+                        href={`tel:${formaterPhoneGabon(telephone)}`}
                         className="w-12 h-12 border-2 border-gray-200 rounded-xl flex items-center justify-center text-lg active:scale-95 transition-all flex-shrink-0"
                         title="Appeler le client"
                       >
@@ -346,17 +477,28 @@ export default function LivreurPage() {
                   </div>
 
                   {l.statut === "en_route" && (
-                    <p className="text-xs text-gray-400 text-center mt-2">
+                    <button
+                      onClick={() => setModalIncident(l.id)}
+                      className="w-full border-2 border-orange-200 text-orange-600 font-semibold py-2.5 rounded-xl text-sm active:scale-95 transition-all"
+                    >
+                      ⚠️ Signaler un incident
+                    </button>
+                  )}
+
+                  {l.statut === "en_route" && (
+                    <p className="text-xs text-gray-400 text-center">
                       Demandez au client le code affiché sur son écran
                     </p>
                   )}
                 </div>
               )}
 
-              {l.statut === "livree" && remun > 0 && (
+              {l.statut === "livree" && (
                 <div className="px-4 pb-3 border-t border-gray-50 pt-2">
-                  <p className="text-xs text-green-600 font-semibold text-center">
-                    ✅ Livraison validée — Gain : {formatXAF(remun)}
+                  <p className={`text-xs font-semibold text-center ${l.remuneration_versee ? "text-green-600" : "text-orange-600"}`}>
+                    {l.remuneration_versee
+                      ? `✅ Gain de ${formatXAF(remun)} versé`
+                      : `⏳ Gain de ${formatXAF(remun)} en attente de versement`}
                   </p>
                 </div>
               )}

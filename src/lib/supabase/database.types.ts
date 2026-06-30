@@ -244,6 +244,8 @@ export type Database = {
           code_confirmation: string | null;
           code_utilise_at: string | null;
           remuneration_xaf: number | null;
+          remuneration_versee: boolean;
+          remuneration_versee_at: string | null;
           client_telephone: string | null;
           notes: string | null;
           assignee_at: string | null;
@@ -260,6 +262,8 @@ export type Database = {
           code_confirmation?: string | null;
           code_utilise_at?: string | null;
           remuneration_xaf?: number | null;
+          remuneration_versee?: boolean;
+          remuneration_versee_at?: string | null;
           client_telephone?: string | null;
           notes?: string | null;
           assignee_at?: string | null;
@@ -497,4 +501,18 @@ export type Message         = Database["public"]["Tables"]["messages"]["Row"];
 export type Reclamation     = Database["public"]["Tables"]["reclamations"]["Row"];
 export type Wallet          = Database["public"]["Tables"]["wallets"]["Row"];
 export type WalletTransaction = Database["public"]["Tables"]["wallet_transactions"]["Row"];
-export type AppConfigRow     = Database["public"]["Tables"]["app_config"]["Row"];
+export type AppConfigRow          = Database["public"]["Tables"]["app_config"]["Row"];
+
+// ── CANDIDATURES LIVREUR ───────────────────────────────────────
+// (table créée par migration 007)
+export type CandidatureLivreur = {
+  id: string;
+  utilisateur_id: string;
+  vehicule: "moto" | "velo" | "voiture" | "autre";
+  zone: string;
+  message: string | null;
+  statut: "en_attente" | "approuvee" | "refusee";
+  traite_par: string | null;
+  traite_le: string | null;
+  created_at: string;
+};

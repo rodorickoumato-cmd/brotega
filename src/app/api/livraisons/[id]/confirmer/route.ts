@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { envoyerPushUtilisateurs } from "@/lib/push";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: livraisonId } = await params;
@@ -37,17 +38,38 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ erreur: "Code incorrect — vérifiez avec le client" }, { status: 422 });
   }
 
+  const maintenant = new Date().toISOString();
+
   await admin.from("livraisons").update({
-    statut:         "livree",
-    livree_at:       new Date().toISOString(),
-    code_utilise_at: new Date().toISOString(),
+    statut:              "livree",
+    livree_at:           maintenant,
+    code_utilise_at:     maintenant,
+    remuneration_versee: false,
   }).eq("id", livraisonId);
 
-  // Mettre à jour la commande → livrée (l'escrow sera libéré par le client ou auto après 7j)
   await admin.from("commandes").update({
-    statut:     "livree",
-    livree_at:  new Date().toISOString(),
+    statut:    "livree",
+    livree_at: maintenant,
   }).eq("id", livraison.commande_id);
+
+  // Récupère la rémunération pour la notification
+  const { data: liv } = await admin
+    .from("livraisons")
+    .select("remuneration_xaf, livreur_id")
+    .eq("id", livraisonId)
+    .single();
+
+  if (liv?.livreur_id) {
+    const gain = liv.remuneration_xaf ?? 0;
+    void envoyerPushUtilisateurs([liv.livreur_id], {
+      title: "Livraison confirmée ✅",
+      body: gain > 0
+        ? `Bravo ! Gain de ${gain.toLocaleString("fr-FR")} XAF — paiement sous 24h.`
+        : "Livraison validée avec succès.",
+      url: "/livreur",
+      tag: "livraison-confirmee",
+    });
+  }
 
   return NextResponse.json({ succes: true });
 }

@@ -342,9 +342,25 @@ export async function assignerLivreur(livraisonId: string, livreurId: string) {
   await admin.from("livraisons")
     .update({ livreur_id: livreurId, statut: "assignee", assignee_at: new Date().toISOString() })
     .eq("id", livraisonId);
+
+  const { data: commande } = await admin
+    .from("commandes")
+    .select("code_court")
+    .eq("id", livraison.commande_id)
+    .single();
+
   await admin.from("commandes")
     .update({ statut: "en_livraison", livreur_id: livreurId })
     .eq("id", livraison.commande_id);
+
+  // Notifie le livreur immédiatement
+  const { envoyerPushUtilisateurs } = await import("@/lib/push");
+  void envoyerPushUtilisateurs([livreurId], {
+    title: "Nouvelle livraison assignée 🏍️",
+    body: `Commande ${commande?.code_court ?? ""} — ouvrez l'app pour démarrer.`,
+    url: "/livreur",
+    tag: "nouvelle-livraison",
+  });
 
   return { succes: true };
 }
