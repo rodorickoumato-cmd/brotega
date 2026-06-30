@@ -461,6 +461,34 @@ export type Database = {
         Relationships: [];
       };
 
+      // ── CANDIDATURES LIVREUR ──────────────────────────────────
+      candidatures_livreur: {
+        Row: {
+          id: string;
+          utilisateur_id: string;
+          vehicule: "moto" | "velo" | "voiture" | "autre";
+          zone: string;
+          message: string | null;
+          statut: "en_attente" | "approuvee" | "refusee";
+          traite_par: string | null;
+          traite_le: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          utilisateur_id: string;
+          vehicule: "moto" | "velo" | "voiture" | "autre";
+          zone: string;
+          message?: string | null;
+          statut?: "en_attente" | "approuvee" | "refusee";
+          traite_par?: string | null;
+          traite_le?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["candidatures_livreur"]["Insert"]>;
+        Relationships: [];
+      };
+
     };
 
     Views: { [_ in never]: never };
@@ -503,16 +531,4 @@ export type Wallet          = Database["public"]["Tables"]["wallets"]["Row"];
 export type WalletTransaction = Database["public"]["Tables"]["wallet_transactions"]["Row"];
 export type AppConfigRow          = Database["public"]["Tables"]["app_config"]["Row"];
 
-// ── CANDIDATURES LIVREUR ───────────────────────────────────────
-// (table créée par migration 007)
-export type CandidatureLivreur = {
-  id: string;
-  utilisateur_id: string;
-  vehicule: "moto" | "velo" | "voiture" | "autre";
-  zone: string;
-  message: string | null;
-  statut: "en_attente" | "approuvee" | "refusee";
-  traite_par: string | null;
-  traite_le: string | null;
-  created_at: string;
-};
+export type CandidatureLivreur = Database["public"]["Tables"]["candidatures_livreur"]["Row"];
