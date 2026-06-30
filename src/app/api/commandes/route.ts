@@ -7,7 +7,8 @@ import { genererCodeCommande } from "@/lib/orderCode";
 import { getProvider } from "@/lib/payment";
 import type { ProviderId } from "@/lib/payment";
 import { vers241 } from "@/lib/phone";
-import { fraisLivraison, TAUX_COMMISSION, FRAIS_MOBILE_MONEY_TAUX } from "@/lib/rules";
+import { TAUX_COMMISSION, FRAIS_MOBILE_MONEY_TAUX } from "@/lib/rules";
+import { fraisLivraisonDynamique } from "@/lib/livraison";
 import { envoyerEmailConfirmationCommande, envoyerEmailNouvelleCommande } from "@/lib/email";
 
 type ItemPanier = {
@@ -124,7 +125,7 @@ export async function POST(request: NextRequest) {
     const villeVendeur = vendeurInfo?.ville ?? "Libreville";
 
     const sousTotal  = itemsVerifies.reduce((s, it) => s + it.prix_xaf * it.quantite, 0);
-    const livraison  = fraisLivraison(villeVendeur, input.adresse.ville);
+    const livraison  = await fraisLivraisonDynamique(villeVendeur, input.adresse.ville);
     const estMM      = input.mode_paiement === "airtel_money" || input.mode_paiement === "moov_money";
     const fraisMM    = estMM ? Math.round((sousTotal + livraison) * FRAIS_MOBILE_MONEY_TAUX) : 0;
     const total      = sousTotal + livraison + fraisMM;
