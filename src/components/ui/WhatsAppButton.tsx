@@ -1,9 +1,7 @@
 ﻿"use client";
 
-const WHATSAPP_SUPPORT = process.env.NEXT_PUBLIC_WHATSAPP_SUPPORT ?? "24100000000";
-
-export function WhatsAppButton() {
-  const href = `https://wa.me/${WHATSAPP_SUPPORT}?text=${encodeURIComponent("Bonjour, j'ai besoin d'aide sur J'adore la Famille.")}`;
+export function WhatsAppButton({ numero = process.env.NEXT_PUBLIC_WHATSAPP_SUPPORT ?? "24100000000" }: { numero?: string }) {
+  const href = `https://wa.me/${numero}?text=${encodeURIComponent("Bonjour, j'ai besoin d'aide sur J'adore la Famille.")}`;
 
   return (
     <a

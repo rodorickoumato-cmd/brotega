@@ -56,7 +56,10 @@ export default function AdminPage() {
     { href: "/admin/commandes",    icon: "📦", titre: "Commandes",       desc: "Modifier statut, rembourser, libérer escrow" },
     { href: "/admin/paiements",    icon: "💳", titre: "Paiements",       desc: "Historique des transactions PVIT" },
     { href: "/admin/livraisons",   icon: "🚚", titre: "Livraisons",      desc: "Assigner les livreurs aux commandes" },
-    { href: "/admin/reclamations", icon: "⚠️", titre: "Réclamations",   desc: "Résoudre les litiges" },
+    { href: "/admin/reclamations",     icon: "⚠️",  titre: "Réclamations",        desc: "Résoudre les litiges" },
+    { href: "/admin/configuration",    icon: "⚙️",  titre: "Configuration",       desc: "Tarifs, paiements, maintenance, bannière" },
+    { href: "/admin/categories",       icon: "🏷️",  titre: "Catégories",          desc: "Ajouter, modifier, réorganiser les catégories" },
+    { href: "/admin/tarifs-livraison", icon: "🗺️",  titre: "Tarifs Livraison",    desc: "Modifier les prix inter-provinces et villes" },
   ];
 
   const couleurMap: Record<string, string> = {

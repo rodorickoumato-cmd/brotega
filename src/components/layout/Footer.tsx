@@ -1,12 +1,31 @@
 import Link from "next/link";
-import { categories } from "@/data/categories";
+import { categories as categoriesStatiques } from "@/data/categories";
+import type { Category } from "@/types";
 
-export function Footer() {
+type Props = {
+  categories?: Category[];
+  whatsapp?: string;
+  cfgExtra?: Record<string, unknown>;
+};
+
+export function Footer({ categories = categoriesStatiques, whatsapp = "24100000000", cfgExtra = {} }: Props) {
+  const facebook  = (cfgExtra.reseaux_facebook  as string) ?? "https://facebook.com/jadoreafamille";
+  const instagram = (cfgExtra.reseaux_instagram as string) ?? "https://instagram.com/jadoreafamille";
+  const twitter   = (cfgExtra.reseaux_twitter   as string) ?? "https://twitter.com/jadoreafamille";
+  const email     = (cfgExtra.contact_email     as string) ?? "support@jadoreafamille.ga";
+
+  const reseaux = [
+    { name: "Facebook",    icon: "f",  href: facebook  },
+    { name: "Instagram",   icon: "📷", href: instagram },
+    { name: "Twitter / X", icon: "𝕏",  href: twitter   },
+    { name: "WhatsApp",    icon: "📱", href: `https://wa.me/${whatsapp}` },
+  ];
+
   return (
     <footer className="bg-[#1A202C] text-gray-300 mt-16">
-      {/* Main footer */}
       <div className="max-w-7xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+
           {/* Brand */}
           <div>
             <div className="flex items-center gap-2 mb-4">
@@ -19,12 +38,7 @@ export function Footer() {
               La marketplace du Gabon. Achetez local, soutenez les entrepreneurs gabonais.
             </p>
             <div className="flex gap-3 mt-4">
-              {[
-                { name: "Facebook", icon: "f", href: "https://facebook.com/mycssecret" },
-                { name: "Instagram", icon: "📷", href: "https://instagram.com/mycssecret" },
-                { name: "Twitter / X", icon: "𝕏", href: "https://twitter.com/mycssecret" },
-                { name: "WhatsApp", icon: "📱", href: "https://wa.me/24101234567" },
-              ].map((s) => (
+              {reseaux.map((s) => (
                 <a
                   key={s.name}
                   href={s.href}
@@ -37,7 +51,6 @@ export function Footer() {
                 </a>
               ))}
             </div>
-            {/* Payment badges */}
             <div className="mt-5">
               <p className="text-xs text-gray-500 mb-2">Paiements acceptés</p>
               <div className="flex flex-wrap gap-2">
@@ -48,7 +61,7 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Categories */}
+          {/* Catégories */}
           <div>
             <h3 className="text-white font-bold mb-4">Catégories</h3>
             <ul className="space-y-2">
@@ -62,7 +75,7 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Account */}
+          {/* Compte */}
           <div>
             <h3 className="text-white font-bold mb-4">Mon Compte</h3>
             <ul className="space-y-2 text-sm">
@@ -83,7 +96,7 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Info */}
+          {/* Infos & Contact */}
           <div>
             <h3 className="text-white font-bold mb-4">Informations</h3>
             <ul className="space-y-2 text-sm mb-6">
@@ -102,14 +115,13 @@ export function Footer() {
             <div className="bg-white/5 rounded-xl p-4">
               <p className="text-xs font-semibold text-white mb-1">Service client</p>
               <p className="text-xs text-gray-400">Lun - Sam : 8h - 20h</p>
-              <a href="tel:+24101234567" className="text-[#E63946] text-sm font-bold mt-1 block hover:underline">+241 01 23 45 67</a>
-              <a href="https://wa.me/24101234567" className="text-[#25D366] text-xs mt-0.5 block hover:underline">💬 WhatsApp</a>
+              <a href={`https://wa.me/${whatsapp}`} className="text-[#25D366] text-xs mt-0.5 block hover:underline">💬 WhatsApp Support</a>
+              <a href={`mailto:${email}`} className="text-[#E63946] text-xs mt-0.5 block hover:underline">✉️ {email}</a>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom bar */}
       <div className="border-t border-white/10 py-4 px-4">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500">
           <p>© 2026 J'adore la Famille — Fait avec ❤️ au Gabon 🇬🇦</p>

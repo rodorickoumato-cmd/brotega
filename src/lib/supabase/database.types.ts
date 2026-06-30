@@ -393,6 +393,70 @@ export type Database = {
         Relationships: [];
       };
 
+      // ── CATEGORIES PRODUITS ────────────────────────────────────
+      categories_produits: {
+        Row: {
+          slug: string;
+          nom: string;
+          icone: string;
+          couleur: string;
+          bg: string;
+          ordre: number;
+          actif: boolean;
+          created_at: string;
+        };
+        Insert: {
+          slug: string;
+          nom: string;
+          icone?: string;
+          couleur?: string;
+          bg?: string;
+          ordre?: number;
+          actif?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["categories_produits"]["Insert"]>;
+        Relationships: [];
+      };
+
+      // ── TARIFS LIVRAISON ───────────────────────────────────────
+      tarifs_livraison: {
+        Row: { province_vendeur: string; province_acheteur: string; tarif_xaf: number };
+        Insert: { province_vendeur: string; province_acheteur: string; tarif_xaf: number };
+        Update: Partial<Database["public"]["Tables"]["tarifs_livraison"]["Insert"]>;
+        Relationships: [];
+      };
+
+      // ── VILLES LIVRAISON ──────────────────────────────────────
+      villes_livraison: {
+        Row: { nom: string; province_code: string; supplement_xaf: number; actif: boolean };
+        Insert: { nom: string; province_code: string; supplement_xaf?: number; actif?: boolean };
+        Update: Partial<Database["public"]["Tables"]["villes_livraison"]["Insert"]>;
+        Relationships: [];
+      };
+
+      // ── APP_CONFIG ─────────────────────────────────────────────
+      app_config: {
+        Row: {
+          cle: string;
+          valeur: unknown;
+          description: string | null;
+          categorie: string;
+          modifie_le: string;
+          modifie_par: string | null;
+        };
+        Insert: {
+          cle: string;
+          valeur: unknown;
+          description?: string | null;
+          categorie?: string;
+          modifie_le?: string;
+          modifie_par?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["app_config"]["Insert"]>;
+        Relationships: [];
+      };
+
     };
 
     Views: { [_ in never]: never };
@@ -433,3 +497,4 @@ export type Message         = Database["public"]["Tables"]["messages"]["Row"];
 export type Reclamation     = Database["public"]["Tables"]["reclamations"]["Row"];
 export type Wallet          = Database["public"]["Tables"]["wallets"]["Row"];
 export type WalletTransaction = Database["public"]["Tables"]["wallet_transactions"]["Row"];
+export type AppConfigRow     = Database["public"]["Tables"]["app_config"]["Row"];

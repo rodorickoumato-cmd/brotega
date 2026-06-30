@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { PLANS, type PlanId } from "@/lib/rules";
+import { getPrixPlan } from "@/lib/config";
 import { getProvider } from "@/lib/payment";
 import type { ProviderId } from "@/lib/payment";
 import { vers241 } from "@/lib/phone";
@@ -75,6 +76,9 @@ export async function initierPaiementAbonnement(input: {
   const plan = PLANS[input.planId];
   if (!plan || plan.prix_xaf === 0) return { erreur: "Plan invalide pour le paiement." };
 
+  // Prix depuis la configuration dynamique (fallback sur rules.ts si DB inaccessible)
+  const prixXaf = await getPrixPlan(input.planId as "mensuel" | "trimestriel" | "semestriel" | "annuel");
+
   const telephone = vers241(input.telephone);
   if (!telephone) return { erreur: "Numéro invalide. Format : 01 23 45 67" };
 
@@ -100,7 +104,7 @@ export async function initierPaiementAbonnement(input: {
     .insert({
       vendeur_id: vendeur.id,
       plan: input.planId,
-      prix_xaf: plan.prix_xaf,
+      prix_xaf: prixXaf,
       statut: "en_attente_paiement",
       max_produits: plan.max_produits === Infinity ? 999999 : plan.max_produits,
       date_debut: dateDebut.toISOString(),
@@ -119,7 +123,7 @@ export async function initierPaiementAbonnement(input: {
       abonnement_id: abo.id,
       provider: input.provider as ProviderId,
       idempotency_key: idempotencyKey,
-      montant_xaf: plan.prix_xaf,
+      montant_xaf: prixXaf,
       telephone,
       statut: "initie",
     })
@@ -136,7 +140,7 @@ export async function initierPaiementAbonnement(input: {
   const provider = getProvider(input.provider as ProviderId);
   const result = await provider.initier({
     idempotencyKey,
-    montantXaf: plan.prix_xaf,
+    montantXaf: prixXaf,
     telephone,
     provider: input.provider as ProviderId,
     commandeCode: `ABO-${input.planId.slice(0, 3).toUpperCase()}`,

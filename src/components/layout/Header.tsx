@@ -6,7 +6,8 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/store/cart";
 import { CartSidebar } from "@/components/cart/CartSidebar";
-import { categories } from "@/data/categories";
+import { categories as categoriesStatiques } from "@/data/categories";
+import type { Category } from "@/types";
 
 type AuthEtat = {
   charge: boolean;
@@ -16,7 +17,7 @@ type AuthEtat = {
 };
 
 // ─── Barre catégories — lit searchParams pour état actif ─────────
-function CategoryNavContent() {
+function CategoryNavContent({ categories }: { categories: Category[] }) {
   const router       = useRouter();
   const pathname     = usePathname();
   const searchParams = useSearchParams();
@@ -97,16 +98,16 @@ function CategoryNavContent() {
   );
 }
 
-function CategoryNav() {
+function CategoryNav({ categories }: { categories: Category[] }) {
   return (
     <Suspense fallback={<div className="border-t border-gray-100 h-[72px]" />}>
-      <CategoryNavContent />
+      <CategoryNavContent categories={categories} />
     </Suspense>
   );
 }
 
 // ─── Header principal ─────────────────────────────────────────────
-export function Header() {
+export function Header({ categories = categoriesStatiques }: { categories?: Category[] }) {
   const { count, dispatch } = useCart();
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -341,7 +342,7 @@ export function Header() {
         </div>
 
         {/* Category nav avec photos */}
-        <CategoryNav />
+        <CategoryNav categories={categories} />
       </header>
 
       {/* Mobile menu */}
