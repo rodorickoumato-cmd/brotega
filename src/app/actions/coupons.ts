@@ -5,6 +5,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { enregistrerAudit } from "@/lib/audit";
 import type { CouponRow } from "@/lib/supabase/database.types";
 
 async function verifierAdmin() {
@@ -52,7 +53,7 @@ export async function creerCoupon(input: {
   }
 
   const admin = createAdminClient();
-  const { error } = await admin.from("coupons").insert({
+  const { data: nouveau, error } = await admin.from("coupons").insert({
     code,
     type: input.type,
     valeur: input.type === "livraison_gratuite" ? 0 : input.valeur,
@@ -60,40 +61,55 @@ export async function creerCoupon(input: {
     montant_min_xaf: input.montantMinXaf,
     expire_le: input.expireLe,
     created_par: userId,
-  });
+  }).select("id").single();
 
   if (error) {
     return { erreur: error.code === "23505" ? "Ce code existe déjà." : error.message, succes: false };
   }
+
+  void enregistrerAudit({
+    adminId: userId, action: "coupon.creer", cibleType: "coupon", cibleId: nouveau?.id,
+    apres: { code, type: input.type, valeur: input.valeur },
+  });
 
   revalidatePath("/admin/coupons");
   return { erreur: null, succes: true };
 }
 
 export async function toggleCouponActif(id: string, actif: boolean): Promise<{ erreur: string | null; succes: boolean }> {
-  const { erreur } = await verifierAdmin();
-  if (erreur) return { erreur, succes: false };
+  const { erreur, userId } = await verifierAdmin();
+  if (erreur || !userId) return { erreur: erreur ?? "Non autorisé", succes: false };
 
   const admin = createAdminClient();
+  const { data: coupon } = await admin.from("coupons").select("code, actif").eq("id", id).single();
   const { error } = await admin.from("coupons").update({ actif }).eq("id", id);
   if (error) return { erreur: error.message, succes: false };
+
+  void enregistrerAudit({
+    adminId: userId, action: "coupon.actif", cibleType: "coupon", cibleId: id,
+    avant: { actif: coupon?.actif, code: coupon?.code }, apres: { actif, code: coupon?.code },
+  });
 
   revalidatePath("/admin/coupons");
   return { erreur: null, succes: true };
 }
 
 export async function supprimerCoupon(id: string): Promise<{ erreur: string | null; succes: boolean }> {
-  const { erreur } = await verifierAdmin();
-  if (erreur) return { erreur, succes: false };
+  const { erreur, userId } = await verifierAdmin();
+  if (erreur || !userId) return { erreur: erreur ?? "Non autorisé", succes: false };
 
   const admin = createAdminClient();
-  const { data: coupon } = await admin.from("coupons").select("utilisation_actuelle").eq("id", id).single();
+  const { data: coupon } = await admin.from("coupons").select("code, utilisation_actuelle, type, valeur").eq("id", id).single();
   if (coupon && coupon.utilisation_actuelle > 0) {
     return { erreur: "Ce code a déjà été utilisé — désactive-le plutôt que de le supprimer, pour garder l'historique lisible.", succes: false };
   }
 
   const { error } = await admin.from("coupons").delete().eq("id", id);
   if (error) return { erreur: error.message, succes: false };
+
+  void enregistrerAudit({
+    adminId: userId, action: "coupon.supprimer", cibleType: "coupon", cibleId: id, avant: coupon,
+  });
 
   revalidatePath("/admin/coupons");
   return { erreur: null, succes: true };

@@ -127,6 +127,7 @@ export default function AdminPage() {
     { href: "/admin/coupons",          icon: "🏷️",  titre: "Coupons",             desc: "Créer et gérer les codes de réduction" },
     { href: "/admin/produits",         icon: "📦",  titre: "Produits signalés",   desc: "Traiter les signalements, désactiver un produit" },
     { href: "/admin/retraits",         icon: "💸",  titre: "Retraits vendeurs",   desc: "Payer ou rejeter les demandes de retrait" },
+    { href: "/admin/audit",            icon: "📜",  titre: "Journal d'audit",     desc: "Qui a modifié quoi, et quand" },
   ];
 
   const couleurMap: Record<string, string> = {

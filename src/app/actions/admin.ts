@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MAX_PRODUITS_GRATUIT } from "@/lib/rules";
 import { getAppConfig } from "@/lib/config";
+import { enregistrerAudit } from "@/lib/audit";
 
 const SEUIL_STOCK_FAIBLE = 5;
 
@@ -81,17 +82,22 @@ export async function getVendeursAdmin() {
 
 // ── Valider / Suspendre / Réactiver ────────────────────────────
 export async function changerStatutVendeur(vendeurId: string, statut: "verifie" | "suspendu" | "en_attente") {
-  const { erreur } = await verifierAdmin();
+  const { erreur, user } = await verifierAdmin();
   if (erreur) return { erreur };
   const admin = createAdminClient();
 
   // Récupère l'utilisateur lié à cette boutique
   const { data: vendeur, error: fetchError } = await admin
-    .from("vendeurs").select("utilisateur_id").eq("id", vendeurId).single();
+    .from("vendeurs").select("utilisateur_id, statut, nom").eq("id", vendeurId).single();
   if (fetchError || !vendeur) return { erreur: "Boutique introuvable." };
 
   const { error } = await admin.from("vendeurs").update({ statut }).eq("id", vendeurId);
   if (error) return { erreur: error.message };
+
+  void enregistrerAudit({
+    adminId: user!.id, action: "vendeur.statut", cibleType: "vendeur", cibleId: vendeurId,
+    avant: { statut: vendeur.statut, nom: vendeur.nom }, apres: { statut, nom: vendeur.nom },
+  });
 
   // Approbation → promouvoir le rôle utilisateur à "vendeur"
   if (statut === "verifie") {

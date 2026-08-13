@@ -3,6 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { enregistrerAudit } from "@/lib/audit";
 import type { AppConfig } from "@/lib/config";
 
 async function verifierAdmin() {
@@ -57,6 +58,9 @@ export async function sauvegarderConfig(
   if (erreur || !userId) return { erreur: erreur ?? "Non autorisé", succes: false };
 
   const admin = createAdminClient();
+
+  const { data: avant } = await admin.from("app_config").select("valeur").eq("cle", cle).maybeSingle();
+
   const { error } = await admin
     .from("app_config")
     .upsert({
@@ -67,6 +71,11 @@ export async function sauvegarderConfig(
     }, { onConflict: "cle" });
 
   if (error) return { erreur: error.message, succes: false };
+
+  void enregistrerAudit({
+    adminId: userId, action: `config.${cle}`, cibleType: "config", cibleId: cle,
+    avant: avant?.valeur ?? null, apres: valeur,
+  });
 
   revalidatePath("/", "layout");
   return { erreur: null, succes: true };
@@ -81,6 +90,10 @@ export async function sauvegarderSection(
   const admin = createAdminClient();
   const maintenant = new Date().toISOString();
 
+  const { data: avantRows } = await admin
+    .from("app_config").select("cle, valeur").in("cle", entrees.map((e) => e.cle));
+  const avantMap = new Map((avantRows ?? []).map((r) => [r.cle, r.valeur]));
+
   const { error } = await admin
     .from("app_config")
     .upsert(
@@ -94,6 +107,16 @@ export async function sauvegarderSection(
     );
 
   if (error) return { erreur: error.message, succes: false };
+
+  // Une entrée par clé réellement modifiée — pas de bruit pour les clés inchangées
+  for (const { cle, valeur } of entrees) {
+    const avant = avantMap.get(cle) ?? null;
+    if (JSON.stringify(avant) === JSON.stringify(valeur)) continue;
+    void enregistrerAudit({
+      adminId: userId, action: `config.${cle}`, cibleType: "config", cibleId: cle,
+      avant, apres: valeur,
+    });
+  }
 
   revalidatePath("/", "layout");
   return { erreur: null, succes: true };

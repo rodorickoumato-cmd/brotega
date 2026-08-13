@@ -8,6 +8,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { envoyerPushUtilisateurs } from "@/lib/push";
+import { enregistrerAudit } from "@/lib/audit";
 import type { RetraitRow } from "@/lib/supabase/database.types";
 
 async function verifierAdmin() {
@@ -62,6 +63,11 @@ export async function marquerRetraitPaye(retraitId: string): Promise<{ erreur: s
     .eq("id", retraitId);
   if (error) return { erreur: error.message, succes: false };
 
+  void enregistrerAudit({
+    adminId: userId, action: "retrait.payer", cibleType: "retrait", cibleId: retraitId,
+    avant: { statut: "a_payer" }, apres: { statut: "paye", montant_xaf: retrait.montant_xaf },
+  });
+
   const { data: vendeur } = await admin.from("vendeurs").select("utilisateur_id").eq("id", retrait.vendeur_id).single();
   if (vendeur?.utilisateur_id) {
     void envoyerPushUtilisateurs([vendeur.utilisateur_id], {
@@ -90,6 +96,11 @@ export async function rejeterRetrait(retraitId: string, motif: string): Promise<
 
   const rpcResult = result as { succes: boolean; erreur?: string };
   if (!rpcResult.succes) return { erreur: rpcResult.erreur ?? "Erreur inconnue", succes: false };
+
+  void enregistrerAudit({
+    adminId: userId, action: "retrait.rejeter", cibleType: "retrait", cibleId: retraitId,
+    avant: { statut: "a_payer" }, apres: { statut: "rejete", motif: motif.trim() },
+  });
 
   const { data: retrait } = await admin.from("retraits").select("vendeur_id, montant_xaf").eq("id", retraitId).single();
   if (retrait) {

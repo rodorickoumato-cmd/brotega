@@ -541,6 +541,32 @@ export type Database = {
         Relationships: [];
       };
 
+      // ── AUDIT LOG ────────────────────────────────────────────────
+      audit_log: {
+        Row: {
+          id: string;
+          admin_id: string | null;
+          action: string;
+          cible_type: string | null;
+          cible_id: string | null;
+          avant: unknown;
+          apres: unknown;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          admin_id?: string | null;
+          action: string;
+          cible_type?: string | null;
+          cible_id?: string | null;
+          avant?: unknown;
+          apres?: unknown;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["audit_log"]["Insert"]>;
+        Relationships: [];
+      };
+
       // ── RETRAITS VENDEURS ───────────────────────────────────────
       retraits: {
         Row: {
@@ -654,3 +680,4 @@ export type PvitConfigRow      = Database["public"]["Tables"]["pvit_config"]["Ro
 export type CouponRow             = Database["public"]["Tables"]["coupons"]["Row"];
 export type SignalementProduitRow = Database["public"]["Tables"]["signalements_produits"]["Row"];
 export type RetraitRow            = Database["public"]["Tables"]["retraits"]["Row"];
+export type AuditLogRow           = Database["public"]["Tables"]["audit_log"]["Row"];

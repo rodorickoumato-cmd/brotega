@@ -2,6 +2,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { PLANS, MAX_PRODUITS_GRATUIT } from "@/lib/rules";
+import { enregistrerAudit } from "@/lib/audit";
 
 type ProduitInput = {
   id?: string;
@@ -222,11 +223,18 @@ export async function traiterSignalementAdmin(signalementId: string) {
 }
 
 export async function changerStatutProduitAdmin(produitId: string, statut: "actif" | "inactif") {
-  const { erreur } = await verifierAdmin();
-  if (erreur) return { erreur };
+  const { erreur, userId } = await verifierAdmin();
+  if (erreur || !userId) return { erreur: erreur ?? "Non autorisé" };
 
   const admin = createAdminClient();
+  const { data: avant } = await admin.from("produits").select("statut, nom").eq("id", produitId).single();
   const { error } = await admin.from("produits").update({ statut }).eq("id", produitId);
   if (error) return { erreur: error.message };
+
+  void enregistrerAudit({
+    adminId: userId, action: "produit.statut", cibleType: "produit", cibleId: produitId,
+    avant: { statut: avant?.statut, nom: avant?.nom }, apres: { statut, nom: avant?.nom },
+  });
+
   return { succes: true };
 }

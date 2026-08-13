@@ -6,6 +6,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { enregistrerAudit } from "@/lib/audit";
 import type { PvitConfigRow } from "@/lib/supabase/database.types";
 
 async function verifierAdmin() {
@@ -43,6 +44,8 @@ export async function sauvegarderPvitCompte(
   if (erreur || !userId) return { erreur: erreur ?? "Non autorisé", succes: false };
 
   const admin = createAdminClient();
+  const { data: avant } = await admin.from("pvit_config").select("account_code").eq("operateur", operateur).maybeSingle();
+
   const { error } = await admin
     .from("pvit_config")
     .upsert({
@@ -53,6 +56,11 @@ export async function sauvegarderPvitCompte(
     }, { onConflict: "operateur" });
 
   if (error) return { erreur: error.message, succes: false };
+
+  void enregistrerAudit({
+    adminId: userId, action: "pvit_config.compte", cibleType: "pvit_config", cibleId: operateur,
+    avant: { account_code: avant?.account_code ?? null }, apres: { account_code: accountCode.trim() },
+  });
 
   revalidatePath("/admin/configuration");
   return { erreur: null, succes: true };
