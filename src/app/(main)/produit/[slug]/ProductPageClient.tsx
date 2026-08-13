@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Product } from "@/types";
-import { formatXAF, getDiscount } from "@/lib/utils";
+import { formatXAF, getDiscount, SITE_URL } from "@/lib/utils";
 import { useCart } from "@/store/cart";
 import { toast } from "@/components/ui/Toaster";
 import { StarRating } from "@/components/ui/StarRating";
@@ -214,7 +214,7 @@ export function ProductPageClient({ product, related }: { product: Product; rela
             <ShareButton product={product} />
             <WhatsAppShareButton
               titre={product.name}
-              url={typeof window !== "undefined" ? `${window.location.origin}/produit/${product.slug}` : `/produit/${product.slug}`}
+              url={`${SITE_URL}/produit/${product.slug}`}
               prixXaf={product.price}
               label="WhatsApp"
               className="flex items-center justify-center gap-2 bg-[#25D366] text-white font-bold text-sm py-3 rounded-xl active:scale-[0.97] transition-all"

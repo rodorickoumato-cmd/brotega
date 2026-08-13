@@ -1,3 +1,9 @@
+// URL absolue du site — jamais dérivée de `window.location.origin` côté
+// composant client : au premier rendu (SSR, avant hydratation), `window`
+// est indéfini, ce qui produisait un lien relatif figé dans les partages
+// (ex: WhatsApp envoyait "/produit/xxx" au lieu de l'URL complète).
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://brotegafrica.org";
+
 export function formatXAF(amount: number): string {
   return new Intl.NumberFormat("fr-GA", {
     style: "currency",

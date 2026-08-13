@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCart } from "@/store/cart";
 import { toast } from "@/components/ui/Toaster";
-import { formatXAF } from "@/lib/utils";
+import { formatXAF, SITE_URL } from "@/lib/utils";
 import { WhatsAppShareButton } from "@/components/ui/WhatsAppShareButton";
 import type { Produit, Vendeur } from "@/lib/supabase/database.types";
 import type { Product, Vendor } from "@/types";
@@ -177,7 +177,7 @@ export function SupabaseProduitClient({
             </button>
             <WhatsAppShareButton
               titre={produit.nom}
-              url={typeof window !== "undefined" ? `${window.location.origin}/produit/${produit.id}` : `/produit/${produit.id}`}
+              url={`${SITE_URL}/produit/${produit.id}`}
               prixXaf={produit.prix}
               label="WhatsApp"
               className="flex items-center justify-center gap-2 bg-[#25D366] text-white font-bold text-sm py-3 rounded-xl active:scale-[0.97] transition-all"
