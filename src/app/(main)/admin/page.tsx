@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { getStatsAdmin } from "@/app/actions/admin";
+import { getStatsAdmin, getDashboardEnrichi } from "@/app/actions/admin";
 import { formatXAF } from "@/lib/utils";
 import Link from "next/link";
 
@@ -17,9 +17,25 @@ type Stats = {
   paiementsReussis: number;
 };
 
+type DashboardEnrichi = {
+  aujourdhui: { caJour: number; commandesJour: number; clientsJour: number; vendeursJour: number };
+  aTraiter: {
+    commandesEnAttente: number; commandesAExpedier: number; commandesLitige: number;
+    vendeursEnAttente: number; stockFaible: number; reclamationsOuvertes: number;
+  };
+  alertes: {
+    echecsAirtel30min: number; echecsMoov30min: number;
+    pvitAirtelConfigure: boolean; pvitMoovConfigure: boolean; escrowEnRetard: number;
+  };
+};
+
+type LigneATraiter = { label: string; valeur: number; href?: string };
+type LigneAlerte = { label: string; ok: boolean; detail: string };
+
 export default function AdminPage() {
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
+  const [dashboard, setDashboard] = useState<DashboardEnrichi | null>(null);
   const [chargement, setChargement] = useState(true);
 
   useEffect(() => {
@@ -32,8 +48,9 @@ export default function AdminPage() {
           .from("utilisateurs").select("role").eq("id", user.id).single();
         if (profil?.role !== "admin") { router.push("/"); return; }
 
-        const res = await getStatsAdmin();
-        if (res.stats) setStats(res.stats);
+        const [resStats, resDashboard] = await Promise.all([getStatsAdmin(), getDashboardEnrichi()]);
+        if (resStats.stats) setStats(resStats.stats);
+        if (resDashboard.data) setDashboard(resDashboard.data as DashboardEnrichi);
       } catch {
         // Erreur réseau silencieuse — affiche stats vides
       } finally {
@@ -47,6 +64,49 @@ export default function AdminPage() {
     { label: "Chiffre d'affaires", valeur: formatXAF(stats.chiffreAffaires), sub: `${stats.paiementsReussis} paiements réussis`, couleur: "green", icon: "💰" },
     { label: "Vendeurs", valeur: stats.totalVendeurs, sub: `${stats.vendeursEnAttente} en attente`, couleur: stats.vendeursEnAttente > 0 ? "orange" : "gray", icon: "🏪" },
     { label: "Livraisons", valeur: stats.commandesLivrees, sub: "commandes livrées", couleur: "purple", icon: "🚚" },
+  ] : [];
+
+  const lignesATraiter: LigneATraiter[] = dashboard ? [
+    { label: "Commandes en attente de paiement", valeur: dashboard.aTraiter.commandesEnAttente, href: "/admin/commandes" },
+    { label: "Commandes à expédier",              valeur: dashboard.aTraiter.commandesAExpedier, href: "/admin/commandes" },
+    { label: "Commandes en litige",                valeur: dashboard.aTraiter.commandesLitige,    href: "/admin/commandes" },
+    { label: "Vendeurs en attente de validation",  valeur: dashboard.aTraiter.vendeursEnAttente,  href: "/admin/vendeurs" },
+    { label: "Réclamations ouvertes",              valeur: dashboard.aTraiter.reclamationsOuvertes, href: "/admin/reclamations" },
+    { label: `Produits en stock faible (< ${5})`,  valeur: dashboard.aTraiter.stockFaible }, // pas de page /admin/produits pour l'instant — Phase 2
+  ] : [];
+
+  const lignesAlertes: LigneAlerte[] = dashboard ? [
+    {
+      label: "Paiements Airtel Money",
+      ok: dashboard.alertes.echecsAirtel30min === 0,
+      detail: dashboard.alertes.echecsAirtel30min > 0
+        ? `${dashboard.alertes.echecsAirtel30min} échec(s) sur les 30 dernières minutes`
+        : "Aucun échec récent",
+    },
+    {
+      label: "Paiements Moov Money",
+      ok: dashboard.alertes.echecsMoov30min === 0,
+      detail: dashboard.alertes.echecsMoov30min > 0
+        ? `${dashboard.alertes.echecsMoov30min} échec(s) sur les 30 dernières minutes`
+        : "Aucun échec récent",
+    },
+    {
+      label: "Compte marchand PVIT · Airtel",
+      ok: dashboard.alertes.pvitAirtelConfigure,
+      detail: dashboard.alertes.pvitAirtelConfigure ? "Configuré" : "Non configuré — voir Configuration",
+    },
+    {
+      label: "Compte marchand PVIT · Moov",
+      ok: dashboard.alertes.pvitMoovConfigure,
+      detail: dashboard.alertes.pvitMoovConfigure ? "Configuré" : "Non configuré — voir Configuration",
+    },
+    {
+      label: "Libération automatique escrow",
+      ok: dashboard.alertes.escrowEnRetard === 0,
+      detail: dashboard.alertes.escrowEnRetard > 0
+        ? `${dashboard.alertes.escrowEnRetard} commande(s) en retard — le cron a peut-être échoué`
+        : "À jour",
+    },
   ] : [];
 
   const sections = [
@@ -95,6 +155,72 @@ export default function AdminPage() {
                 </div>
               ))}
         </div>
+
+        {/* Aujourd'hui */}
+        {!chargement && dashboard && (
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100">
+              <h2 className="font-bold text-gray-800">Aujourd&apos;hui</h2>
+            </div>
+            <div className="grid grid-cols-4 divide-x divide-gray-100">
+              {[
+                { label: "CA",      valeur: formatXAF(dashboard.aujourdhui.caJour) },
+                { label: "Commandes", valeur: dashboard.aujourdhui.commandesJour },
+                { label: "Clients",   valeur: dashboard.aujourdhui.clientsJour },
+                { label: "Vendeurs",  valeur: dashboard.aujourdhui.vendeursJour },
+              ].map((s) => (
+                <div key={s.label} className="px-2 py-3 text-center">
+                  <div className="text-sm font-black text-gray-800">{s.valeur}</div>
+                  <div className="text-[10px] text-gray-400 mt-0.5">{s.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* À traiter */}
+        {!chargement && dashboard && (
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100">
+              <h2 className="font-bold text-gray-800">À traiter</h2>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {lignesATraiter.map((l) => {
+                const contenu = (
+                  <div className="px-4 py-3 flex items-center justify-between">
+                    <span className="text-sm text-gray-600">{l.label}</span>
+                    <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${l.valeur > 0 ? "bg-orange-50 text-orange-600" : "bg-gray-50 text-gray-400"}`}>
+                      {l.valeur}
+                    </span>
+                  </div>
+                );
+                return l.href
+                  ? <Link key={l.label} href={l.href} className="block hover:bg-gray-50 transition-colors">{contenu}</Link>
+                  : <div key={l.label}>{contenu}</div>;
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Alertes / Santé */}
+        {!chargement && dashboard && (
+          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-100">
+              <h2 className="font-bold text-gray-800">Santé de la plateforme</h2>
+            </div>
+            <div className="divide-y divide-gray-50">
+              {lignesAlertes.map((l) => (
+                <div key={l.label} className="px-4 py-3 flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-sm text-gray-700">{l.label}</p>
+                    <p className={`text-xs mt-0.5 ${l.ok ? "text-gray-400" : "text-red-600 font-semibold"}`}>{l.detail}</p>
+                  </div>
+                  <span className={`text-lg flex-shrink-0 ${l.ok ? "" : "animate-pulse"}`}>{l.ok ? "🟢" : "🔴"}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Navigation */}
         <div className="space-y-2">

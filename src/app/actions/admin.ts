@@ -3,6 +3,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MAX_PRODUITS_GRATUIT } from "@/lib/rules";
+import { getAppConfig } from "@/lib/config";
+
+const SEUIL_STOCK_FAIBLE = 5;
 
 async function verifierAdmin() {
   const supabase = await createClient();
@@ -223,6 +226,81 @@ export async function getStatsAdmin() {
       chiffreAffaires,
       paiementsReussis: paiements.filter((p) => p.statut === "reussi").length,
       abonnementsExpires: aboExpiresRes.count ?? 0,
+    },
+  };
+}
+
+// ── Dashboard enrichi (Phase 1 — visibilité opérationnelle) ─────
+// Uniquement des signaux réellement mesurables depuis la base : pas
+// de faux statut "🟢" pour des services non instrumentés (SMS,
+// WhatsApp, stockage...). Si on ne peut pas le calculer honnêtement,
+// on ne l'affiche pas.
+export async function getDashboardEnrichi() {
+  const { erreur } = await verifierAdmin();
+  if (erreur) return { erreur, data: null };
+
+  const admin = createAdminClient();
+  const maintenant = new Date();
+  const debutJour = new Date(maintenant);
+  debutJour.setHours(0, 0, 0, 0);
+  const il30min = new Date(maintenant.getTime() - 30 * 60 * 1000);
+
+  // Escrow en retard : une commande en_livraison dont l'escrow n'est pas
+  // libéré alors que le délai configuré (+ 1h de marge pour laisser le
+  // cron 03h tourner) est dépassé signale que le cron n'a pas fait son
+  // travail — sans avoir besoin d'une table de logs dédiée.
+  const cfg = await getAppConfig();
+  const seuilEscrowMs = cfg.jours_auto_liberation_escrow * 24 * 60 * 60 * 1000 + 60 * 60 * 1000;
+  const seuilEscrowDate = new Date(maintenant.getTime() - seuilEscrowMs).toISOString();
+
+  const [
+    paiementsJourRes, commandesJourRes, clientsJourRes, vendeursJourRes,
+    commandesEnAttenteRes, commandesAExpedierRes, commandesLitigeRes,
+    vendeursEnAttenteRes, stockFaibleRes, reclamationsOuvertesRes,
+    echecsAirtelRes, echecsMoovRes, escrowRetardRes, pvitConfigRes,
+  ] = await Promise.all([
+    admin.from("paiements").select("montant_xaf").eq("statut", "reussi").gte("created_at", debutJour.toISOString()),
+    admin.from("commandes").select("id", { count: "exact", head: true }).gte("created_at", debutJour.toISOString()),
+    admin.from("utilisateurs").select("id", { count: "exact", head: true }).gte("created_at", debutJour.toISOString()),
+    admin.from("vendeurs").select("id", { count: "exact", head: true }).gte("created_at", debutJour.toISOString()),
+    admin.from("commandes").select("id", { count: "exact", head: true }).eq("statut", "en_attente_paiement"),
+    admin.from("commandes").select("id", { count: "exact", head: true }).in("statut", ["payee_escrow", "confirmee_vendeur"]),
+    admin.from("commandes").select("id", { count: "exact", head: true }).eq("statut", "litige"),
+    admin.from("vendeurs").select("id", { count: "exact", head: true }).eq("statut", "en_attente"),
+    admin.from("produits").select("id", { count: "exact", head: true }).eq("statut", "actif").lt("stock", SEUIL_STOCK_FAIBLE).not("stock", "is", null),
+    admin.from("reclamations").select("id", { count: "exact", head: true }).in("statut", ["ouverte", "en_cours"]),
+    admin.from("paiements").select("id", { count: "exact", head: true }).eq("provider", "airtel").eq("statut", "echec").gte("created_at", il30min.toISOString()),
+    admin.from("paiements").select("id", { count: "exact", head: true }).eq("provider", "moov").eq("statut", "echec").gte("created_at", il30min.toISOString()),
+    admin.from("commandes").select("id", { count: "exact", head: true }).eq("statut", "en_livraison").is("escrow_libere_at", null).lt("updated_at", seuilEscrowDate),
+    admin.from("pvit_config").select("operateur, account_code"),
+  ]);
+
+  const caJour = (paiementsJourRes.data ?? []).reduce((s, p) => s + p.montant_xaf, 0);
+
+  return {
+    erreur: null,
+    data: {
+      aujourdhui: {
+        caJour,
+        commandesJour: commandesJourRes.count ?? 0,
+        clientsJour: clientsJourRes.count ?? 0,
+        vendeursJour: vendeursJourRes.count ?? 0,
+      },
+      aTraiter: {
+        commandesEnAttente: commandesEnAttenteRes.count ?? 0,
+        commandesAExpedier: commandesAExpedierRes.count ?? 0,
+        commandesLitige: commandesLitigeRes.count ?? 0,
+        vendeursEnAttente: vendeursEnAttenteRes.count ?? 0,
+        stockFaible: stockFaibleRes.count ?? 0,
+        reclamationsOuvertes: reclamationsOuvertesRes.count ?? 0,
+      },
+      alertes: {
+        echecsAirtel30min: echecsAirtelRes.count ?? 0,
+        echecsMoov30min: echecsMoovRes.count ?? 0,
+        pvitAirtelConfigure: !!pvitConfigRes.data?.find((c) => c.operateur === "airtel")?.account_code,
+        pvitMoovConfigure: !!pvitConfigRes.data?.find((c) => c.operateur === "moov")?.account_code,
+        escrowEnRetard: escrowRetardRes.count ?? 0,
+      },
     },
   };
 }
