@@ -14,8 +14,29 @@ export async function generateMetadata(
 
   if (UUID_RE.test(slug)) {
     const supabase = await createClient();
-    const { data } = await supabase.from("produits").select("nom").eq("id", slug).single();
-    return { title: data ? `${data.nom} — J'adore la Famille` : "Produit — J'adore la Famille" };
+    const { data } = await supabase.from("produits").select("nom, description, image, prix").eq("id", slug).single();
+    if (!data) return { title: "Produit — J'adore la Famille" };
+
+    const titre = `${data.nom} — J'adore la Famille`;
+    const description = data.description?.trim()
+      || `${data.nom} — ${data.prix.toLocaleString("fr-FR")} XAF sur J'adore la Famille, la marketplace du Gabon.`;
+
+    return {
+      title: titre,
+      description,
+      openGraph: {
+        title: data.nom,
+        description,
+        type: "website",
+        images: data.image ? [{ url: data.image, alt: data.nom }] : undefined,
+      },
+      twitter: {
+        card: data.image ? "summary_large_image" : "summary",
+        title: data.nom,
+        description,
+        images: data.image ? [data.image] : undefined,
+      },
+    };
   }
 
   const product = getProductBySlug(slug);
@@ -26,7 +47,14 @@ export async function generateMetadata(
     openGraph: {
       title: product.name,
       description: product.description,
-      images: [{ url: product.images[0], alt: product.name }],
+      type: "website",
+      images: product.images[0] ? [{ url: product.images[0], alt: product.name }] : undefined,
+    },
+    twitter: {
+      card: product.images[0] ? "summary_large_image" : "summary",
+      title: product.name,
+      description: product.description,
+      images: product.images[0] ? [product.images[0]] : undefined,
     },
   };
 }

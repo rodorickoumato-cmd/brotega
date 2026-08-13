@@ -7,6 +7,9 @@ import { Toaster } from "@/components/ui/Toaster";
 const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  // Requis pour que Next.js résolve les images Open Graph en URLs absolues
+  // (WhatsApp/Instagram/etc. ignorent une image si l'URL n'est pas absolue).
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://brotegafrica.org"),
   title: "J'adore la Famille – La Marketplace du Gabon",
   description: "Achetez et vendez en toute confiance au Gabon. Produits locaux et internationaux livrés chez vous.",
   keywords: "marketplace gabon, e-commerce gabon, acheter gabon, vendre gabon, brotega, brotegafrica",
@@ -15,6 +18,11 @@ export const metadata: Metadata = {
     description: "Achetez et vendez en toute confiance au Gabon.",
     locale: "fr_GA",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "J'adore la Famille – La Marketplace du Gabon",
+    description: "Achetez et vendez en toute confiance au Gabon.",
   },
 };
 
