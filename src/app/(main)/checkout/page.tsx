@@ -37,6 +37,11 @@ export default function CheckoutPage() {
   const [villeVendeur, setVilleVendeur] = useState<string>("Libreville");
   const [vendeurNom,   setVendeurNom]   = useState<string>("");
 
+  const [couponInput,    setCouponInput]    = useState("");
+  const [couponLoading,  setCouponLoading]  = useState(false);
+  const [couponErreur,   setCouponErreur]   = useState("");
+  const [couponApplique, setCouponApplique] = useState<{ code: string; reductionXaf: number; livraisonGratuite: boolean } | null>(null);
+
   // Vérifier disponibilité des produits au chargement
   useEffect(() => {
     if (!state.items.length) return;
@@ -70,8 +75,40 @@ export default function CheckoutPage() {
   const delivery   = fraisLivraison(villeVendeur, address.city);
   const trajet     = libelleTrajetLivraison(villeVendeur, address.city);
   const isMobileMoney = payMethod === "airtel_money" || payMethod === "moov_money";
-  const fraisMM    = isMobileMoney ? Math.round((total + delivery) * FRAIS_MOBILE_MONEY_TAUX) : 0;
-  const grandTotal = total + delivery + fraisMM;
+  const reductionXaf   = couponApplique?.reductionXaf ?? 0;
+  const baseApresReduction = Math.max(0, total + delivery - reductionXaf);
+  const fraisMM    = isMobileMoney ? Math.round(baseApresReduction * FRAIS_MOBILE_MONEY_TAUX) : 0;
+  const grandTotal = baseApresReduction + fraisMM;
+
+  const appliquerCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setCouponLoading(true);
+    setCouponErreur("");
+    try {
+      const r = await fetch("/api/coupons/valider", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponInput.trim(), sous_total_xaf: total, frais_livraison_xaf: delivery }),
+      });
+      const data = await r.json() as
+        | { ok: true; coupon: { code: string }; reductionXaf: number; livraisonGratuite: boolean }
+        | { ok: false; erreur: string };
+      if (!data.ok) { setCouponErreur(data.erreur); setCouponApplique(null); }
+      else {
+        setCouponApplique({ code: data.coupon.code, reductionXaf: data.reductionXaf, livraisonGratuite: data.livraisonGratuite });
+        toast(`Code ${data.coupon.code} appliqué !`, "success");
+      }
+    } catch {
+      setCouponErreur("Erreur réseau. Réessayez.");
+    }
+    setCouponLoading(false);
+  };
+
+  const retirerCoupon = () => {
+    setCouponApplique(null);
+    setCouponInput("");
+    setCouponErreur("");
+  };
 
   const validerAdresse = () => {
     if (!address.fullName.trim()) { toast("Entrez votre nom complet.", "error"); return false; }
@@ -109,6 +146,7 @@ export default function CheckoutPage() {
           },
           mode_paiement: payMethod,
           telephone_paiement: payMethod === "especes" ? undefined : phoneAdresse,
+          coupon_code: couponApplique?.code,
         }),
       });
       res = await r.json() as { succes?: boolean; erreur?: string; code?: string; instructions?: string };
@@ -472,6 +510,14 @@ export default function CheckoutPage() {
                     </span>
                   </div>
                 )}
+                {couponApplique && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500">Code promo</span>
+                    <span className="text-xs font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+                      {couponApplique.code} — {couponApplique.livraisonGratuite ? "livraison offerte" : `−${formatXAF(reductionXaf)}`}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Articles */}
@@ -521,6 +567,36 @@ export default function CheckoutPage() {
             ))}
           </div>
 
+          {/* Code promo */}
+          <div className="border-t pt-3 mb-3">
+            {couponApplique ? (
+              <div className="flex items-center justify-between bg-green-50 border border-green-100 rounded-xl px-3 py-2">
+                <span className="text-xs font-bold text-green-700">✓ Code {couponApplique.code} appliqué</span>
+                <button onClick={retirerCoupon} className="text-xs text-green-600 underline">Retirer</button>
+              </div>
+            ) : (
+              <div>
+                <div className="flex gap-2">
+                  <input
+                    value={couponInput}
+                    onChange={(e) => { setCouponInput(e.target.value); setCouponErreur(""); }}
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); appliquerCoupon(); } }}
+                    placeholder="Code promo"
+                    className="flex-1 min-w-0 text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#E63946] transition-all uppercase"
+                  />
+                  <button
+                    onClick={appliquerCoupon}
+                    disabled={couponLoading || !couponInput.trim()}
+                    className="text-sm font-bold px-3 py-2 rounded-xl border-2 border-gray-200 text-gray-700 disabled:opacity-50 flex-shrink-0"
+                  >
+                    {couponLoading ? "…" : "Appliquer"}
+                  </button>
+                </div>
+                {couponErreur && <p className="text-xs text-red-600 mt-1.5">{couponErreur}</p>}
+              </div>
+            )}
+          </div>
+
           <div className="border-t pt-3 space-y-2 text-sm">
             <div className="flex justify-between text-gray-500">
               <span>Sous-total</span>
@@ -540,6 +616,16 @@ export default function CheckoutPage() {
               </div>
               <span className="font-semibold">{formatXAF(delivery)}</span>
             </div>
+
+            {/* Réduction coupon */}
+            {couponApplique && (
+              <div className="flex justify-between text-green-600">
+                <span className="font-semibold">Code {couponApplique.code}</span>
+                <span className="font-semibold">
+                  {couponApplique.livraisonGratuite ? "Livraison offerte" : `−${formatXAF(reductionXaf)}`}
+                </span>
+              </div>
+            )}
 
             {/* Frais Mobile Money */}
             {fraisMM > 0 && (

@@ -14,6 +14,73 @@ import Image from "next/image";
 import Link from "next/link";
 import { categories } from "@/data/categories";
 
+function SignalerButton({ product }: { product: Product }) {
+  const [ouvert, setOuvert] = useState(false);
+  const [motif, setMotif]   = useState("");
+  const [envoi, setEnvoi]   = useState(false);
+
+  const envoyer = async () => {
+    if (!motif.trim()) { toast("Précisez le motif du signalement.", "error"); return; }
+    setEnvoi(true);
+    try {
+      const r = await fetch("/api/produits/signaler", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ produit_id: product.id, motif }),
+      });
+      const data = await r.json() as { succes?: boolean; erreur?: string };
+      if (data.erreur) toast(data.erreur, "error");
+      else { toast("Signalement envoyé, merci — un admin va l'examiner.", "success"); setOuvert(false); setMotif(""); }
+    } catch {
+      toast("Erreur réseau. Réessayez.", "error");
+    }
+    setEnvoi(false);
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => setOuvert(true)}
+        aria-label="Signaler ce produit"
+        className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-red-600 transition-colors px-3 py-1.5 border border-gray-200 hover:border-red-300 rounded-lg"
+      >
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3v18h2v-8h6l1 2h7V5h-6l-1-2H3z" />
+        </svg>
+        Signaler
+      </button>
+
+      {ouvert && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-center p-4" onClick={() => setOuvert(false)}>
+          <div className="bg-white rounded-2xl p-5 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-black text-gray-800 mb-2">Signaler ce produit</h3>
+            <p className="text-xs text-gray-500 mb-3">Décrivez le problème (contrefaçon, contenu trompeur, prix suspect...).</p>
+            <textarea
+              value={motif}
+              onChange={(e) => setMotif(e.target.value)}
+              rows={3}
+              placeholder="Expliquez le problème..."
+              className="w-full text-sm border-2 border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#E63946] resize-none mb-3"
+            />
+            <div className="flex gap-2">
+              <button onClick={() => setOuvert(false)} className="flex-1 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600">
+                Annuler
+              </button>
+              <button
+                onClick={envoyer}
+                disabled={envoi}
+                className="flex-1 py-2.5 bg-red-600 text-white rounded-xl text-sm font-bold disabled:opacity-60"
+              >
+                {envoi ? "…" : "Envoyer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function ShareButton({ product }: { product: Product }) {
   const [copied, setCopied] = useState(false);
 
@@ -119,7 +186,10 @@ export function ProductPageClient({ product, related }: { product: Product; rela
               )}
               {product.stock === 0 && <Badge variant="red">Rupture de stock</Badge>}
             </div>
-            <ShareButton product={product} />
+            <div className="flex items-center gap-2">
+              <ShareButton product={product} />
+              <SignalerButton product={product} />
+            </div>
           </div>
 
           <h1 className="text-2xl md:text-3xl font-black text-gray-800 mb-3">{product.name}</h1>

@@ -161,6 +161,8 @@ export type Database = {
           total: number;
           frais_livraison: number;
           commission_xaf: number;
+          coupon_code: string | null;
+          reduction_xaf: number;
           statut: "en_attente_paiement" | "payee_escrow" | "confirmee_vendeur" | "en_livraison" | "livree" | "litige" | "remboursee" | "annulee";
           mode_paiement: "airtel_money" | "moov_money" | "especes" | null;
           statut_paiement: "en_attente" | "paye" | "echec";
@@ -182,6 +184,8 @@ export type Database = {
           total: number;
           frais_livraison?: number;
           commission_xaf?: number;
+          coupon_code?: string | null;
+          reduction_xaf?: number;
           statut?: "en_attente_paiement" | "payee_escrow" | "confirmee_vendeur" | "en_livraison" | "livree" | "litige" | "remboursee" | "annulee";
           mode_paiement?: "airtel_money" | "moov_money" | "especes" | null;
           statut_paiement?: "en_attente" | "paye" | "echec";
@@ -479,6 +483,64 @@ export type Database = {
         Relationships: [];
       };
 
+      // ── COUPONS ────────────────────────────────────────────────
+      coupons: {
+        Row: {
+          id: string;
+          code: string;
+          type: "pourcentage" | "montant_fixe" | "livraison_gratuite";
+          valeur: number;
+          utilisation_max: number | null;
+          utilisation_actuelle: number;
+          montant_min_xaf: number;
+          actif: boolean;
+          expire_le: string | null;
+          created_at: string;
+          created_par: string | null;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          type: "pourcentage" | "montant_fixe" | "livraison_gratuite";
+          valeur?: number;
+          utilisation_max?: number | null;
+          utilisation_actuelle?: number;
+          montant_min_xaf?: number;
+          actif?: boolean;
+          expire_le?: string | null;
+          created_at?: string;
+          created_par?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["coupons"]["Insert"]>;
+        Relationships: [];
+      };
+
+      // ── SIGNALEMENTS PRODUITS ──────────────────────────────────
+      signalements_produits: {
+        Row: {
+          id: string;
+          produit_id: string;
+          utilisateur_id: string | null;
+          motif: string;
+          statut: "en_attente" | "traite";
+          traite_par: string | null;
+          traite_le: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          produit_id: string;
+          utilisateur_id?: string | null;
+          motif: string;
+          statut?: "en_attente" | "traite";
+          traite_par?: string | null;
+          traite_le?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["signalements_produits"]["Insert"]>;
+        Relationships: [];
+      };
+
       // ── CANDIDATURES LIVREUR ──────────────────────────────────
       candidatures_livreur: {
         Row: {
@@ -528,6 +590,10 @@ export type Database = {
         Args: { p_vendeur_id: string; p_max: number; p_nom: string; p_description: string | null; p_prix: number; p_categorie: string | null; p_image: string | null; p_unite: string; p_stock: number | null };
         Returns: Record<string, unknown>;
       };
+      incrementer_utilisation_coupon: {
+        Args: { p_coupon_id: string };
+        Returns: void;
+      };
     };
 
     Enums: { [_ in never]: never };
@@ -551,3 +617,5 @@ export type AppConfigRow          = Database["public"]["Tables"]["app_config"]["
 
 export type CandidatureLivreur = Database["public"]["Tables"]["candidatures_livreur"]["Row"];
 export type PvitConfigRow      = Database["public"]["Tables"]["pvit_config"]["Row"];
+export type CouponRow             = Database["public"]["Tables"]["coupons"]["Row"];
+export type SignalementProduitRow = Database["public"]["Tables"]["signalements_produits"]["Row"];

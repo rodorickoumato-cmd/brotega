@@ -1,5 +1,6 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { PLANS, MAX_PRODUITS_GRATUIT } from "@/lib/rules";
 
 type ProduitInput = {
@@ -162,4 +163,70 @@ export async function getMesProduits() {
   } catch {
     return [];
   }
+}
+
+// ── Modération admin (Phase 2 — Admin Center) ───────────────────
+// Signalement + retrait a posteriori, décidé explicitement avec l'utilisateur :
+// les vendeurs publient toujours instantanément, aucun blocage à la publication.
+
+async function verifierAdmin() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { erreur: "Non connecté" as const, userId: null };
+  const { data: profil } = await supabase
+    .from("utilisateurs").select("role").eq("id", user.id).single();
+  if (profil?.role !== "admin") return { erreur: "Accès refusé" as const, userId: null };
+  return { erreur: null, userId: user.id };
+}
+
+export async function getSignalementsAdmin() {
+  const { erreur } = await verifierAdmin();
+  if (erreur) return { erreur, signalements: null };
+
+  const admin = createAdminClient();
+  const { data: signalements, error } = await admin
+    .from("signalements_produits")
+    .select("id, produit_id, motif, statut, created_at")
+    .order("created_at", { ascending: false })
+    .limit(200);
+
+  if (error) return { erreur: error.message, signalements: null };
+  if (!signalements?.length) return { erreur: null, signalements: [] };
+
+  // Jointure manuelle (cohérent avec le reste de l'admin — voir getVendeursAdmin)
+  const produitIds = [...new Set(signalements.map((s) => s.produit_id))];
+  const { data: produits } = await admin
+    .from("produits")
+    .select("id, nom, statut, vendeur_id")
+    .in("id", produitIds);
+  const produitMap = new Map((produits ?? []).map((p) => [p.id, p]));
+
+  return {
+    erreur: null,
+    signalements: signalements.map((s) => ({ ...s, produit: produitMap.get(s.produit_id) ?? null })),
+  };
+}
+
+export async function traiterSignalementAdmin(signalementId: string) {
+  const { erreur, userId } = await verifierAdmin();
+  if (erreur || !userId) return { erreur: erreur ?? "Non autorisé" };
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("signalements_produits")
+    .update({ statut: "traite", traite_par: userId, traite_le: new Date().toISOString() })
+    .eq("id", signalementId);
+
+  if (error) return { erreur: error.message };
+  return { succes: true };
+}
+
+export async function changerStatutProduitAdmin(produitId: string, statut: "actif" | "inactif") {
+  const { erreur } = await verifierAdmin();
+  if (erreur) return { erreur };
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("produits").update({ statut }).eq("id", produitId);
+  if (error) return { erreur: error.message };
+  return { succes: true };
 }

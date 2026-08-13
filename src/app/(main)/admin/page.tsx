@@ -22,6 +22,7 @@ type DashboardEnrichi = {
   aTraiter: {
     commandesEnAttente: number; commandesAExpedier: number; commandesLitige: number;
     vendeursEnAttente: number; stockFaible: number; reclamationsOuvertes: number;
+    signalementsProduits: number;
   };
   alertes: {
     echecsAirtel30min: number; echecsMoov30min: number;
@@ -72,7 +73,8 @@ export default function AdminPage() {
     { label: "Commandes en litige",                valeur: dashboard.aTraiter.commandesLitige,    href: "/admin/commandes" },
     { label: "Vendeurs en attente de validation",  valeur: dashboard.aTraiter.vendeursEnAttente,  href: "/admin/vendeurs" },
     { label: "Réclamations ouvertes",              valeur: dashboard.aTraiter.reclamationsOuvertes, href: "/admin/reclamations" },
-    { label: `Produits en stock faible (< ${5})`,  valeur: dashboard.aTraiter.stockFaible }, // pas de page /admin/produits pour l'instant — Phase 2
+    { label: "Produits signalés",                   valeur: dashboard.aTraiter.signalementsProduits, href: "/admin/produits" },
+    { label: `Produits en stock faible (< ${5})`,  valeur: dashboard.aTraiter.stockFaible }, // pas de page dédiée — nécessiterait une vue catalogue complète, hors scope Phase 2
   ] : [];
 
   const lignesAlertes: LigneAlerte[] = dashboard ? [
@@ -121,6 +123,8 @@ export default function AdminPage() {
     { href: "/admin/categories",       icon: "🏷️",  titre: "Catégories",          desc: "Ajouter, modifier, réorganiser les catégories" },
     { href: "/admin/tarifs-livraison", icon: "🗺️",  titre: "Tarifs Livraison",    desc: "Modifier les prix inter-provinces et villes" },
     { href: "/admin/candidatures",     icon: "🏍️",  titre: "Candidatures Livreur", desc: "Approuver les demandes de nouveaux livreurs" },
+    { href: "/admin/coupons",          icon: "🏷️",  titre: "Coupons",             desc: "Créer et gérer les codes de réduction" },
+    { href: "/admin/produits",         icon: "📦",  titre: "Produits signalés",   desc: "Traiter les signalements, désactiver un produit" },
   ];
 
   const couleurMap: Record<string, string> = {

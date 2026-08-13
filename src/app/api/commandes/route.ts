@@ -9,6 +9,7 @@ import type { ProviderId } from "@/lib/payment";
 import { vers241 } from "@/lib/phone";
 import { TAUX_COMMISSION, FRAIS_MOBILE_MONEY_TAUX } from "@/lib/rules";
 import { fraisLivraisonDynamique } from "@/lib/livraison";
+import { validerCoupon, enregistrerUtilisationCoupon } from "@/lib/coupons";
 import { envoyerEmailConfirmationCommande, envoyerEmailNouvelleCommande } from "@/lib/email";
 
 type ItemPanier = {
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
       adresse: { nom_complet: string; telephone: string; ville: string; quartier?: string; details?: string };
       mode_paiement: string;
       telephone_paiement?: string;
+      coupon_code?: string;
     };
 
     if (!input.items || input.items.length === 0) {
@@ -125,10 +127,23 @@ export async function POST(request: NextRequest) {
     const villeVendeur = vendeurInfo?.ville ?? "Libreville";
 
     const sousTotal  = itemsVerifies.reduce((s, it) => s + it.prix_xaf * it.quantite, 0);
+    // frais_livraison stocke toujours le coût réel de la course — jamais réduit par
+    // un coupon, sans quoi la rémunération livreur (60% de ce montant) serait faussée.
     const livraison  = await fraisLivraisonDynamique(villeVendeur, input.adresse.ville);
+
+    let reductionXaf = 0;
+    let couponApplique: { id: string; code: string } | null = null;
+    if (input.coupon_code) {
+      const validation = await validerCoupon(input.coupon_code, sousTotal, livraison);
+      if (!validation.ok) return NextResponse.json({ erreur: validation.erreur }, { status: 400 });
+      reductionXaf = validation.reductionXaf;
+      couponApplique = validation.coupon;
+    }
+
+    const baseApresReduction = Math.max(0, sousTotal + livraison - reductionXaf);
     const estMM      = input.mode_paiement === "airtel_money" || input.mode_paiement === "moov_money";
-    const fraisMM    = estMM ? Math.round((sousTotal + livraison) * FRAIS_MOBILE_MONEY_TAUX) : 0;
-    const total      = sousTotal + livraison + fraisMM;
+    const fraisMM    = estMM ? Math.round(baseApresReduction * FRAIS_MOBILE_MONEY_TAUX) : 0;
+    const total      = baseApresReduction + fraisMM;
     // commission_xaf stocke les frais plateforme (Mobile Money inclus) — déduits de l'escrow
     const commission = Math.round(sousTotal * TAUX_COMMISSION) + fraisMM;
 
@@ -157,6 +172,8 @@ export async function POST(request: NextRequest) {
         total,
         frais_livraison: livraison,
         commission_xaf: commission,
+        coupon_code: couponApplique?.code ?? null,
+        reduction_xaf: reductionXaf,
         mode_paiement: input.mode_paiement as "airtel_money" | "moov_money" | "especes",
         telephone_paiement: phoneMM,
         adresse: input.adresse,
@@ -176,6 +193,8 @@ export async function POST(request: NextRequest) {
       items: itemsVerifies, modePaiement: input.mode_paiement,
       acheteurId: user.id, acheteurEmail: user.email ?? null, vendeurId,
     });
+
+    if (couponApplique) void enregistrerUtilisationCoupon(couponApplique.id);
 
     if (input.mode_paiement === "especes") {
       return NextResponse.json({ succes: true, code: commande.code_court!, instructions: "Paiement à la livraison" });
