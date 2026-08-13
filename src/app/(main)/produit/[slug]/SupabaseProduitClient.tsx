@@ -102,11 +102,6 @@ export function SupabaseProduitClient({
           </svg>
         </Link>
         <p className="font-bold text-sm text-gray-800 flex-1 truncate">{produit.nom}</p>
-        <WhatsAppShareButton
-          titre={produit.nom}
-          url={typeof window !== "undefined" ? `${window.location.origin}/produit/${produit.id}` : `/produit/${produit.id}`}
-          prixXaf={produit.prix}
-        />
         <button onClick={handleShare}
           className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95 transition-all">
           <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -240,6 +235,12 @@ export function SupabaseProduitClient({
             <p className="text-[11px] text-gray-400 leading-none">Total</p>
             <p className="text-sm font-black text-gray-800 mt-0.5">{formatXAF(montantTotal)}</p>
           </div>
+          <WhatsAppShareButton
+            titre={produit.nom}
+            url={typeof window !== "undefined" ? `${window.location.origin}/produit/${produit.id}` : `/produit/${produit.id}`}
+            prixXaf={produit.prix}
+            className="w-[52px] h-[52px] bg-[#25D366]/10 rounded-2xl flex items-center justify-center flex-shrink-0 active:scale-95 transition-all"
+          />
           <button
             onClick={handleAdd}
             className="flex-1 bg-[#E63946] text-white font-black py-4 rounded-2xl text-base active:scale-[0.97] transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2"

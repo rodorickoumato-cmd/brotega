@@ -188,14 +188,6 @@ export function ProductPageClient({ product, related }: { product: Product; rela
               {product.stock === 0 && <Badge variant="red">Rupture de stock</Badge>}
             </div>
             <div className="flex items-center gap-2">
-              <WhatsAppShareButton
-                titre={product.name}
-                url={typeof window !== "undefined" ? `${window.location.origin}/produit/${product.slug}` : `/produit/${product.slug}`}
-                prixXaf={product.price}
-                label="WhatsApp"
-                className="flex items-center gap-1.5 text-xs text-[#1EBE5C] hover:brightness-90 transition-all px-3 py-1.5 border border-[#25D366]/30 rounded-lg"
-                iconClassName="w-3.5 h-3.5"
-              />
               <ShareButton product={product} />
               <SignalerButton product={product} />
             </div>
@@ -245,6 +237,12 @@ export function ProductPageClient({ product, related }: { product: Product; rela
                 className="text-lg font-bold hover:text-[#E63946] w-6 text-center transition-colors"
               >+</button>
             </div>
+            <WhatsAppShareButton
+              titre={product.name}
+              url={typeof window !== "undefined" ? `${window.location.origin}/produit/${product.slug}` : `/produit/${product.slug}`}
+              prixXaf={product.price}
+              className="w-11 h-11 bg-[#25D366]/10 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95 transition-all"
+            />
             <Button
               onClick={addToCart}
               size="lg"
