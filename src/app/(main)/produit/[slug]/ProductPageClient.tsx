@@ -13,6 +13,7 @@ import { products } from "@/data/products";
 import Image from "next/image";
 import Link from "next/link";
 import { categories } from "@/data/categories";
+import { WhatsAppShareButton } from "@/components/ui/WhatsAppShareButton";
 
 function SignalerButton({ product }: { product: Product }) {
   const [ouvert, setOuvert] = useState(false);
@@ -187,6 +188,14 @@ export function ProductPageClient({ product, related }: { product: Product; rela
               {product.stock === 0 && <Badge variant="red">Rupture de stock</Badge>}
             </div>
             <div className="flex items-center gap-2">
+              <WhatsAppShareButton
+                titre={product.name}
+                url={typeof window !== "undefined" ? `${window.location.origin}/produit/${product.slug}` : `/produit/${product.slug}`}
+                prixXaf={product.price}
+                label="WhatsApp"
+                className="flex items-center gap-1.5 text-xs text-[#1EBE5C] hover:brightness-90 transition-all px-3 py-1.5 border border-[#25D366]/30 rounded-lg"
+                iconClassName="w-3.5 h-3.5"
+              />
               <ShareButton product={product} />
               <SignalerButton product={product} />
             </div>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCart } from "@/store/cart";
 import { toast } from "@/components/ui/Toaster";
 import { formatXAF } from "@/lib/utils";
+import { WhatsAppShareButton } from "@/components/ui/WhatsAppShareButton";
 import type { Produit, Vendeur } from "@/lib/supabase/database.types";
 import type { Product, Vendor } from "@/types";
 
@@ -101,6 +102,11 @@ export function SupabaseProduitClient({
           </svg>
         </Link>
         <p className="font-bold text-sm text-gray-800 flex-1 truncate">{produit.nom}</p>
+        <WhatsAppShareButton
+          titre={produit.nom}
+          url={typeof window !== "undefined" ? `${window.location.origin}/produit/${produit.id}` : `/produit/${produit.id}`}
+          prixXaf={produit.prix}
+        />
         <button onClick={handleShare}
           className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95 transition-all">
           <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
