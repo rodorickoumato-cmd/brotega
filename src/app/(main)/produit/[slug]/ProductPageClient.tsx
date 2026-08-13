@@ -103,9 +103,9 @@ function ShareButton({ product }: { product: Product }) {
     <button
       onClick={handleShare}
       aria-label="Partager ce produit"
-      className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-[#E63946] transition-colors px-3 py-1.5 border border-gray-200 hover:border-[#E63946]/40 rounded-lg"
+      className="flex items-center justify-center gap-2 bg-gray-800 text-white font-bold text-sm py-3 rounded-xl active:scale-[0.97] transition-all"
     >
-      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
       </svg>
       {copied ? "Copié !" : "Partager"}
@@ -188,7 +188,6 @@ export function ProductPageClient({ product, related }: { product: Product; rela
               {product.stock === 0 && <Badge variant="red">Rupture de stock</Badge>}
             </div>
             <div className="flex items-center gap-2">
-              <ShareButton product={product} />
               <SignalerButton product={product} />
             </div>
           </div>
@@ -208,6 +207,20 @@ export function ProductPageClient({ product, related }: { product: Product; rela
             {product.originalPrice && (
               <p className="text-sm text-gray-400 line-through mt-0.5">{formatXAF(product.originalPrice)}</p>
             )}
+          </div>
+
+          {/* Partager — boutons pleins, texte + icône, grande cible tactile */}
+          <div className="grid grid-cols-2 gap-2.5 mb-5">
+            <ShareButton product={product} />
+            <WhatsAppShareButton
+              titre={product.name}
+              url={typeof window !== "undefined" ? `${window.location.origin}/produit/${product.slug}` : `/produit/${product.slug}`}
+              prixXaf={product.price}
+              label="WhatsApp"
+              className="flex items-center justify-center gap-2 bg-[#25D366] text-white font-bold text-sm py-3 rounded-xl active:scale-[0.97] transition-all"
+              iconClassName="w-5 h-5 flex-shrink-0"
+              iconFill="white"
+            />
           </div>
 
           {/* Description */}
@@ -237,12 +250,6 @@ export function ProductPageClient({ product, related }: { product: Product; rela
                 className="text-lg font-bold hover:text-[#E63946] w-6 text-center transition-colors"
               >+</button>
             </div>
-            <WhatsAppShareButton
-              titre={product.name}
-              url={typeof window !== "undefined" ? `${window.location.origin}/produit/${product.slug}` : `/produit/${product.slug}`}
-              prixXaf={product.price}
-              className="w-11 h-11 bg-[#25D366]/10 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95 transition-all"
-            />
             <Button
               onClick={addToCart}
               size="lg"

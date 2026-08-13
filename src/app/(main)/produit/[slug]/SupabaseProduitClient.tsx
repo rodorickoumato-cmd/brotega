@@ -102,13 +102,6 @@ export function SupabaseProduitClient({
           </svg>
         </Link>
         <p className="font-bold text-sm text-gray-800 flex-1 truncate">{produit.nom}</p>
-        <button onClick={handleShare}
-          className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0 active:scale-95 transition-all">
-          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-          </svg>
-        </button>
       </div>
 
       {/* ── Image principale ─────────────────────────────────────── */}
@@ -167,6 +160,30 @@ export function SupabaseProduitClient({
                 className="w-6 h-6 flex items-center justify-center font-black text-gray-600 active:text-[#E63946] transition-colors text-lg"
               >+</button>
             </div>
+          </div>
+
+          {/* Partager — boutons pleins, texte + icône, grande cible tactile */}
+          <div className="grid grid-cols-2 gap-2.5 mt-4 pt-4 border-t border-gray-100">
+            <button
+              onClick={handleShare}
+              aria-label="Partager ce produit"
+              className="flex items-center justify-center gap-2 bg-gray-800 text-white font-bold text-sm py-3 rounded-xl active:scale-[0.97] transition-all"
+            >
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+              Partager
+            </button>
+            <WhatsAppShareButton
+              titre={produit.nom}
+              url={typeof window !== "undefined" ? `${window.location.origin}/produit/${produit.id}` : `/produit/${produit.id}`}
+              prixXaf={produit.prix}
+              label="WhatsApp"
+              className="flex items-center justify-center gap-2 bg-[#25D366] text-white font-bold text-sm py-3 rounded-xl active:scale-[0.97] transition-all"
+              iconClassName="w-5 h-5 flex-shrink-0"
+              iconFill="white"
+            />
           </div>
         </div>
 
@@ -235,12 +252,6 @@ export function SupabaseProduitClient({
             <p className="text-[11px] text-gray-400 leading-none">Total</p>
             <p className="text-sm font-black text-gray-800 mt-0.5">{formatXAF(montantTotal)}</p>
           </div>
-          <WhatsAppShareButton
-            titre={produit.nom}
-            url={typeof window !== "undefined" ? `${window.location.origin}/produit/${produit.id}` : `/produit/${produit.id}`}
-            prixXaf={produit.prix}
-            className="w-[52px] h-[52px] bg-[#25D366]/10 rounded-2xl flex items-center justify-center flex-shrink-0 active:scale-95 transition-all"
-          />
           <button
             onClick={handleAdd}
             className="flex-1 bg-[#E63946] text-white font-black py-4 rounded-2xl text-base active:scale-[0.97] transition-all shadow-lg shadow-red-200 flex items-center justify-center gap-2"
