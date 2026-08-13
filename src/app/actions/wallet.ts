@@ -83,6 +83,8 @@ export async function demanderRetrait(input: {
     p_vendeur_id: vendeur.id,
     p_montant: input.montant_xaf,
     p_description: description,
+    p_telephone: phone,
+    p_provider: input.provider,
   });
 
   if (errRpc) return { erreur: "Erreur technique : " + errRpc.message };
@@ -90,7 +92,9 @@ export async function demanderRetrait(input: {
   const rpcResult = result as { succes: boolean; erreur?: string };
   if (!rpcResult.succes) return { erreur: rpcResult.erreur ?? "Erreur inconnue" };
 
-  // TODO : déclencher le payout via PawaPay (API payout). Pour l'instant traitement manuel admin.
+  // Le retrait est maintenant tracé dans `retraits` (statut a_payer) —
+  // visible et actionnable depuis /admin/retraits. Le virement Mobile Money
+  // reste manuel (TODO : brancher un vrai payout PawaPay/PVIT plus tard).
 
   return {
     succes: true,

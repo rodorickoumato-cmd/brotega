@@ -41,12 +41,14 @@ const PROVIDER_LABEL: Record<string, string> = {
 };
 
 const FILTRES = ["Tous", "reussi", "en_attente", "echec"] as const;
+const FILTRES_PROVIDER = ["Tous", "airtel", "moov", "cash"] as const;
 
 export default function AdminPaiementsPage() {
   const router = useRouter();
   const [paiements, setPaiements] = useState<Paiement[]>([]);
   const [chargement, setChargement] = useState(true);
   const [filtre, setFiltre] = useState<string>("Tous");
+  const [filtreProvider, setFiltreProvider] = useState<string>("Tous");
 
   useEffect(() => {
     const supabase = createClient();
@@ -62,7 +64,9 @@ export default function AdminPaiementsPage() {
     })();
   }, [router]);
 
-  const visibles = paiements.filter((p) => filtre === "Tous" || p.statut === filtre);
+  const visibles = paiements
+    .filter((p) => filtre === "Tous" || p.statut === filtre)
+    .filter((p) => filtreProvider === "Tous" || p.provider === filtreProvider);
 
   const totalReussis = paiements
     .filter((p) => p.statut === "reussi")
@@ -92,6 +96,23 @@ export default function AdminPaiementsPage() {
               }`}
             >
               {f === "Tous" ? "Tous" : (STATUT_LABEL[f] ?? f)}
+            </button>
+          ))}
+        </div>
+
+        {/* Filtres par opérateur */}
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+          {FILTRES_PROVIDER.map((f) => (
+            <button
+              key={f}
+              onClick={() => setFiltreProvider(f)}
+              className={`flex-shrink-0 text-xs font-bold px-3 py-1.5 rounded-full border transition-all ${
+                filtreProvider === f
+                  ? "bg-gray-800 border-gray-800 text-white"
+                  : "bg-white border-gray-200 text-gray-600"
+              }`}
+            >
+              {f === "Tous" ? "Tout opérateur" : (PROVIDER_LABEL[f] ?? f)}
             </button>
           ))}
         </div>

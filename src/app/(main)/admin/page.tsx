@@ -22,7 +22,7 @@ type DashboardEnrichi = {
   aTraiter: {
     commandesEnAttente: number; commandesAExpedier: number; commandesLitige: number;
     vendeursEnAttente: number; stockFaible: number; reclamationsOuvertes: number;
-    signalementsProduits: number;
+    signalementsProduits: number; retraitsAPayer: number;
   };
   alertes: {
     echecsAirtel30min: number; echecsMoov30min: number;
@@ -72,6 +72,7 @@ export default function AdminPage() {
     { label: "Commandes à expédier",              valeur: dashboard.aTraiter.commandesAExpedier, href: "/admin/commandes" },
     { label: "Commandes en litige",                valeur: dashboard.aTraiter.commandesLitige,    href: "/admin/commandes" },
     { label: "Vendeurs en attente de validation",  valeur: dashboard.aTraiter.vendeursEnAttente,  href: "/admin/vendeurs" },
+    { label: "Retraits vendeurs à payer",           valeur: dashboard.aTraiter.retraitsAPayer,     href: "/admin/retraits" },
     { label: "Réclamations ouvertes",              valeur: dashboard.aTraiter.reclamationsOuvertes, href: "/admin/reclamations" },
     { label: "Produits signalés",                   valeur: dashboard.aTraiter.signalementsProduits, href: "/admin/produits" },
     { label: `Produits en stock faible (< ${5})`,  valeur: dashboard.aTraiter.stockFaible }, // pas de page dédiée — nécessiterait une vue catalogue complète, hors scope Phase 2
@@ -125,6 +126,7 @@ export default function AdminPage() {
     { href: "/admin/candidatures",     icon: "🏍️",  titre: "Candidatures Livreur", desc: "Approuver les demandes de nouveaux livreurs" },
     { href: "/admin/coupons",          icon: "🏷️",  titre: "Coupons",             desc: "Créer et gérer les codes de réduction" },
     { href: "/admin/produits",         icon: "📦",  titre: "Produits signalés",   desc: "Traiter les signalements, désactiver un produit" },
+    { href: "/admin/retraits",         icon: "💸",  titre: "Retraits vendeurs",   desc: "Payer ou rejeter les demandes de retrait" },
   ];
 
   const couleurMap: Record<string, string> = {

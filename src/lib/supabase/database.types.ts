@@ -541,6 +541,36 @@ export type Database = {
         Relationships: [];
       };
 
+      // ── RETRAITS VENDEURS ───────────────────────────────────────
+      retraits: {
+        Row: {
+          id: string;
+          vendeur_id: string;
+          montant_xaf: number;
+          telephone: string;
+          provider: "airtel" | "moov";
+          statut: "a_payer" | "paye" | "rejete";
+          motif_rejet: string | null;
+          paye_par: string | null;
+          paye_le: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          vendeur_id: string;
+          montant_xaf: number;
+          telephone: string;
+          provider: "airtel" | "moov";
+          statut?: "a_payer" | "paye" | "rejete";
+          motif_rejet?: string | null;
+          paye_par?: string | null;
+          paye_le?: string | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["retraits"]["Insert"]>;
+        Relationships: [];
+      };
+
       // ── CANDIDATURES LIVREUR ──────────────────────────────────
       candidatures_livreur: {
         Row: {
@@ -583,7 +613,11 @@ export type Database = {
         Returns: void;
       };
       debiter_wallet_retrait: {
-        Args: { p_vendeur_id: string; p_montant: number; p_description: string };
+        Args: { p_vendeur_id: string; p_montant: number; p_description: string; p_telephone: string; p_provider: string };
+        Returns: Record<string, unknown>;
+      };
+      rejeter_retrait: {
+        Args: { p_retrait_id: string; p_admin_id: string; p_motif: string | null };
         Returns: Record<string, unknown>;
       };
       inserer_produit_si_limite_ok: {
@@ -619,3 +653,4 @@ export type CandidatureLivreur = Database["public"]["Tables"]["candidatures_livr
 export type PvitConfigRow      = Database["public"]["Tables"]["pvit_config"]["Row"];
 export type CouponRow             = Database["public"]["Tables"]["coupons"]["Row"];
 export type SignalementProduitRow = Database["public"]["Tables"]["signalements_produits"]["Row"];
+export type RetraitRow            = Database["public"]["Tables"]["retraits"]["Row"];
