@@ -6,6 +6,7 @@
 // - reference : alphanumérique uniquement, max 20 chars
 
 import { createHmac, timingSafeEqual } from "crypto";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type {
   PaiementProvider, InitierPaiementParams, InitierPaiementResult,
   StatutDistantParams, StatutDistantResult, ProviderId,
@@ -21,6 +22,24 @@ function getEnv() {
     SECRET:        process.env.PVIT_SECRET            ?? "",
     CALLBACK_CODE: process.env.PVIT_CALLBACK_URL_CODE ?? "",
   };
+}
+
+// Compte marchand PVIT par opérateur — modifiable depuis /admin/configuration
+// (table pvit_config, jamais exposée au client). Repli sur PVIT_ACCOUNT_CODE
+// (env var, historique) si l'admin n'a pas encore renseigné de valeur en base.
+async function getAccountCode(operateur: "airtel" | "moov"): Promise<string> {
+  try {
+    const admin = createAdminClient();
+    const { data } = await admin
+      .from("pvit_config")
+      .select("account_code")
+      .eq("operateur", operateur)
+      .maybeSingle();
+    if (data?.account_code) return data.account_code;
+  } catch {
+    // table absente / erreur réseau → repli silencieux sur l'env var
+  }
+  return getEnv().ACCOUNT_CODE;
 }
 
 const OPERATOR_MAP: Record<ProviderId, string> = {
@@ -41,13 +60,18 @@ export class PvitProvider implements PaiementProvider {
   constructor(id: ProviderId = "airtel") { this.id = id; }
 
   async initier(p: InitierPaiementParams): Promise<InitierPaiementResult> {
-    const { SLUG, REST_TOKEN, ACCOUNT_CODE, CALLBACK_CODE, BASE_URL, SECRET } = getEnv();
-    if (!SLUG || !REST_TOKEN || !ACCOUNT_CODE || !CALLBACK_CODE) {
-      return { ok: false, erreur: "Variables PVIT manquantes dans .env (SLUG, REST_TOKEN, ACCOUNT_CODE, CALLBACK_CODE)" };
+    const { SLUG, REST_TOKEN, CALLBACK_CODE, BASE_URL, SECRET } = getEnv();
+    if (!SLUG || !REST_TOKEN || !CALLBACK_CODE) {
+      return { ok: false, erreur: "Variables PVIT manquantes dans .env (SLUG, REST_TOKEN, CALLBACK_CODE)" };
     }
 
     const operator_code = OPERATOR_MAP[p.provider];
     if (!operator_code) return { ok: false, erreur: "Opérateur non supporté : " + p.provider };
+
+    const ACCOUNT_CODE = await getAccountCode(p.provider as "airtel" | "moov");
+    if (!ACCOUNT_CODE) {
+      return { ok: false, erreur: `Compte marchand PVIT ${p.provider} non configuré — à renseigner dans /admin/configuration` };
+    }
 
     // PVIT attend 9 chiffres sans préfixe pays (ex: 074590041, 066393247)
     // vers241 retourne +241XXXXXXXX (8 chiffres) — PVIT veut 9 chiffres avec le 0 initial

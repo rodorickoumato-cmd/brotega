@@ -461,6 +461,24 @@ export type Database = {
         Relationships: [];
       };
 
+      // ── PVIT_CONFIG (comptes marchands par opérateur) ─────────
+      pvit_config: {
+        Row: {
+          operateur: "airtel" | "moov";
+          account_code: string;
+          modifie_le: string;
+          modifie_par: string | null;
+        };
+        Insert: {
+          operateur: "airtel" | "moov";
+          account_code?: string;
+          modifie_le?: string;
+          modifie_par?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["pvit_config"]["Insert"]>;
+        Relationships: [];
+      };
+
       // ── CANDIDATURES LIVREUR ──────────────────────────────────
       candidatures_livreur: {
         Row: {
@@ -532,3 +550,4 @@ export type WalletTransaction = Database["public"]["Tables"]["wallet_transaction
 export type AppConfigRow          = Database["public"]["Tables"]["app_config"]["Row"];
 
 export type CandidatureLivreur = Database["public"]["Tables"]["candidatures_livreur"]["Row"];
+export type PvitConfigRow      = Database["public"]["Tables"]["pvit_config"]["Row"];
