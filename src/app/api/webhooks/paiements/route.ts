@@ -1,4 +1,4 @@
-﻿// Webhook Mobile Money — reçoit les callbacks PVIT (Airtel + Moov Gabon) pour commandes et abonnements.
+﻿// Webhook Mobile Money — reçoit les callbacks de tous les providers (Singpay, PVIT, Pawapay, Mock).
 // Idempotent — peut être rappelé plusieurs fois sans effet secondaire.
 
 import { NextRequest, NextResponse } from "next/server";
@@ -34,6 +34,11 @@ function normaliser(payload: Payload): {
   if (typeof payload["depositId"] === "string" && typeof payload["status"] === "string") {
     return { providerRef: payload["depositId"], statut: mapStatut(payload["status"]) };
   }
+  // Format Singpay : { transaction_id, status } ou { id, status }
+  const singpayRef = (payload["transaction_id"] ?? payload["id"]) as string | undefined;
+  if (singpayRef && typeof payload["status"] === "string") {
+    return { providerRef: singpayRef, statut: mapStatut(payload["status"]) };
+  }
   return null;
 }
 
@@ -44,16 +49,18 @@ export async function POST(req: NextRequest) {
   const providerEnv  = process.env.PAYMENT_PROVIDER ?? "mock";
   const sigPvit      = req.headers.get("x-pvit-signature") ?? req.headers.get("x-signature");
   const sigPawapay   = req.headers.get("signature");
+  const sigSingpay   = req.headers.get("x-singpay-signature") ?? req.headers.get("x-singpay-hmac");
   const sigMock      = req.headers.get("x-mock-signature");
 
   const providerId: ProviderId =
     providerEnv === "pvit"    ? "airtel" :
     providerEnv === "pawapay" ? "airtel" :
+    providerEnv === "singpay" ? "airtel" :
     "mock";
 
   // 2. Vérifier signature HMAC
   const provider = getProvider(providerId);
-  const sig = sigPvit ?? sigPawapay ?? sigMock;
+  const sig = sigPvit ?? sigPawapay ?? sigSingpay ?? sigMock;
   if (!provider.verifierSignature(rawBody, sig)) {
     return NextResponse.json({ erreur: "Signature invalide" }, { status: 401 });
   }
