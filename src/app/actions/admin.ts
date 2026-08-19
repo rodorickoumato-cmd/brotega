@@ -263,7 +263,7 @@ export async function getDashboardEnrichi() {
     paiementsJourRes, commandesJourRes, clientsJourRes, vendeursJourRes,
     commandesEnAttenteRes, commandesAExpedierRes, commandesLitigeRes,
     vendeursEnAttenteRes, stockFaibleRes, reclamationsOuvertesRes,
-    echecsAirtelRes, echecsMoovRes, escrowRetardRes, pvitConfigRes,
+    echecsAirtelRes, echecsMoovRes, escrowRetardRes,
     signalementsEnAttenteRes, retraitsAPayerRes,
   ] = await Promise.all([
     admin.from("paiements").select("montant_xaf").eq("statut", "reussi").gte("created_at", debutJour.toISOString()),
@@ -279,7 +279,6 @@ export async function getDashboardEnrichi() {
     admin.from("paiements").select("id", { count: "exact", head: true }).eq("provider", "airtel").eq("statut", "echec").gte("created_at", il30min.toISOString()),
     admin.from("paiements").select("id", { count: "exact", head: true }).eq("provider", "moov").eq("statut", "echec").gte("created_at", il30min.toISOString()),
     admin.from("commandes").select("id", { count: "exact", head: true }).eq("statut", "en_livraison").is("escrow_libere_at", null).lt("updated_at", seuilEscrowDate),
-    admin.from("pvit_config").select("operateur, account_code"),
     admin.from("signalements_produits").select("id", { count: "exact", head: true }).eq("statut", "en_attente"),
     admin.from("retraits").select("id", { count: "exact", head: true }).eq("statut", "a_payer"),
   ]);
@@ -308,8 +307,6 @@ export async function getDashboardEnrichi() {
       alertes: {
         echecsAirtel30min: echecsAirtelRes.count ?? 0,
         echecsMoov30min: echecsMoovRes.count ?? 0,
-        pvitAirtelConfigure: !!pvitConfigRes.data?.find((c) => c.operateur === "airtel")?.account_code,
-        pvitMoovConfigure: !!pvitConfigRes.data?.find((c) => c.operateur === "moov")?.account_code,
         escrowEnRetard: escrowRetardRes.count ?? 0,
       },
     },

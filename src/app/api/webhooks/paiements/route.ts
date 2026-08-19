@@ -25,10 +25,10 @@ function normaliser(payload: Payload): {
   if (typeof payload["providerRef"] === "string" && typeof payload["statut"] === "string") {
     return { providerRef: payload["providerRef"], statut: mapStatut(payload["statut"]) };
   }
-  // Format PVIT callback : { transactionId, merchantReferenceId, status, ... }
-  const pvitRef = (payload["transactionId"] ?? payload["reference_id"] ?? payload["transaction_id"] ?? payload["reference"]) as string | undefined;
-  if (pvitRef && typeof payload["status"] === "string") {
-    return { providerRef: pvitRef, statut: mapStatut(payload["status"]) };
+  // Format PVIT/Singpay callback : { transactionId, transaction_id, reference, status, ... }
+  const paymentRef = (payload["transactionId"] ?? payload["reference_id"] ?? payload["transaction_id"] ?? payload["reference"] ?? payload["id"]) as string | undefined;
+  if (paymentRef && typeof payload["status"] === "string") {
+    return { providerRef: paymentRef, statut: mapStatut(payload["status"]) };
   }
   // Format PawaPay : { depositId, status }
   if (typeof payload["depositId"] === "string" && typeof payload["status"] === "string") {

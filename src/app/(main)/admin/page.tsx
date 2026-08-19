@@ -26,7 +26,7 @@ type DashboardEnrichi = {
   };
   alertes: {
     echecsAirtel30min: number; echecsMoov30min: number;
-    pvitAirtelConfigure: boolean; pvitMoovConfigure: boolean; escrowEnRetard: number;
+    escrowEnRetard: number;
   };
 };
 
@@ -94,16 +94,6 @@ export default function AdminPage() {
         : "Aucun échec récent",
     },
     {
-      label: "Compte marchand PVIT · Airtel",
-      ok: dashboard.alertes.pvitAirtelConfigure,
-      detail: dashboard.alertes.pvitAirtelConfigure ? "Configuré" : "Non configuré — voir Configuration",
-    },
-    {
-      label: "Compte marchand PVIT · Moov",
-      ok: dashboard.alertes.pvitMoovConfigure,
-      detail: dashboard.alertes.pvitMoovConfigure ? "Configuré" : "Non configuré — voir Configuration",
-    },
-    {
       label: "Libération automatique escrow",
       ok: dashboard.alertes.escrowEnRetard === 0,
       detail: dashboard.alertes.escrowEnRetard > 0
@@ -117,7 +107,7 @@ export default function AdminPage() {
     { href: "/admin/utilisateurs", icon: "👥", titre: "Utilisateurs",    desc: "Changer rôle, bannir, gérer les comptes" },
     { href: "/admin/livreurs",     icon: "🛵", titre: "Livreurs",        desc: "Stats, gains, suspendre des livreurs" },
     { href: "/admin/commandes",    icon: "📦", titre: "Commandes",       desc: "Modifier statut, rembourser, libérer escrow" },
-    { href: "/admin/paiements",    icon: "💳", titre: "Paiements",       desc: "Historique des transactions PVIT" },
+    { href: "/admin/paiements",    icon: "💳", titre: "Paiements",       desc: "Historique des transactions Mobile Money" },
     { href: "/admin/livraisons",   icon: "🚚", titre: "Livraisons",      desc: "Assigner les livreurs aux commandes" },
     { href: "/admin/reclamations",     icon: "⚠️",  titre: "Réclamations",        desc: "Résoudre les litiges" },
     { href: "/admin/configuration",    icon: "⚙️",  titre: "Configuration",       desc: "Tarifs, paiements, maintenance, bannière" },
