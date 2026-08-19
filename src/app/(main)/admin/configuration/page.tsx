@@ -4,8 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { getConfigDetailAdmin, sauvegarderSection } from "@/app/actions/config";
-import { getPvitComptesAdmin, sauvegarderPvitCompte } from "@/app/actions/pvit";
-import type { PvitConfigRow } from "@/lib/supabase/database.types";
 import Link from "next/link";
 
 type Ligne = {
@@ -238,90 +236,6 @@ function CarteCle({
 
 // ── Carte des comptes marchands PVIT (Airtel / Moov) ───────────────────────
 // Distincte de app_config : ces codes ne doivent jamais transiter par une
-// table lisible publiquement (voir migration 008_pvit_comptes_operateurs.sql).
-const OPERATEUR_LABEL: Record<"airtel" | "moov", string> = {
-  airtel: "Airtel Money",
-  moov:   "Moov Money",
-};
-
-function CartePvitComptes() {
-  const [comptes, setComptes] = useState<PvitConfigRow[]>([]);
-  const [chargement, setChargement] = useState(true);
-  const [sauvegarde, setSauvegarde] = useState<string | null>(null);
-  const [toast, setToast] = useState<Toast | null>(null);
-
-  useEffect(() => {
-    (async () => {
-      const res = await getPvitComptesAdmin();
-      if (res.comptes) setComptes(res.comptes);
-      setChargement(false);
-    })();
-  }, []);
-
-  function afficherToast(message: string, type: "succes" | "erreur") {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  }
-
-  function handleLocalChange(operateur: string, valeur: string) {
-    setComptes((prev) => prev.map((c) => c.operateur === operateur ? { ...c, account_code: valeur } : c));
-  }
-
-  async function handleSave(operateur: "airtel" | "moov") {
-    setSauvegarde(operateur);
-    const compte = comptes.find((c) => c.operateur === operateur);
-    const res = await sauvegarderPvitCompte(operateur, compte?.account_code ?? "");
-    setSauvegarde(null);
-    afficherToast(res.succes ? "Compte enregistré." : (res.erreur ?? "Erreur"), res.succes ? "succes" : "erreur");
-  }
-
-  if (chargement) return <div className="bg-white rounded-2xl h-40 animate-pulse" />;
-
-  return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-      <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-        <span className="text-lg">🏦</span>
-        <h2 className="font-bold text-gray-800">Comptes marchands PVIT</h2>
-      </div>
-      {toast && (
-        <div className={`mx-4 mt-3 px-3 py-2 rounded-xl text-xs font-semibold text-white ${toast.type === "succes" ? "bg-green-500" : "bg-red-500"}`}>
-          {toast.type === "succes" ? "✓ " : "✗ "}{toast.message}
-        </div>
-      )}
-      <div className="px-4 py-4 space-y-4">
-        <p className="text-xs text-gray-400 -mt-1">
-          Code de compte marchand (`merchant_operation_account_code`) transmis à PVIT pour chaque opérateur.
-          Interne uniquement — jamais affiché à l&apos;acheteur.
-        </p>
-        {(["airtel", "moov"] as const).map((operateur) => {
-          const compte = comptes.find((c) => c.operateur === operateur);
-          return (
-            <div key={operateur}>
-              <p className="font-semibold text-gray-800 text-sm mb-1">{OPERATEUR_LABEL[operateur]}</p>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={compte?.account_code ?? ""}
-                  onChange={(e) => handleLocalChange(operateur, e.target.value)}
-                  placeholder="Code de compte marchand PVIT"
-                  className="flex-1 text-sm bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#E63946]"
-                />
-                <button
-                  onClick={() => handleSave(operateur)}
-                  disabled={sauvegarde === operateur}
-                  className="bg-[#E63946] text-white text-sm font-bold px-4 py-2 rounded-xl active:scale-[0.98] disabled:opacity-60 transition-all"
-                >
-                  {sauvegarde === operateur ? "…" : "Enregistrer"}
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 // ── Carte par catégorie ────────────────────────────────────────────────────
 function CarteCategorie({
   categorie,
@@ -464,7 +378,6 @@ export default function ConfigurationPage() {
                   onSave={handleSauvegarderSection}
                 />
               ) : null}
-              {cat === "paiements" && <CartePvitComptes />}
             </div>
           ))
         )}
