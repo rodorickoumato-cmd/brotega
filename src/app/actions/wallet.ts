@@ -94,7 +94,7 @@ export async function demanderRetrait(input: {
 
   // Le retrait est maintenant tracé dans `retraits` (statut a_payer) —
   // visible et actionnable depuis /admin/retraits. Le virement Mobile Money
-  // reste manuel (TODO : brancher un vrai payout PawaPay/PVIT plus tard).
+  // reste manuel (TODO : brancher un vrai payout via Singpay plus tard).
 
   return {
     succes: true,

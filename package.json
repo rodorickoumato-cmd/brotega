@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --experimental-vm-modules tests/payment/webhook.test.ts && node --experimental-vm-modules tests/payment/singpay.test.ts",
+    "test:webhook": "node --experimental-vm-modules tests/payment/webhook.test.ts",
+    "test:singpay": "node --experimental-vm-modules tests/payment/singpay.test.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.92.0",

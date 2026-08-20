@@ -55,21 +55,21 @@ src/app/
 ├── api/                      # Route handlers (toujours Server)
 │   ├── livraisons/[id]/      # demarrer · confirmer · echec
 │   ├── commandes/            # confirmer-livraison · confirmer-vendeur
-│   ├── pvit/reception        # Webhook renouvellement clé secrète PVIT
-│   ├── webhooks/paiements    # Webhook callback PVIT (paiement entrant)
+│   ├── webhooks/paiements    # Webhook callback Singpay (paiement entrant)
 │   └── cron/escrow-release   # Cron Vercel 03:00 UTC quotidien
 └── auth/callback/            # Callback OAuth Supabase
 ```
 
-### Paiement PVIT Mobile Money
+### Paiement Singpay Mobile Money
 
-Provider dans `src/lib/payment/pvit.ts`. Points non-évidents :
-- Header d'authentification : `X-Secret` (pas `Authorization Bearer`)
-- Numéro de téléphone : PVIT attend 9 chiffres sans `+241` — le provider normalise automatiquement
-- `reference` : alphanumérique + underscore, max 20 chars, pas de tirets
-- Callback entrant : `POST /api/webhooks/paiements` — vérifie la signature HMAC-SHA256
-- Renouvellement clé : PVIT envoie la nouvelle clé sur `POST /api/pvit/reception` → lire les logs Vercel et mettre à jour `PVIT_SECRET`
-- Mode TEST actif — il faut 2 succès + 2 échecs réels pour débloquer la production
+Provider dans `src/lib/payment/singpay.ts`. Points non-évidents :
+- Authentification : `Authorization: Bearer {SINGPAY_API_KEY}`
+- Numéro de téléphone : Singpay accepte format E.164 ou local (0XXXXXXXX) — le provider normalise automatiquement
+- `reference` : alphanumérique + tirets/underscores, max 50 chars
+- Callback entrant : `POST /api/webhooks/paiements` — vérifie la signature HMAC-SHA256 avec `SINGPAY_SECRET_KEY`
+- Webhook headers : `X-Singpay-Signature` ou `X-Singpay-HMAC`
+- Supporte Airtel Money et Moov Money (Gabon)
+- Format de statut Singpay : pending, accepted, completed, failed
 
 ### Système livraison anti-fraude
 
@@ -80,19 +80,29 @@ La colonne `remuneration_xaf` sur la table `livraisons` est calculée à 60% (`T
 ### Variables d'environnement requises
 
 ```
+# Supabase
 NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
-PVIT_BASE_URL
-PVIT_SLUG
-PVIT_ACCOUNT_CODE
-PVIT_REST_TOKEN
-PVIT_STATUS_TOKEN
-PVIT_SECRET
-PVIT_CALLBACK_URL_CODE
+
+# Paiement Singpay
+PAYMENT_PROVIDER=singpay
+SINGPAY_BASE_URL                                    # https://api.singpay.io
+SINGPAY_MERCHANT_ID                                 # ID marchand Singpay
+SINGPAY_API_KEY                                     # Bearer token API
+SINGPAY_SECRET_KEY                                  # HMAC-SHA256 pour webhooks
+SINGPAY_WEBHOOK_URL                                 # URL absolue callback
+
+# Medias
 CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET
+
+# Notifications
 NEXT_PUBLIC_VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY   # Push notifications web
+
+# Emails
 RESEND_API_KEY                                      # Emails transactionnels
+
+# IA
 ANTHROPIC_API_KEY                                  # Chat IA vendeur
 ```
 

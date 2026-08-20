@@ -22,7 +22,7 @@ type Categorie = "Tous" | "config" | "vendeur" | "coupon" | "retrait" | "produit
 
 const CATEGORIE_LABEL: Record<Categorie, string> = {
   Tous: "Tout", config: "Configuration", vendeur: "Vendeurs",
-  coupon: "Coupons", retrait: "Retraits", produit: "Produits", pvit_config: "Comptes PVIT",
+  coupon: "Coupons", retrait: "Retraits", produit: "Produits", pvit_config: "Paiements",
 };
 
 function formaterValeur(v: unknown): string {
