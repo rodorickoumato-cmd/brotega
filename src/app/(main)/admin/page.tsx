@@ -80,14 +80,14 @@ export default function AdminPage() {
 
   const lignesAlertes: LigneAlerte[] = dashboard ? [
     {
-      label: "Paiements Airtel Money",
+      label: "Singpay — Airtel Money",
       ok: dashboard.alertes.echecsAirtel30min === 0,
       detail: dashboard.alertes.echecsAirtel30min > 0
         ? `${dashboard.alertes.echecsAirtel30min} échec(s) sur les 30 dernières minutes`
         : "Aucun échec récent",
     },
     {
-      label: "Paiements Moov Money",
+      label: "Singpay — Moov Money",
       ok: dashboard.alertes.echecsMoov30min === 0,
       detail: dashboard.alertes.echecsMoov30min > 0
         ? `${dashboard.alertes.echecsMoov30min} échec(s) sur les 30 dernières minutes`
@@ -107,7 +107,7 @@ export default function AdminPage() {
     { href: "/admin/utilisateurs", icon: "👥", titre: "Utilisateurs",    desc: "Changer rôle, bannir, gérer les comptes" },
     { href: "/admin/livreurs",     icon: "🛵", titre: "Livreurs",        desc: "Stats, gains, suspendre des livreurs" },
     { href: "/admin/commandes",    icon: "📦", titre: "Commandes",       desc: "Modifier statut, rembourser, libérer escrow" },
-    { href: "/admin/paiements",    icon: "💳", titre: "Paiements",       desc: "Historique des transactions Mobile Money" },
+    { href: "/admin/paiements",    icon: "💳", titre: "Paiements",       desc: "Historique Singpay — Airtel Money & Moov Money" },
     { href: "/admin/livraisons",   icon: "🚚", titre: "Livraisons",      desc: "Assigner les livreurs aux commandes" },
     { href: "/admin/reclamations",     icon: "⚠️",  titre: "Réclamations",        desc: "Résoudre les litiges" },
     { href: "/admin/configuration",    icon: "⚙️",  titre: "Configuration",       desc: "Tarifs, paiements, maintenance, bannière" },

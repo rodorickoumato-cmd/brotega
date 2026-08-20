@@ -152,13 +152,14 @@ export default function PageWallet() {
       </div>
 
       {/* Garantie escrow */}
-      <div className="bg-gray-50 rounded-2xl p-4 text-sm text-gray-700">
-        <p className="font-bold mb-1">🛡️ Comment ça marche ?</p>
-        <ol className="text-xs space-y-1 list-decimal list-inside">
-          <li>Un client paye → l&apos;argent va dans &quot;En attente livraison&quot;</li>
-          <li>Le client confirme la réception (ou auto-confirmé après 7 jours)</li>
-          <li>L&apos;argent passe dans &quot;Disponible&quot; (- 5% de commission J'adore la Famille)</li>
-          <li>Vous retirez vers Airtel Money ou Moov Money en 24h max</li>
+      <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-sm text-blue-900">
+        <p className="font-bold mb-1">🛡️ Paiement sécurisé (Singpay)</p>
+        <ol className="text-xs space-y-1 list-decimal list-inside text-blue-800">
+          <li>Un client paye via Singpay (Airtel/Moov) → argent bloqué en escrow</li>
+          <li>Vous livrez le colis</li>
+          <li>Client confirme la réception (ou auto-confirmé après 7 jours)</li>
+          <li>Argent transféré dans &quot;Disponible&quot; (après 5% commission)</li>
+          <li>Vous retirez vers Singpay en 24h max</li>
         </ol>
       </div>
 
@@ -207,10 +208,16 @@ function ModaleRetrait({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Info Singpay */}
+          <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
+            <p className="text-xs font-bold text-blue-700">💳 Retrait via Singpay</p>
+            <p className="text-xs text-blue-600 mt-1">Sélectionnez votre compte Mobile Money pour recevoir l'argent</p>
+          </div>
+
           {/* Choix opérateur */}
           <div>
             <label className="text-sm font-bold text-gray-700 mb-2 block">
-              Vers quel Mobile Money ?
+              Quel compte Mobile Money Singpay ?
             </label>
             <div className="grid grid-cols-2 gap-2">
               {(["airtel", "moov"] as const).map((p) => (

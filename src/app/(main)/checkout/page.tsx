@@ -357,14 +357,14 @@ export default function CheckoutPage() {
               </h2>
               <p className="text-xs text-gray-500 mb-5 pl-9">Sécurisé · Argent bloqué jusqu&apos;à livraison</p>
 
-              {/* Info Mobile Money */}
+              {/* Info Mobile Money - Singpay powered */}
               <div className="flex items-start gap-2.5 bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 mb-4">
                 <svg className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
                 <p className="text-xs text-blue-700">
-                  <span className="font-bold">Airtel Money &amp; Moov Money acceptés.</span>{" "}
-                  Votre argent est bloqué jusqu&apos;à confirmation de livraison.
+                  <span className="font-bold">Airtel Money &amp; Moov Money acceptés via Singpay.</span>{" "}
+                  Paiement sécurisé · Votre argent est bloqué jusqu&apos;à confirmation de livraison.
                 </p>
               </div>
 
@@ -406,15 +406,18 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              {/* Explication Mobile Money (Airtel ou Moov) */}
+              {/* Explication Mobile Money (Airtel ou Moov) - Singpay */}
               {(payMethod === "airtel_money" || payMethod === "moov_money") && (
                 <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-4">
-                  <p className="font-black text-blue-800 text-sm mb-3">Comment ça se passe</p>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="font-black text-blue-800 text-sm">Paiement Singpay sécurisé</p>
+                    <span className="text-[10px] font-bold bg-blue-200 text-blue-800 px-2 py-1 rounded-full">SINGPAY</span>
+                  </div>
                   <div className="space-y-2.5">
                     {[
                       { n: "1", t: "Vous confirmez la commande" },
-                      { n: "2", t: `Une demande de paiement arrive sur votre téléphone ${payMethod === "airtel_money" ? "Airtel" : "Moov"}` },
-                      { n: "3", t: `Saisissez votre code PIN ${payMethod === "airtel_money" ? "Airtel" : "Moov"} Money` },
+                      { n: "2", t: `Singpay envoie une demande de paiement sur votre téléphone ${payMethod === "airtel_money" ? "Airtel" : "Moov"}` },
+                      { n: "3", t: `Saisissez votre code PIN ${payMethod === "airtel_money" ? "Airtel" : "Moov"} Money pour valider` },
                       { n: "4", t: `Montant débité : ${formatXAF(grandTotal)}` },
                     ].map((s) => (
                       <div key={s.n} className="flex items-start gap-2.5">
@@ -429,7 +432,7 @@ export default function CheckoutPage() {
                     <svg className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
-                    <p className="text-blue-700 text-xs">Argent bloqué jusqu&apos;à confirmation de livraison. Non livré = remboursé sous 48h.</p>
+                    <p className="text-blue-700 text-xs"><span className="font-bold">Sécurité maximale :</span> Argent bloqué jusqu&apos;à confirmation de livraison. Non livré = remboursé sous 48h.</p>
                   </div>
                 </div>
               )}
@@ -504,7 +507,7 @@ export default function CheckoutPage() {
                 </div>
                 {fraisMM > 0 && (
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-500">Frais Mobile Money</span>
+                    <span className="text-gray-500">Frais Singpay</span>
                     <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
                       +{formatXAF(fraisMM)} (3%)
                     </span>
@@ -627,12 +630,12 @@ export default function CheckoutPage() {
               </div>
             )}
 
-            {/* Frais Mobile Money */}
+            {/* Frais Singpay Mobile Money */}
             {fraisMM > 0 && (
               <div className="flex justify-between text-gray-500">
                 <div>
-                  <p>Traitement Mobile Money</p>
-                  <p className="text-[10px] font-bold mt-0.5 text-blue-600">{(FRAIS_MOBILE_MONEY_TAUX * 100).toFixed(0)}% · {payMethod === "moov_money" ? "Moov Money" : "Airtel Money"}</p>
+                  <p>Frais Singpay</p>
+                  <p className="text-[10px] font-bold mt-0.5 text-blue-600">{(FRAIS_MOBILE_MONEY_TAUX * 100).toFixed(0)}% · Traitement {payMethod === "moov_money" ? "Moov" : "Airtel"}</p>
                 </div>
                 <span className="font-semibold">{formatXAF(fraisMM)}</span>
               </div>
