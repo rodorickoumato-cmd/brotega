@@ -31,9 +31,9 @@ const LABELS: Record<string, string> = {
   plans_prix:                    "Prix des plans",
   max_produits_gratuit:          "Produits max (gratuit)",
   taux_commission:               "Taux de commission",
-  frais_mobile_money_taux:       "Frais Mobile Money",
-  airtel_money_actif:            "Airtel Money",
-  moov_money_actif:              "Moov Money",
+  frais_mobile_money_taux:       "Frais Singpay (Mobile Money)",
+  airtel_money_actif:            "Airtel Money (Singpay)",
+  moov_money_actif:              "Moov Money (Singpay)",
   jours_auto_liberation_escrow:  "Jours auto-libération escrow",
   retrait_min_xaf:               "Retrait minimum (XAF)",
   max_retraits_par_jour:         "Max retraits / jour",
@@ -43,7 +43,7 @@ const CATEGORIES: Record<string, { label: string; icon: string }> = {
   systeme:     { label: "Système",      icon: "🔧" },
   contact:     { label: "Contact & Réseaux sociaux", icon: "📞" },
   abonnements: { label: "Abonnements",  icon: "🏷️" },
-  paiements:   { label: "Paiements",    icon: "💳" },
+  paiements:   { label: "Paiements (Singpay)",    icon: "💳" },
   commissions: { label: "Commissions",  icon: "📊" },
   livraison:   { label: "Livraison",    icon: "🚚" },
   wallet:      { label: "Wallet",       icon: "💰" },
@@ -384,13 +384,22 @@ export default function ConfigurationPage() {
 
         {/* Note bas de page */}
         {!chargement && (
-          <div className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-4">
-            <p className="text-xs font-bold text-blue-600 mb-1">Comment ça marche ?</p>
-            <p className="text-xs text-blue-500 leading-relaxed">
-              Chaque modification est appliquée immédiatement sans redéploiement.
-              Les nouveaux abonnements utiliseront les prix mis à jour.
-              Les transactions en cours ne sont pas affectées.
-            </p>
+          <div className="space-y-3">
+            <div className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-4">
+              <p className="text-xs font-bold text-blue-600 mb-1">💡 Payment Provider</p>
+              <p className="text-xs text-blue-500 leading-relaxed">
+                Paiements mobiles via <strong>Singpay</strong> — Airtel Money &amp; Moov Money (Gabon).
+                Configuration dynamique sans redéploiement.
+              </p>
+            </div>
+            <div className="bg-green-50 border border-green-100 rounded-2xl px-4 py-4">
+              <p className="text-xs font-bold text-green-600 mb-1">Comment ça marche ?</p>
+              <p className="text-xs text-green-500 leading-relaxed">
+                Chaque modification est appliquée immédiatement sans redéploiement.
+                Les nouveaux abonnements utiliseront les prix mis à jour.
+                Les transactions en cours ne sont pas affectées.
+              </p>
+            </div>
           </div>
         )}
       </div>

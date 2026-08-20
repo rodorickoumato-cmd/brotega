@@ -208,13 +208,22 @@ export default function AbonnementPage() {
     <div className="min-h-screen bg-white flex flex-col">
       <div className="bg-[#E63946] px-6 pt-14 pb-10">
         <button onClick={() => setEcran("selection")} className="text-white/70 text-sm">← Retour</button>
-        <h1 className="text-2xl font-black text-white mt-2">Paiement Mobile Money</h1>
+        <div className="flex items-center justify-between mt-2">
+          <h1 className="text-2xl font-black text-white">Paiement Singpay</h1>
+          <span className="text-xs font-bold bg-white/20 text-white px-2.5 py-1 rounded-full">SINGPAY</span>
+        </div>
         <p className="text-white/70 text-sm mt-1">Plan {plan.label} — {formatXAF(plan.prix_xaf)}</p>
       </div>
 
       <div className="flex-1 px-6 py-8 -mt-4 bg-white rounded-t-3xl space-y-5">
+        {/* Info Singpay */}
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-3">
+          <p className="text-xs font-bold text-blue-700">🔒 Paiement sécurisé via Singpay</p>
+          <p className="text-xs text-blue-600 mt-1">Votre argent est bloqué jusqu'à confirmation</p>
+        </div>
+
         <div>
-          <label className="text-sm font-bold text-gray-700 mb-3 block">Opérateur</label>
+          <label className="text-sm font-bold text-gray-700 mb-3 block">Compte Singpay</label>
           <div className="grid grid-cols-2 gap-3">
             {(["airtel", "moov"] as const).map((op) => (
               <button key={op} onClick={() => setOperateur(op)}
@@ -228,7 +237,7 @@ export default function AbonnementPage() {
         </div>
 
         <div>
-          <label className="text-sm font-bold text-gray-700 mb-2 block">Numéro Mobile Money</label>
+          <label className="text-sm font-bold text-gray-700 mb-2 block">Numéro Singpay ({operateur === "airtel" ? "Airtel" : "Moov"})</label>
           <div className="flex border-2 border-gray-200 rounded-2xl overflow-hidden focus-within:border-[#E63946] transition-colors">
             <span className="bg-gray-50 px-4 flex items-center text-sm text-gray-600 border-r-2 border-gray-200 font-bold whitespace-nowrap">
               🇬🇦 +241
@@ -249,7 +258,7 @@ export default function AbonnementPage() {
         </button>
 
         <p className="text-center text-xs text-gray-400">
-          Vous recevrez un USSD sur votre téléphone pour confirmer
+          Singpay enverra une demande USSD sur votre téléphone — saisissez votre PIN
         </p>
       </div>
     </div>
@@ -259,10 +268,11 @@ export default function AbonnementPage() {
   if (ecran === "attente") return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
       <div className="animate-spin w-16 h-16 rounded-full border-4 border-[#E63946] border-t-transparent mb-6" />
-      <h2 className="text-xl font-black text-gray-800 mb-2">En attente de confirmation</h2>
+      <h2 className="text-xl font-black text-gray-800 mb-2">Singpay en attente</h2>
       <p className="text-sm text-gray-500 mb-4">{instructions}</p>
-      <p className="text-xs text-gray-400">{formaterPhoneGabon(vers241(telephone) ?? telephone)}</p>
-      <p className="text-xs text-gray-400 mt-6">La page se met à jour automatiquement…</p>
+      <p className="text-xs font-semibold text-gray-600 bg-gray-50 px-4 py-2 rounded-xl mb-2">{formaterPhoneGabon(vers241(telephone) ?? telephone)}</p>
+      <p className="text-xs text-gray-400 mt-6">Vérifiez votre téléphone — validez le USSD Singpay</p>
+      <p className="text-xs text-gray-300 mt-2">La page se met à jour automatiquement…</p>
     </div>
   );
 
@@ -289,9 +299,12 @@ export default function AbonnementPage() {
       <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-6">
         <span className="text-4xl">❌</span>
       </div>
-      <h2 className="text-2xl font-black text-gray-800 mb-2">Paiement échoué</h2>
-      <p className="text-sm text-gray-500 mb-8">
-        Le paiement n&apos;a pas abouti. Vérifiez votre solde et réessayez.
+      <h2 className="text-2xl font-black text-gray-800 mb-2">Paiement Singpay échoué</h2>
+      <p className="text-sm text-gray-500 mb-2">
+        Singpay n&apos;a pas pu traiter votre paiement.
+      </p>
+      <p className="text-xs text-gray-400 mb-8">
+        Vérifiez votre solde, votre PIN, et réessayez.
       </p>
       <button onClick={() => { setEcran("paiement"); setErreur(""); }}
         className="bg-[#E63946] text-white font-black px-8 py-4 rounded-2xl active:scale-95 transition-all">

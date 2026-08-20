@@ -34,8 +34,8 @@ const STATUT_LABEL: Record<string, string> = {
 };
 
 const PROVIDER_LABEL: Record<string, string> = {
-  airtel: "Airtel Money",
-  moov:   "Moov Money",
+  airtel: "Airtel Money (Singpay)",
+  moov:   "Moov Money (Singpay)",
   cash:   "Espèces",
   mock:   "Test",
 };
@@ -76,9 +76,15 @@ export default function AdminPaiementsPage() {
     <div className="min-h-screen bg-[#F7F8FA]">
       <div className="bg-[#E63946] px-5 pt-5 pb-6">
         <Link href="/admin" className="text-white/70 text-sm flex items-center gap-1 mb-3">‹ Admin</Link>
-        <h1 className="text-2xl font-black text-white">Paiements 💳</h1>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-2xl font-black text-white">Paiements 💳</h1>
+          <span className="text-xs font-bold bg-white/20 text-white px-3 py-1 rounded-full">Singpay</span>
+        </div>
         <p className="text-white/70 text-sm mt-1">
           {formatXAF(totalReussis)} encaissés · {paiements.length} transactions
+        </p>
+        <p className="text-white/50 text-xs mt-2">
+          Provider : Singpay · Supports Airtel Money &amp; Moov Money (Gabon)
         </p>
       </div>
 
@@ -154,7 +160,9 @@ export default function AdminPaiementsPage() {
                 {new Date(p.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}
               </span>
               {p.provider_ref && (
-                <span className="font-mono text-gray-300 truncate max-w-[120px]">{p.provider_ref}</span>
+                <span title={`Singpay Ref: ${p.provider_ref}`} className="font-mono text-gray-300 truncate max-w-[120px] hover:text-gray-500 cursor-help">
+                  #{p.provider_ref.substring(0, 8)}...
+                </span>
               )}
             </div>
           </div>
