@@ -174,7 +174,7 @@ export const STATUTS_RECLAMATION_OUVRABLE: StatutCommande[] = [
 // ─── MODES DE PAIEMENT ────────────────────────────────────────
 
 export const AIRTEL_MONEY_ACTIF = true;
-export const MOOV_MONEY_ACTIF   = true; // PVIT supporte Airtel + Moov Gabon
+export const MOOV_MONEY_ACTIF   = true; // Singpay supporte Airtel Money + Moov Money (Gabon)
 
 // Frais de traitement Mobile Money — facturés au client, reversés au vendeur
 export const FRAIS_MOBILE_MONEY_TAUX = 0.03; // 3 %

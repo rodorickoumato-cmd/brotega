@@ -121,7 +121,7 @@ export async function envoyerEmailNouvelleCommande(params: EmailVendeurParams) {
   await envoyerEmail(params.to, `Nouvelle commande ${params.codeCourt} — J'adore la Famille`, html);
 }
 
-// ── Emails post-paiement (déclenchés par le webhook PVIT) ──────────────────
+// ── Emails post-paiement (déclenchés par le webhook Singpay) ──────────────────
 
 export async function envoyerEmailConfirmationPaiement(params: EmailCommandeParams) {
   const html = `

@@ -1,4 +1,5 @@
-﻿// Webhook Mobile Money — reçoit les callbacks de tous les providers (Singpay, PVIT, Pawapay, Mock).
+﻿// Webhook Mobile Money — reçoit les callbacks Singpay (Airtel Money + Moov Money).
+// Supporte fallback legacy pour PVIT, Pawapay, Mock (backward compatibility).
 // Idempotent — peut être rappelé plusieurs fois sans effet secondaire.
 
 import { NextRequest, NextResponse } from "next/server";
@@ -25,7 +26,7 @@ function normaliser(payload: Payload): {
   if (typeof payload["providerRef"] === "string" && typeof payload["statut"] === "string") {
     return { providerRef: payload["providerRef"], statut: mapStatut(payload["statut"]) };
   }
-  // Format PVIT/Singpay callback : { transactionId, transaction_id, reference, status, ... }
+  // Format Singpay callback : { transaction_id, reference, status, ... } (aussi supporte PVIT legacy)
   const paymentRef = (payload["transactionId"] ?? payload["reference_id"] ?? payload["transaction_id"] ?? payload["reference"] ?? payload["id"]) as string | undefined;
   if (paymentRef && typeof payload["status"] === "string") {
     return { providerRef: paymentRef, statut: mapStatut(payload["status"]) };

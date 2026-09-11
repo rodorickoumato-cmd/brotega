@@ -234,7 +234,7 @@ function CarteCle({
   );
 }
 
-// ── Carte des comptes marchands PVIT (Airtel / Moov) ───────────────────────
+// ── Configuration du provider Singpay (Airtel / Moov) ───────────────────────
 // Distincte de app_config : ces codes ne doivent jamais transiter par une
 // ── Carte par catégorie ────────────────────────────────────────────────────
 function CarteCategorie({
