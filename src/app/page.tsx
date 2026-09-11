@@ -3,6 +3,8 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ServiceWorkerRegister } from "@/components/sw/ServiceWorkerRegister";
 import { PushPermissionBanner } from "@/components/ui/PushPermissionBanner";
+import { createClient } from "@/lib/supabase/server";
+import { formatXAF } from "@/lib/utils";
 
 const CATEGORIES = [
   { icon: "🥗", label: "Alimentation", slug: "alimentation" },
@@ -52,7 +54,24 @@ const GARANTIES = [
   },
 ];
 
-export default function HomePage() {
+async function loadProduitsPop() {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("produits")
+      .select("id, nom, prix, image, categorie, created_at, vendeurs(nom)")
+      .eq("statut", "actif")
+      .order("created_at", { ascending: false })
+      .limit(8);
+    return data ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export default async function HomePage() {
+  const produits = await loadProduitsPop();
+
   return (
     <>
       <ServiceWorkerRegister />
@@ -60,77 +79,106 @@ export default function HomePage() {
       <Header />
       <main className="flex-1 bg-[#F7F8FA]">
 
-        {/* Hero */}
-        <div className="bg-[#E63946] px-5 pt-10 pb-16">
-          <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-2">
+        {/* Hero — Simplifié pour la clarté */}
+        <div className="bg-[#E63946] px-5 pt-8 pb-6">
+          <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-1">
             La marketplace du Gabon
           </p>
-          <h1 className="text-3xl font-black text-white leading-tight mb-3">
-            Achetez et vendez<br />en toute confiance
+          <h1 className="text-2xl font-black text-white leading-tight mb-2">
+            Produits locaux livrés partout
           </h1>
-          <p className="text-white/80 text-sm mb-7 leading-relaxed">
-            Produits locaux livrés partout au Gabon.<br />
-            Paiement sécurisé Airtel &amp; Moov Money.
+          <p className="text-white/80 text-xs mb-4">
+            Paiement sécurisé Singpay (Airtel &amp; Moov Money)
           </p>
-          <div className="flex gap-3">
-            <Link
-              href="/catalogue"
-              className="bg-white text-[#E63946] font-black px-5 py-3 rounded-xl text-sm shadow-lg active:scale-95 transition-transform"
-            >
-              Voir les produits
-            </Link>
-            <Link
-              href="/vendor/register"
-              className="bg-white/10 border border-white/30 text-white font-semibold px-5 py-3 rounded-xl text-sm active:scale-95 transition-transform"
-            >
-              Vendre ici
-            </Link>
-          </div>
+          <Link
+            href="/catalogue"
+            className="inline-block bg-white text-[#E63946] font-black px-4 py-2.5 rounded-lg text-sm active:scale-95 transition-transform"
+          >
+            Voir tous les produits →
+          </Link>
         </div>
 
-        {/* Catégories */}
-        <div className="-mt-6 mx-4 bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-          <h2 className="font-black text-gray-800 text-base mb-4">Parcourir par catégorie</h2>
-          <div className="grid grid-cols-3 gap-2.5">
+        {/* Catégories — Accès rapide */}
+        <div className="-mt-3 mx-4 bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+          <div className="grid grid-cols-3 gap-2">
             {CATEGORIES.map((c) => (
               <Link
                 key={c.slug}
                 href={`/catalogue?categorie=${c.slug}`}
-                className="flex flex-col items-center gap-1.5 bg-[#F7F8FA] hover:bg-[#FEF2F2] rounded-xl py-3.5 px-2 active:scale-95 transition-all border border-transparent hover:border-[#E63946]/20"
+                className="flex flex-col items-center gap-1 bg-[#F7F8FA] hover:bg-[#FEF2F2] rounded-lg py-3 px-2 active:scale-95 transition-all border border-transparent hover:border-[#E63946]/20"
               >
-                <span className="text-2xl">{c.icon}</span>
-                <span className="text-[11px] font-semibold text-gray-700 text-center leading-tight">{c.label}</span>
+                <span className="text-xl">{c.icon}</span>
+                <span className="text-[10px] font-semibold text-gray-700 text-center leading-tight">{c.label}</span>
               </Link>
             ))}
           </div>
         </div>
 
-        {/* Garanties */}
-        <div className="mx-4 mt-4 grid grid-cols-2 gap-3">
+        {/* Produits populaires — EN PRIORITÉ */}
+        <div className="mx-4 mt-4">
+          <h2 className="font-black text-gray-800 text-base mb-3 flex items-center gap-2">
+            ✨ Produits populaires
+          </h2>
+          {produits.length > 0 ? (
+            <div className="grid grid-cols-2 gap-3">
+              {produits.map((p: any) => (
+                <Link
+                  key={p.id}
+                  href={`/produit/${p.id}`}
+                  className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-all active:scale-95"
+                >
+                  <div className="aspect-square bg-gray-200 overflow-hidden relative">
+                    {p.image ? (
+                      <img
+                        src={p.image}
+                        alt={p.nom}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-3xl">📦</div>
+                    )}
+                  </div>
+                  <div className="p-3">
+                    <p className="font-bold text-gray-800 text-sm line-clamp-2">{p.nom}</p>
+                    <p className="text-xs text-gray-500 mt-1">{p.vendeurs?.nom}</p>
+                    <p className="font-black text-[#E63946] text-sm mt-2">{formatXAF(p.prix)}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl p-8 text-center border border-gray-100">
+              <p className="text-gray-500">Aucun produit disponible pour le moment</p>
+              <Link href="/vendor/register" className="text-[#E63946] font-bold text-sm mt-2 inline-block">
+                Devenez vendeur →
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Garanties — Confiance */}
+        <div className="mx-4 mt-4 grid grid-cols-2 gap-2.5">
           {GARANTIES.map((g) => (
-            <div key={g.titre} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex items-start gap-3">
-              <div className="text-[#E63946] flex-shrink-0 mt-0.5">{g.icon}</div>
+            <div key={g.titre} className="bg-white rounded-lg p-3 shadow-sm border border-gray-100 flex items-start gap-2">
+              <div className="text-[#E63946] flex-shrink-0 mt-0.5 w-5 h-5">{g.icon}</div>
               <div>
-                <p className="font-bold text-sm text-gray-800">{g.titre}</p>
-                <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{g.desc}</p>
+                <p className="font-bold text-xs text-gray-800">{g.titre}</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">{g.desc}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* CTA vendeur */}
-        <div className="mx-4 mt-4 mb-10 bg-gray-900 rounded-2xl p-6">
-          <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">Vous êtes commerçant ?</p>
-          <h3 className="text-white font-black text-lg mb-1">Ouvrez votre boutique</h3>
-          <p className="text-gray-400 text-xs mb-4">3 produits gratuits · Sans commission · Accès immédiat</p>
+        {/* CTA Vendeur — Discret mais accessible */}
+        <div className="mx-4 mt-4 mb-6 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl p-4">
+          <p className="text-gray-600 text-xs font-semibold mb-2">💼 Vendeur ?</p>
+          <p className="text-gray-700 text-sm font-bold mb-3">Ouvrez votre boutique gratuitement</p>
+          <p className="text-gray-500 text-xs mb-3">3 produits • Sans commission • Accès immédiat</p>
           <Link
             href="/vendor/register"
-            className="inline-flex items-center gap-2 bg-[#E63946] text-white font-black px-5 py-3 rounded-xl text-sm active:scale-95 transition-transform"
+            className="text-[#E63946] font-black text-sm inline-flex items-center gap-1 hover:underline active:scale-95 transition-transform"
           >
-            Commencer gratuitement
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+            Commencer →
           </Link>
         </div>
 
