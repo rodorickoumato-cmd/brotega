@@ -5,22 +5,51 @@
 // ─── ABONNEMENTS ──────────────────────────────────────────────
 
 export const PLANS = {
-  gratuit:      { label: "Découverte",           prix_xaf: 0,      max_produits: 3,         duree_jours: null },
-  mensuel:      { label: "Business Mensuel",     prix_xaf: 2_000,  max_produits: Infinity,  duree_jours: 30   },
-  trimestriel:  { label: "Business Trimestriel", prix_xaf: 5_000,  max_produits: Infinity,  duree_jours: 90   },
-  semestriel:   { label: "Business Semestriel",  prix_xaf: 8_000,  max_produits: Infinity,  duree_jours: 180  },
-  annuel:       { label: "Business Annuel",      prix_xaf: 15_000, max_produits: Infinity,  duree_jours: 365  },
+  gratuit:      { label: "Découverte",           prix_xaf: 0,      max_produits: Infinity,  commission_defaut: 0.05, duree_jours: null },
+  mensuel:      { label: "Business Mensuel",     prix_xaf: 2_000,  max_produits: Infinity,  commission_defaut: 0.03, duree_jours: 30   },
+  trimestriel:  { label: "Business Trimestriel", prix_xaf: 5_000,  max_produits: Infinity,  commission_defaut: 0.03, duree_jours: 90   },
+  semestriel:   { label: "Business Semestriel",  prix_xaf: 8_000,  max_produits: Infinity,  commission_defaut: 0.03, duree_jours: 180  },
+  annuel:       { label: "Business Annuel",      prix_xaf: 15_000, max_produits: Infinity,  commission_defaut: 0.03, duree_jours: 365  },
 } as const;
 
 export type PlanId = keyof typeof PLANS;
 export const PLAN_DEFAUT: PlanId = "gratuit";
 
-// ─── PRODUITS ─────────────────────────────────────────────────
+// ─── PRODUITS — SYSTÈME SANS LIMITES ───────────────────────────
+// Tous les plans ont max_produits = Infinity (pas de limite)
+// La monétisation se fait via commission par article
 
-export const MAX_PRODUITS_GRATUIT = 3;
+export const MAX_PRODUITS_GRATUIT = Infinity; // Plus de limite !
 
 export function peutAjouterProduit(nbActuels: number, maxPlan: number): boolean {
-  return nbActuels < maxPlan;
+  return nbActuels < maxPlan; // Toujours true maintenant
+}
+
+// ─── COMMISSION SYSTÈME ────────────────────────────────────────
+// Chaque article a une commission configurable par le vendeur
+// Cela crée une incitation à publier plus d'articles
+
+export const COMMISSION_DEFAUT_GRATUIT = 0.05;    // 5% pour les vendeurs gratuits
+export const COMMISSION_DEFAUT_PAYANT = 0.03;    // 3% pour les vendeurs payants
+export const COMMISSION_MIN = 0.02;              // 2% minimum (empêche dumping)
+export const COMMISSION_MAX = 0.15;              // 15% maximum (pas abusif)
+
+export function getCommissionDefaut(planId: PlanId): number {
+  return (PLANS[planId] as any).commission_defaut ?? COMMISSION_DEFAUT_GRATUIT;
+}
+
+export function validerCommission(commission: number): { valide: boolean; erreur?: string } {
+  if (commission < COMMISSION_MIN) {
+    return { valide: false, erreur: `Commission minimale ${COMMISSION_MIN * 100}%` };
+  }
+  if (commission > COMMISSION_MAX) {
+    return { valide: false, erreur: `Commission maximale ${COMMISSION_MAX * 100}%` };
+  }
+  return { valide: true };
+}
+
+export function calculerMontantCommission(montantVente: number, commission: number): number {
+  return Math.floor(montantVente * commission);
 }
 
 // ─── VENDEUR ──────────────────────────────────────────────────

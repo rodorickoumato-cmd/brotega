@@ -681,3 +681,41 @@ export type CouponRow             = Database["public"]["Tables"]["coupons"]["Row
 export type SignalementProduitRow = Database["public"]["Tables"]["signalements_produits"]["Row"];
 export type RetraitRow            = Database["public"]["Tables"]["retraits"]["Row"];
 export type AuditLogRow           = Database["public"]["Tables"]["audit_log"]["Row"];
+
+// ──────────────────────────────────────────────────────────────────
+// 📊 COMMISSION SYSTEM TYPES
+// ──────────────────────────────────────────────────────────────────
+
+export type VendorCommissionSettings = {
+  id: string;
+  vendeur_id: string;
+  commission_defaut: number; // 0.05 = 5%
+  commission_min: number;    // min acceptée par vendeur
+  commission_max: number;    // max acceptée par vendeur
+  actif: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ProduitCommission = {
+  id: string;
+  produit_id: string;
+  vendeur_id: string;
+  commission: number; // override de la défaut
+  raison?: string;    // ex: "Article populaire" / "Promotion"
+  created_at: string;
+  updated_at: string;
+};
+
+export type CommissionHistory = {
+  id: string;
+  vendeur_id: string;
+  produit_id?: string;
+  commission_ancien?: number;
+  commission_nouveau: number;
+  raison?: string;
+  change_type: 'defaut_update' | 'custom_create' | 'custom_update' | 'custom_reset';
+  changed_by_vendeur_id?: string;
+  changed_by_admin_id?: string;
+  created_at: string;
+};
