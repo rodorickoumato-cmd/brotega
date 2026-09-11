@@ -173,7 +173,7 @@ export default async function HomePage() {
         <div className="mx-4 mt-4 mb-6 bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl p-4">
           <p className="text-gray-600 text-xs font-semibold mb-2">💼 Vendeur ?</p>
           <p className="text-gray-700 text-sm font-bold mb-3">Ouvrez votre boutique gratuitement</p>
-          <p className="text-gray-500 text-xs mb-3">3 produits • Sans commission • Accès immédiat</p>
+          <p className="text-gray-500 text-xs mb-3">📦 Illimité d'articles • 5% de commission • Accès immédiat</p>
           <Link
             href="/vendor/register"
             className="text-[#E63946] font-black text-sm inline-flex items-center gap-1 hover:underline active:scale-95 transition-transform"

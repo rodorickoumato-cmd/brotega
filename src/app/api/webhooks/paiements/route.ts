@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
   if (paiement.commande_id && norm.statut === "reussi") {
     const { data: commande } = await admin
       .from("commandes")
-      .select("id, vendeur_id, total, frais_livraison")
+      .select("id, vendeur_id, total, frais_livraison, articles")
       .eq("id", paiement.commande_id)
       .single();
 
@@ -147,18 +147,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ erreur: "Commande sans vendeur" }, { status: 500 });
     }
 
-    await admin.from("commandes")
+    // 📊 Calculer la commission basée sur les articles
+    // (Pour l'instant, on utilise une commission fixe par article)
+    // TODO: Récupérer la commission spécifique de chaque produit
+    const articles = Array.isArray(commande.articles) ? commande.articles : [];
+    let commissionTotale = 0;
+    let commissionPercent = 0.05; // défaut
+
+    if (articles.length > 0) {
+      // Récupérer la commission pour le premier produit (simplifié)
+      // En production: boucler sur tous les articles et additionner les commissions
+      const firstProductId = (articles[0] as any)?.id;
+      if (firstProductId) {
+        const { data: prodCom } = await (admin
+          .from("produit_commission" as any)
+          .select("commission")
+          .eq("produit_id", firstProductId)
+          .maybeSingle()) as any;
+
+        commissionPercent = prodCom?.commission ?? 0.05;
+      }
+    }
+
+    commissionTotale = Math.floor(commande.total * commissionPercent);
+
+    await (admin.from("commandes")
       .update({
         statut: "payee_escrow",
         statut_paiement: "paye",
         paye_at: new Date().toISOString(),
-      })
-      .eq("id", commande.id);
+        commission_percent: commissionPercent,
+        commission_montant_xaf: commissionTotale,
+      } as any)
+      .eq("id", commande.id)) as any;
 
-    const montantEscrow = commande.total - (commande.frais_livraison ?? 0);
+    const montantVendeur = commande.total - commissionTotale - (commande.frais_livraison ?? 0);
     await admin.rpc("crediter_wallet_escrow", {
       p_vendeur_id: commande.vendeur_id,
-      p_montant: montantEscrow,
+      p_montant: montantVendeur,
       p_commande_id: commande.id,
       p_paiement_id: paiement.id,
     });
