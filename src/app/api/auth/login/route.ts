@@ -35,63 +35,66 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Appeler la fonction login Supabase
+    // 2. Chercher l'utilisateur par pseudo
     const admin = createAdminClient();
-    const { data: result, error: dbError } = await (admin.rpc("login_user", {
-      p_pseudo: pseudo,
-      p_pin: pin,
-    })) as any;
+    const { data: user, error: fetchError } = await (admin
+      .from("utilisateurs_auth_v2")
+      .select("*")
+      .eq("pseudo", pseudo)
+      .single()) as any;
 
-    if (dbError || !result || result.length === 0) {
-      console.error("DB Error:", dbError);
-      return NextResponse.json(
-        { erreur: "Erreur authentification" },
-        { status: 500 }
-      );
-    }
-
-    const [{ user_id, success }] = result;
-
-    // 3. Si login échoué
-    if (!success || !user_id) {
+    if (fetchError || !user) {
+      console.error("User not found:", fetchError);
       return NextResponse.json(
         { erreur: "Pseudo ou PIN incorrect" },
         { status: 401 }
       );
     }
 
-    // 4. Récupérer info utilisateur
-    const { data: user } = await (admin
-      .from("utilisateurs_auth_v2" as any)
-      .select("pseudo, recovery_method, email")
-      .eq("id", user_id)
-      .maybeSingle()) as any;
+    // 3. Vérifier le PIN (hash SHA256)
+    const pinHash = crypto
+      .createHash("sha256")
+      .update(pin)
+      .digest("hex");
 
-    // 5. Générer JWT
-    const token = generateJWT(user_id);
+    if (user.pin_hash !== pinHash) {
+      return NextResponse.json(
+        { erreur: "Pseudo ou PIN incorrect" },
+        { status: 401 }
+      );
+    }
 
-    // 6. Enregistrer session
+    // 4. Générer JWT
+    const token = generateJWT(user.id);
+
+    // 5. Enregistrer session
     const deviceId = req.headers.get("user-agent")?.substring(0, 255) || "unknown";
     await (admin
       .from("user_sessions" as any)
       .upsert({
-        user_id,
+        user_id: user.id,
         token_hash: crypto.createHash("sha256").update(token).digest("hex"),
         device_id: deviceId,
         ip_address: req.ip || "unknown",
         user_agent: req.headers.get("user-agent"),
       })) as any;
 
-    // 7. Logger la tentative réussie
+    // 6. Logger la tentative réussie
     await (admin
       .from("recovery_attempts" as any)
       .insert({
-        user_id,
+        user_id: user.id,
         action: "login",
         success: true,
         ip_address: req.ip,
         user_agent: req.headers.get("user-agent"),
       })) as any;
+
+    // 7. Mettre à jour last_login_at
+    await (admin
+      .from("utilisateurs_auth_v2" as any)
+      .update({ last_login_at: new Date().toISOString() })
+      .eq("id", user.id)) as any;
 
     // 8. Retourner le token
     return NextResponse.json(
@@ -99,9 +102,9 @@ export async function POST(req: NextRequest) {
         succes: true,
         token,
         user: {
-          id: user_id,
-          pseudo: user?.pseudo,
-          recovery_method: user?.recovery_method,
+          id: user.id,
+          pseudo: user.pseudo,
+          recovery_method: user.recovery_method,
         },
         message: "Connecté avec succès!",
       },
