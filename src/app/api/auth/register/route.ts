@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,35 +46,62 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Appeler la fonction Supabase
-    const { data: result, error: dbError } = await (admin.rpc(
-      "register_user",
-      {
-        p_pseudo: pseudo,
-        p_pin: pin,
-        p_recovery_method: recovery_method,
-        p_email: recovery_method === "email" ? email : null,
-        p_phrase: recovery_method === "phrase" ? phrase : null,
-        p_code: recovery_method === "code" ? code : null,
-      }
-    )) as any;
+    // 3. Hash le PIN (SHA256)
+    const pinHash = crypto
+      .createHash("sha256")
+      .update(pin)
+      .digest("hex");
 
-    if (dbError || !result || result.length === 0) {
-      console.error("DB Error:", dbError);
+    // 4. Générer le code de récupération
+    const recoveryCode = crypto.randomBytes(8).toString("hex").toUpperCase();
+    const recoveryCodeHash = crypto
+      .createHash("sha256")
+      .update(recoveryCode)
+      .digest("hex");
+
+    // 5. Préparer les données utilisateur
+    const userData: any = {
+      pseudo,
+      pin_hash: pinHash,
+      recovery_method: recovery_method,
+      actif: true,
+    };
+
+    // Ajouter les champs spécifiques à la méthode de récupération
+    if (recovery_method === "email") {
+      userData.email = email || null;
+    } else if (recovery_method === "phrase") {
+      userData.phrase_hash = crypto
+        .createHash("sha256")
+        .update(phrase || "")
+        .digest("hex");
+      userData.phrase_first_letter = (phrase || "")[0]?.toUpperCase() || "";
+      userData.phrase_word_count = (phrase || "").split(/\s+/).length;
+    } else if (recovery_method === "code") {
+      userData.recovery_code_hash = recoveryCodeHash;
+    }
+
+    // 6. Insérer l'utilisateur
+    const { data: newUser, error: insertError } = await (admin
+      .from("utilisateurs_auth_v2" as any)
+      .insert([userData])
+      .select("id")
+      .single()) as any;
+
+    if (insertError || !newUser) {
+      console.error("Insert Error:", insertError);
       return NextResponse.json(
         { erreur: "Erreur inscription" },
         { status: 500 }
       );
     }
 
-    const [{ user_id, recovery_code }] = result;
-
-    // 4. Retourner le code de récupération
+    // 7. Retourner le code de récupération
     return NextResponse.json(
       {
         succes: true,
-        user_id,
-        recovery_code: recovery_code, // À afficher une seule fois!
+        user_id: newUser.id,
+        recovery_code: recovery_method === "code" ? recoveryCode : undefined, // À afficher une seule fois!
         message: "Inscription réussie!",
       },
       { status: 201 }
