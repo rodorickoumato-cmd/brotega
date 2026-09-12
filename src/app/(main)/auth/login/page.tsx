@@ -42,18 +42,24 @@ export default function LoginPage() {
 
       // ✅ SUCCESS - Stocker token et rediriger
       const token = data.token;
-      
-      // Stocker dans localStorage ET cookies
+
+      // Stocker dans localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("user_id", data.user.id);
       localStorage.setItem("pseudo", data.user.pseudo);
+      localStorage.setItem("role", data.user.role || "customer");
 
       // Stocker dans cookie pour middleware
       document.cookie = `auth_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}`; // 30 days
 
-      // Rediriger au dashboard
+      // Rediriger au dashboard approprié selon le rôle
+      const redirectPath =
+        data.user.role === "vendor" ? "/vendor/dashboard" :
+        data.user.role === "livreur" ? "/livreur" :
+        "/";
+
       setTimeout(() => {
-        router.push("/vendor/dashboard");
+        router.push(redirectPath);
       }, 100);
     } catch (err) {
       console.error(err);

@@ -2,11 +2,29 @@ import { NextResponse, type NextRequest } from "next/server";
 
 // Routes nécessitant une authentification
 const ROUTES_AUTH = ["/compte", "/checkout", "/vendor", "/messages", "/reclamation"];
-// Routes avec contrôle de rôle strict (admin, livreur)
+// Routes avec contrôle de rôle strict
 const ROUTES_ROLES: Record<string, string[]> = {
   "/admin":   ["admin"],
   "/livreur": ["livreur", "admin"],
 };
+
+// Décoder le JWT payload sans vérifier la signature (OK en middleware)
+function decodeJWTPayload(token: string): any {
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
+
+    // Vérifier l'expiration
+    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
+      return null; // Token expiré
+    }
+
+    return payload;
+  } catch {
+    return null;
+  }
+}
 
 export default async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -14,6 +32,8 @@ export default async function proxy(request: NextRequest) {
   // ── Vérifier le token JWT custom (Pseudo+PIN auth) ────────────
   const token = request.cookies.get("auth_token")?.value;
   const isAuthenticated = !!token;
+  const jwtPayload = token ? decodeJWTPayload(token) : null;
+  const userRole = jwtPayload?.role || "customer";
 
   const loginUrl = () => {
     const url = request.nextUrl.clone();
@@ -26,21 +46,25 @@ export default async function proxy(request: NextRequest) {
   const estProtegee = ROUTES_AUTH.some((r) => pathname.startsWith(r));
   if (estProtegee && !isAuthenticated) return loginUrl();
 
-  // ── Couche 2 : contrôle de rôle (admin, livreur) ──────────────
-  // NOTE: Avec le nouveau système Pseudo+PIN, on n'a pas de rôles
-  // Cette logique peut être restaurée plus tard si besoin
-  /*
+  // ── Couche 2 : contrôle de rôle ──────────────────────────────
   const entreeRole = Object.entries(ROUTES_ROLES).find(([prefix]) =>
     pathname.startsWith(prefix)
   );
   if (entreeRole) {
     if (!isAuthenticated) return loginUrl();
-    // TODO: Implémenter rôles pour le système Pseudo+PIN si nécessaire
+
+    const [, requiredRoles] = entreeRole;
+    if (!requiredRoles.includes(userRole)) {
+      // Accès refusé - rediriger vers page d'erreur ou home
+      return NextResponse.redirect(new URL("/", request.url));
+    }
   }
-  */
 
   // ── Redirige utilisateur connecté hors des pages auth ─────────
   if (isAuthenticated && (pathname === "/auth/login" || pathname === "/auth/register")) {
+    // Rediriger vers le dashboard approprié selon le rôle
+    if (userRole === "vendor") return NextResponse.redirect(new URL("/vendor/dashboard", request.url));
+    if (userRole === "livreur") return NextResponse.redirect(new URL("/livreur", request.url));
     return NextResponse.redirect(new URL("/", request.url));
   }
 

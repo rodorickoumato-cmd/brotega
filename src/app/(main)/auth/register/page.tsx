@@ -10,6 +10,7 @@ export default function RegisterPage() {
   const [recoveryMethod, setRecoveryMethod] = useState("code");
   const [email, setEmail] = useState("");
   const [phrase, setPhrase] = useState("");
+  const [role, setRole] = useState("customer"); // New: role selection
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -44,6 +45,7 @@ export default function RegisterPage() {
         pseudo,
         pin,
         recovery_method: recoveryMethod,
+        role, // Add role to payload
       };
 
       if (recoveryMethod === "email") {
@@ -127,6 +129,24 @@ export default function RegisterPage() {
               className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none text-center tracking-widest"
             />
             <p className="text-xs text-gray-500 mt-1">4-6 chiffres</p>
+          </div>
+
+          {/* ROLE SELECT */}
+          <div className="mb-4">
+            <label className="block text-sm font-bold text-gray-700 mb-2">👤 Rôle</label>
+            <select
+              value={role}
+              onChange={(e) => {
+                setRole(e.target.value);
+                setError("");
+              }}
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none"
+            >
+              <option value="customer">🛒 Client</option>
+              <option value="vendor">🏪 Vendeur</option>
+              <option value="livreur">🚚 Livreur</option>
+            </select>
+            <p className="text-xs text-gray-500 mt-1">Sélectionnez votre type de compte</p>
           </div>
 
           {/* RECOVERY METHOD */}

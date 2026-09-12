@@ -7,7 +7,7 @@ import crypto from "crypto";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { pseudo, pin, recovery_method, email, phrase, code } = body;
+    const { pseudo, pin, recovery_method, email, phrase, code, role } = body;
 
     // 1. Validation
     if (!pseudo || pseudo.length < 3 || pseudo.length > 50) {
@@ -27,6 +27,14 @@ export async function POST(req: NextRequest) {
     if (!["email", "phrase", "code"].includes(recovery_method)) {
       return NextResponse.json(
         { erreur: "Méthode récupération invalide" },
+        { status: 400 }
+      );
+    }
+
+    // Validate role
+    if (!["customer", "vendor", "livreur"].includes(role || "customer")) {
+      return NextResponse.json(
+        { erreur: "Rôle invalide" },
         { status: 400 }
       );
     }
@@ -64,6 +72,7 @@ export async function POST(req: NextRequest) {
       pseudo,
       pin_hash: pinHash,
       recovery_method: recovery_method,
+      role: role || "customer", // Add role (default: customer)
       actif: true,
     };
 

@@ -4,11 +4,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import crypto from "crypto";
 
-function generateJWT(userId: string, expiresIn = "30d"): string {
+function generateJWT(userId: string, role: string = "customer", expiresIn = "30d"): string {
   const header = btoa(JSON.stringify({ alg: "HS256", typ: "JWT" }));
   const payload = btoa(
     JSON.stringify({
       user_id: userId,
+      role: role, // Include role in JWT
       iat: Math.floor(Date.now() / 1000),
       exp: Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60), // 30 days
     })
@@ -64,8 +65,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Générer JWT
-    const token = generateJWT(user.id);
+    // 4. Générer JWT avec rôle
+    const token = generateJWT(user.id, user.role || "customer");
 
     // 5. Récupérer l'IP
     const ipAddress = req.headers.get("x-forwarded-for")?.split(",")[0] ||
@@ -102,7 +103,7 @@ export async function POST(req: NextRequest) {
       .eq("id", user.id)
       .then(() => ({ data: null, error: null }))) as any;
 
-    // 8. Retourner le token
+    // 8. Retourner le token + rôle
     return NextResponse.json(
       {
         succes: true,
@@ -110,6 +111,7 @@ export async function POST(req: NextRequest) {
         user: {
           id: user.id,
           pseudo: user.pseudo,
+          role: user.role || "customer",
           recovery_method: user.recovery_method,
         },
         message: "Connecté avec succès!",
