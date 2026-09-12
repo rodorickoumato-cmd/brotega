@@ -115,9 +115,15 @@ export default function ComptePage() {
           {[
             { icon: "👤", label: "Modifier mon profil", href: "/compte/profil" },
             { icon: "📦", label: "Mes commandes", href: "/compte/commandes" },
+            { icon: "❤️", label: "Mes favoris", href: "/compte/favoris" },
+            { icon: "📍", label: "Mes adresses", href: "/compte/adresses" },
+            { icon: "🔒", label: "Sécurité", href: "/compte/securite" },
             ...(profil?.role === "vendeur"
               ? [{ icon: "🏪", label: "Dashboard vendeur", href: "/vendor/dashboard" }]
               : [{ icon: "🏪", label: "Devenir vendeur", href: "/vendor/register" }]),
+            ...(profil?.role === "livreur"
+              ? [{ icon: "🏍️", label: "Dashboard livreur", href: "/livreur" }]
+              : [{ icon: "🏍️", label: "Devenir livreur", href: "/devenir-livreur" }]),
           ].map((item, i, arr) => (
             <Link key={item.href} href={item.href}
               className={`flex items-center gap-4 px-5 py-4 active:bg-gray-50 transition-colors ${

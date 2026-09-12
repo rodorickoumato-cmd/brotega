@@ -178,22 +178,29 @@ export function Header({ categories = categoriesStatiques }: { categories?: Cate
 
   const mobileMenuItems = auth.connecte
     ? [
-        { href: "/compte", label: "Mon compte" },
-        { href: "/compte/commandes", label: "Mes commandes" },
+        { href: "/compte", label: "👤 Mon compte", section: "compte" },
+        { href: "/compte/commandes", label: "📦 Mes commandes", section: "compte" },
+        { href: "/compte/favoris", label: "❤️ Mes favoris", section: "compte" },
+        { href: "/compte/adresses", label: "📍 Mes adresses", section: "compte" },
+        { href: "/compte/securite", label: "🔒 Sécurité", section: "compte" },
         ...(auth.role === "vendeur"
           ? [
-              { href: "/vendor/dashboard", label: "Ma boutique" },
-              { href: "/vendor/abonnement", label: "Mon abonnement" },
+              { href: "/vendor/dashboard", label: "🏪 Ma boutique", section: "roles" },
+              { href: "/vendor/abonnement", label: "📊 Mon abonnement", section: "roles" },
             ]
           : auth.role === "admin"
-          ? [{ href: "/admin", label: "Administration" }]
+          ? [{ href: "/admin", label: "⚙️ Administration", section: "roles" }]
           : auth.role === "livreur"
-          ? [{ href: "/livreur", label: "Mes livraisons" }]
-          : [{ href: "/vendor/register", label: "Devenir vendeur" }]),
+          ? [{ href: "/livreur", label: "🏍️ Mes livraisons", section: "roles" }]
+          : [
+              { href: "/vendor/register", label: "🏪 Devenir vendeur", section: "roles" },
+              { href: "/devenir-livreur", label: "🏍️ Devenir livreur", section: "roles" },
+            ]),
       ]
     : [
         { href: "/auth/login", label: "Se connecter" },
         { href: "/vendor/register", label: "Devenir vendeur" },
+        { href: "/devenir-livreur", label: "Devenir livreur" },
       ];
 
   return (
@@ -381,17 +388,27 @@ export function Header({ categories = categoriesStatiques }: { categories?: Cate
               </button>
             </div>
 
-            <nav className="flex flex-col gap-1">
-              {mobileMenuItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="py-3 px-2 border-b border-gray-50 text-sm font-medium text-gray-700 hover:text-[#E63946]"
-                >
-                  {item.label}
-                </Link>
-              ))}
+            <nav className="flex flex-col gap-0">
+              {mobileMenuItems.map((item, idx, arr) => {
+                const nextSection = idx + 1 < arr.length ? (arr[idx + 1] as any).section : null;
+                const currentSection = (item as any).section;
+                const isLastInSection = nextSection !== currentSection;
+
+                return (
+                  <div key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={() => setMobileOpen(false)}
+                      className="py-3 px-3 text-sm font-medium text-gray-700 hover:text-[#E63946] hover:bg-gray-50 transition-colors block"
+                    >
+                      {item.label}
+                    </Link>
+                    {isLastInSection && currentSection && (
+                      <div className="border-b border-gray-100" />
+                    )}
+                  </div>
+                );
+              })}
 
               <div className="mt-3 pt-3 border-t border-gray-100">
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider px-2 mb-3">Catégories</p>
