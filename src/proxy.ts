@@ -1,36 +1,19 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Routes nécessitant une simple authentification
-const ROUTES_AUTH = ["/compte", "/checkout", "/vendor", "/messages"];
-// Routes avec contrôle de rôle strict
+// Routes nécessitant une authentification
+const ROUTES_AUTH = ["/compte", "/checkout", "/vendor", "/messages", "/reclamation"];
+// Routes avec contrôle de rôle strict (admin, livreur)
 const ROUTES_ROLES: Record<string, string[]> = {
   "/admin":   ["admin"],
   "/livreur": ["livreur", "admin"],
 };
 
 export default async function proxy(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return request.cookies.getAll(); },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  const { data: { user } } = await supabase.auth.getUser();
   const pathname = request.nextUrl.pathname;
+
+  // ── Vérifier le token JWT custom (Pseudo+PIN auth) ────────────
+  const token = request.cookies.get("auth_token")?.value;
+  const isAuthenticated = !!token;
 
   const loginUrl = () => {
     const url = request.nextUrl.clone();
@@ -41,36 +24,27 @@ export default async function proxy(request: NextRequest) {
 
   // ── Couche 1 : authentification requise ───────────────────────
   const estProtegee = ROUTES_AUTH.some((r) => pathname.startsWith(r));
-  if (estProtegee && !user) return loginUrl();
+  if (estProtegee && !isAuthenticated) return loginUrl();
 
   // ── Couche 2 : contrôle de rôle (admin, livreur) ──────────────
+  // NOTE: Avec le nouveau système Pseudo+PIN, on n'a pas de rôles
+  // Cette logique peut être restaurée plus tard si besoin
+  /*
   const entreeRole = Object.entries(ROUTES_ROLES).find(([prefix]) =>
     pathname.startsWith(prefix)
   );
   if (entreeRole) {
-    if (!user) return loginUrl();
-
-    // Rôle lu depuis le JWT (app_metadata) — aucune requête DB en middleware
-    // Fallback DB pour les comptes créés avant cette architecture (période de transition)
-    let roleUtilisateur = (user.app_metadata?.role as string) ?? "";
-    if (!roleUtilisateur) {
-      const { data: profil } = await supabase
-        .from("utilisateurs").select("role").eq("id", user.id).single();
-      roleUtilisateur = profil?.role ?? "";
-    }
-
-    const rolesAutorises = entreeRole[1];
-    if (!rolesAutorises.includes(roleUtilisateur)) {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
+    if (!isAuthenticated) return loginUrl();
+    // TODO: Implémenter rôles pour le système Pseudo+PIN si nécessaire
   }
+  */
 
   // ── Redirige utilisateur connecté hors des pages auth ─────────
-  if (user && (pathname === "/auth/login" || pathname === "/auth/register")) {
+  if (isAuthenticated && (pathname === "/auth/login" || pathname === "/auth/register")) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  return supabaseResponse;
+  return NextResponse.next();
 }
 
 export const config = {

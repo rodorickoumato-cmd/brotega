@@ -40,13 +40,21 @@ export default function LoginPage() {
         return;
       }
 
-      // Stocker le token
-      localStorage.setItem("token", data.token);
+      // ✅ SUCCESS - Stocker token et rediriger
+      const token = data.token;
+      
+      // Stocker dans localStorage ET cookies
+      localStorage.setItem("token", token);
       localStorage.setItem("user_id", data.user.id);
       localStorage.setItem("pseudo", data.user.pseudo);
 
+      // Stocker dans cookie pour middleware
+      document.cookie = `auth_token=${token}; path=/; max-age=${30 * 24 * 60 * 60}`; // 30 days
+
       // Rediriger au dashboard
-      router.push("/vendor/dashboard");
+      setTimeout(() => {
+        router.push("/vendor/dashboard");
+      }, 100);
     } catch (err) {
       console.error(err);
       setError("❌ Erreur serveur");
@@ -63,6 +71,13 @@ export default function LoginPage() {
           <h1 className="text-2xl font-black text-gray-800">Connexion</h1>
           <p className="text-gray-600 text-sm mt-2">Pseudo + PIN</p>
         </div>
+
+        {/* Error */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        )}
 
         {/* Form */}
         <div className="space-y-4">
@@ -92,22 +107,15 @@ export default function LoginPage() {
               type="password"
               value={pin}
               onChange={(e) => {
-                setPin(e.target.value);
+                setPin(e.target.value.replace(/\D/g, "").slice(0, 6));
                 setError("");
               }}
               placeholder="0000"
               maxLength={6}
               inputMode="numeric"
-              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-emerald-600 transition-colors"
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:border-emerald-600 transition-colors text-center tracking-widest"
             />
           </div>
-
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          )}
 
           {/* Login Button */}
           <button
