@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     // 2. Chercher l'utilisateur par pseudo
     const admin = createAdminClient();
     const { data: user, error: fetchError } = await (admin
-      .from("utilisateurs_auth_v2")
+      .from("utilisateurs_auth_v2" as any)
       .select("*")
       .eq("pseudo", pseudo)
       .single()) as any;
@@ -94,7 +94,8 @@ export async function POST(req: NextRequest) {
     await (admin
       .from("utilisateurs_auth_v2" as any)
       .update({ last_login_at: new Date().toISOString() })
-      .eq("id", user.id)) as any;
+      .eq("id", user.id)
+      .then(() => ({ data: null, error: null }))) as any;
 
     // 8. Retourner le token
     return NextResponse.json(
