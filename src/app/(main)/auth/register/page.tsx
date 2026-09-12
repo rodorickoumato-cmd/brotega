@@ -1,160 +1,150 @@
 "use client";
+
 import { useState } from "react";
-import Link from "next/link";
-import { CITIES_GABON } from "@/lib/utils";
-import { sInscrire } from "@/app/actions/auth";
-import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
-  const [role, setRole] = useState<"acheteur" | "vendeur">("acheteur");
-  const [nom, setNom] = useState("");
-  const [email, setEmail] = useState("");
-  const [telephone, setTelephone] = useState("");
-  const [motDePasse, setMotDePasse] = useState("");
-  const [nomBoutique, setNomBoutique] = useState("");
-  const [ville, setVille] = useState("Libreville");
+  const router = useRouter();
+  const [pseudo, setPseudo] = useState("");
+  const [pin, setPin] = useState("");
+  const [recoveryMethod, setRecoveryMethod] = useState("code");
   const [loading, setLoading] = useState(false);
-  const [erreur, setErreur] = useState("");
-  const [voirMdp, setVoirMdp] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState("");
 
-  const inscrire = async () => {
-    setErreur(""); setLoading(true);
-    const res = await sInscrire({
-      email, motDePasse, nom, telephone: telephone || undefined,
-      role, nomBoutique: role === "vendeur" ? nomBoutique : undefined,
-      ville: role === "vendeur" ? ville : undefined,
-    });
-    setLoading(false);
-    if (res.erreur) { setErreur(res.erreur); return; }
-    // Rafraîchit le JWT pour intégrer app_metadata.role avant navigation
-    await createClient().auth.refreshSession().catch(() => {});
-    window.location.href = role === "vendeur" ? "/vendor/dashboard" : "/";
+  const handleRegister = async () => {
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pseudo,
+          pin,
+          recovery_method: recoveryMethod,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // 🔴 AFFICHER L'ERREUR PSEUDO DÉJÀ UTILISÉ
+        if (res.status === 409) {
+          setError("❌ Ce pseudo est déjà utilisé. Choisissez un autre.");
+        } else {
+          setError(data.erreur || "Erreur lors de l'inscription");
+        }
+        return;
+      }
+
+      // ✅ SUCCESS
+      setSuccess(true);
+      setRecoveryCode(data.recovery_code);
+    } catch (err) {
+      setError("Erreur serveur. Vérifiez que Supabase est configuré.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <div className="bg-[#E63946] px-6 pt-14 pb-10">
-        <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
-          <span className="text-2xl">❤️</span>
+  if (success) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-xl">
+          <h1 className="text-3xl font-black text-emerald-600 mb-4">✅ Inscription réussie!</h1>
+          <p className="text-gray-600 mb-4">Bienvenue {pseudo}! 🎉</p>
+          
+          {recoveryCode && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+              <p className="text-xs text-amber-800 font-bold mb-2">⚠️ SAUVEGARDEZ CE CODE:</p>
+              <p className="font-mono text-lg font-black text-amber-900 break-all">{recoveryCode}</p>
+              <p className="text-xs text-amber-700 mt-2">À afficher une seule fois!</p>
+            </div>
+          )}
+
+          <button
+            onClick={() => router.push("/auth/login")}
+            className="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700"
+          >
+            → Aller à la connexion
+          </button>
         </div>
-        <h1 className="text-2xl font-black text-white">Créer un compte</h1>
-        <p className="text-white/70 text-sm mt-1">MYC&apos;S SECRET 🇬🇦</p>
       </div>
+    );
+  }
 
-      <div className="flex-1 px-6 py-8 -mt-4 bg-white rounded-t-3xl space-y-4">
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 p-4">
+      <div className="max-w-md mx-auto">
+        <div className="bg-white rounded-2xl p-8 shadow-xl">
+          <h1 className="text-2xl font-black text-gray-800 mb-2">📝 S'inscrire</h1>
+          <p className="text-gray-600 text-sm mb-6">Créez votre compte Brotega</p>
 
-        {/* Rôle */}
-        <div className="grid grid-cols-2 gap-3">
-          {([
-            { id: "acheteur", emoji: "🛒", label: "Acheteur", desc: "J'achète" },
-            { id: "vendeur",  emoji: "🏪", label: "Vendeur",  desc: "Je vends" },
-          ] as const).map((r) => (
-            <button key={r.id} onClick={() => setRole(r.id)}
-              className={`flex flex-col items-center gap-1 py-4 rounded-2xl border-2 transition-all ${
-                role === r.id ? "border-[#E63946] bg-[#FEF2F2] text-[#E63946]" : "border-gray-200 text-gray-500"
-              }`}>
-              <span className="text-2xl">{r.emoji}</span>
-              <span className="text-sm font-black">{r.label}</span>
-              <span className="text-xs opacity-70">{r.desc}</span>
-            </button>
-          ))}
-        </div>
+          {/* ERROR MESSAGE */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 text-red-700 text-sm">
+              {error}
+            </div>
+          )}
 
-        {/* Nom */}
-        <div>
-          <label className="text-sm font-bold text-gray-700 mb-2 block">Nom complet</label>
-          <input value={nom} onChange={(e) => setNom(e.target.value)}
-            placeholder="Jean-Pierre Mbourou" autoComplete="name"
-            className="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 text-base focus:outline-none focus:border-[#E63946] transition-colors" />
-        </div>
-
-        {/* Email */}
-        <div>
-          <label className="text-sm font-bold text-gray-700 mb-2 block">Email</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-            placeholder="exemple@gmail.com" autoComplete="email" inputMode="email"
-            className="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 text-base focus:outline-none focus:border-[#E63946] transition-colors" />
-        </div>
-
-        {/* Mot de passe */}
-        <div>
-          <label className="text-sm font-bold text-gray-700 mb-2 block">Mot de passe</label>
-          <div className="relative">
+          {/* PSEUDO INPUT */}
+          <div className="mb-4">
+            <label className="block text-sm font-bold text-gray-700 mb-2">Pseudo</label>
             <input
-              type={voirMdp ? "text" : "password"}
-              value={motDePasse}
-              onChange={(e) => setMotDePasse(e.target.value)}
-              placeholder="Minimum 6 caractères"
-              autoComplete="new-password"
-              className="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 pr-14 text-base focus:outline-none focus:border-[#E63946] transition-colors"
+              type="text"
+              value={pseudo}
+              onChange={(e) => setPseudo(e.target.value)}
+              placeholder="john_seller"
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none"
             />
-            <button
-              type="button"
-              onClick={() => setVoirMdp((v) => !v)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#E63946] transition-colors"
-              tabIndex={-1}
+            <p className="text-xs text-gray-500 mt-1">3-50 caractères, unique</p>
+          </div>
+
+          {/* PIN INPUT */}
+          <div className="mb-4">
+            <label className="block text-sm font-bold text-gray-700 mb-2">PIN</label>
+            <input
+              type="password"
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              placeholder="0000"
+              maxLength="6"
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none text-center tracking-widest"
+            />
+            <p className="text-xs text-gray-500 mt-1">4-6 chiffres</p>
+          </div>
+
+          {/* RECOVERY METHOD */}
+          <div className="mb-6">
+            <label className="block text-sm font-bold text-gray-700 mb-2">Récupération</label>
+            <select
+              value={recoveryMethod}
+              onChange={(e) => setRecoveryMethod(e.target.value)}
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none"
             >
-              {voirMdp ? (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                </svg>
-              ) : (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              )}
-            </button>
+              <option value="code">📋 Code de récupération</option>
+              <option value="email">📧 Email</option>
+              <option value="phrase">🔐 Phrase secrète</option>
+            </select>
           </div>
+
+          {/* REGISTER BUTTON */}
+          <button
+            onClick={handleRegister}
+            disabled={loading || !pseudo || !pin}
+            className="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+          >
+            {loading ? "Inscription..." : "S'inscrire →"}
+          </button>
+
+          {/* LOGIN LINK */}
+          <p className="text-center text-sm text-gray-600 mt-4">
+            Déjà inscrit? <a href="/auth/login" className="text-emerald-600 font-bold">Connectez-vous</a>
+          </p>
         </div>
-
-        {/* Téléphone (optionnel) */}
-        <div>
-          <label className="text-sm font-bold text-gray-700 mb-2 block">
-            Téléphone <span className="text-gray-400 font-normal text-xs">(optionnel)</span>
-          </label>
-          <div className="flex border-2 border-gray-200 rounded-2xl overflow-hidden focus-within:border-[#E63946] transition-colors">
-            <span className="bg-gray-50 px-4 flex items-center text-sm text-gray-600 border-r-2 border-gray-200 font-bold whitespace-nowrap">🇬🇦 +241</span>
-            <input value={telephone} onChange={(e) => setTelephone(e.target.value)}
-              placeholder="66 XX XX XX" inputMode="tel"
-              className="flex-1 px-4 py-4 text-base font-medium focus:outline-none" />
-          </div>
-        </div>
-
-        {/* Champs vendeur */}
-        {role === "vendeur" && (
-          <>
-            <div>
-              <label className="text-sm font-bold text-gray-700 mb-2 block">Nom de votre boutique</label>
-              <input value={nomBoutique} onChange={(e) => setNomBoutique(e.target.value)}
-                placeholder="Ex : Épicerie Centrale..."
-                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 text-base focus:outline-none focus:border-[#E63946] transition-colors" />
-            </div>
-            <div>
-              <label className="text-sm font-bold text-gray-700 mb-2 block">Ville</label>
-              <select value={ville} onChange={(e) => setVille(e.target.value)}
-                className="w-full border-2 border-gray-200 rounded-2xl px-4 py-4 text-base focus:outline-none focus:border-[#E63946] transition-colors bg-white">
-                {CITIES_GABON.map((c) => <option key={c} value={c}>📍 {c}</option>)}
-              </select>
-            </div>
-          </>
-        )}
-
-        {erreur && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
-            <p className="text-sm text-red-700 font-medium">{erreur}</p>
-          </div>
-        )}
-
-        <button onClick={inscrire} disabled={loading}
-          className="w-full bg-[#E63946] text-white font-black py-4 rounded-2xl text-base disabled:opacity-60 active:scale-95 transition-all">
-          {loading ? "Création..." : role === "vendeur" ? "Créer ma boutique 🏪" : "Créer mon compte 🛒"}
-        </button>
-
-        <p className="text-center text-sm text-gray-500 pt-2">
-          Déjà un compte ?{" "}
-          <Link href="/auth/login" className="text-[#E63946] font-black">Se connecter</Link>
-        </p>
       </div>
     </div>
   );
