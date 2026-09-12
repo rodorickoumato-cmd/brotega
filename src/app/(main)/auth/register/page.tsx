@@ -8,28 +8,59 @@ export default function RegisterPage() {
   const [pseudo, setPseudo] = useState("");
   const [pin, setPin] = useState("");
   const [recoveryMethod, setRecoveryMethod] = useState("code");
+  const [email, setEmail] = useState("");
+  const [phrase, setPhrase] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleRegister = async () => {
     setError("");
+
+    // Validation
+    if (!pseudo.trim()) {
+      setError("❌ Entrez votre pseudo (3-50 caractères)");
+      return;
+    }
+
+    if (!pin || pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)) {
+      setError("❌ PIN: 4-6 chiffres");
+      return;
+    }
+
+    if (recoveryMethod === "email" && !email.trim()) {
+      setError("❌ Entrez votre email");
+      return;
+    }
+
+    if (recoveryMethod === "phrase" && !phrase.trim()) {
+      setError("❌ Entrez votre phrase secrète");
+      return;
+    }
+
     setLoading(true);
 
     try {
+      const payload: any = {
+        pseudo,
+        pin,
+        recovery_method: recoveryMethod,
+      };
+
+      if (recoveryMethod === "email") {
+        payload.email = email;
+      } else if (recoveryMethod === "phrase") {
+        payload.phrase = phrase;
+      }
+
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          pseudo,
-          pin,
-          recovery_method: recoveryMethod,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        // 🔴 AFFICHER L'ERREUR PSEUDO DÉJÀ UTILISÉ
         if (res.status === 409) {
           setError("❌ Ce pseudo est déjà utilisé. Choisissez un autre.");
         } else {
@@ -70,7 +101,10 @@ export default function RegisterPage() {
             <input
               type="text"
               value={pseudo}
-              onChange={(e) => setPseudo(e.target.value)}
+              onChange={(e) => {
+                setPseudo(e.target.value);
+                setError("");
+              }}
               placeholder="john_seller"
               className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none"
             />
@@ -83,33 +117,95 @@ export default function RegisterPage() {
             <input
               type="password"
               value={pin}
-              onChange={(e) => setPin(e.target.value)}
+              onChange={(e) => {
+                setPin(e.target.value.replace(/\D/g, "").slice(0, 6));
+                setError("");
+              }}
               placeholder="0000"
               maxLength={6}
+              inputMode="numeric"
               className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none text-center tracking-widest"
             />
             <p className="text-xs text-gray-500 mt-1">4-6 chiffres</p>
           </div>
 
           {/* RECOVERY METHOD */}
-          <div className="mb-6">
+          <div className="mb-4">
             <label className="block text-sm font-bold text-gray-700 mb-2">Récupération</label>
             <select
               value={recoveryMethod}
-              onChange={(e) => setRecoveryMethod(e.target.value)}
+              onChange={(e) => {
+                setRecoveryMethod(e.target.value);
+                setError("");
+              }}
               className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none"
             >
-              <option value="code">📋 Code de récupération</option>
+              <option value="code">💾 Code de récupération (généré)</option>
               <option value="email">📧 Email</option>
-              <option value="phrase">🔐 Phrase secrète</option>
+              <option value="phrase">🔑 Phrase secrète</option>
             </select>
+            <p className="text-xs text-gray-500 mt-1">
+              {recoveryMethod === "code" && "Code généré après inscription"}
+              {recoveryMethod === "email" && "Entrez votre email ci-dessous"}
+              {recoveryMethod === "phrase" && "Entrez une phrase secrète ci-dessous"}
+            </p>
           </div>
+
+          {/* CONDITIONAL FIELDS */}
+
+          {/* Email Field */}
+          {recoveryMethod === "email" && (
+            <div className="mb-4">
+              <label className="block text-sm font-bold text-gray-700 mb-2">📧 Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError("");
+                }}
+                placeholder="votre@email.com"
+                className="w-full border-2 border-emerald-300 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none bg-emerald-50"
+              />
+              <p className="text-xs text-gray-500 mt-1">Vous recevrez un lien de récupération</p>
+            </div>
+          )}
+
+          {/* Phrase Field */}
+          {recoveryMethod === "phrase" && (
+            <div className="mb-4">
+              <label className="block text-sm font-bold text-gray-700 mb-2">🔑 Phrase Secrète</label>
+              <textarea
+                value={phrase}
+                onChange={(e) => {
+                  setPhrase(e.target.value);
+                  setError("");
+                }}
+                placeholder="Entrez une phrase que vous seul connaissez..."
+                rows={3}
+                className="w-full border-2 border-emerald-300 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none bg-emerald-50 resize-none"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                ⚠️ Mémorisez cette phrase - vous l'utiliserez pour récupérer votre compte
+              </p>
+            </div>
+          )}
+
+          {/* Code Info */}
+          {recoveryMethod === "code" && (
+            <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-900">
+                ℹ️ Un <strong>code de récupération unique</strong> sera généré après votre inscription. 
+                Conservez-le précieusement!
+              </p>
+            </div>
+          )}
 
           {/* REGISTER BUTTON */}
           <button
             onClick={handleRegister}
             disabled={loading || !pseudo || !pin}
-            className="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+            className="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-all"
           >
             {loading ? "Inscription..." : "S'inscrire →"}
           </button>
