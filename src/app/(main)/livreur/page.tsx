@@ -5,11 +5,17 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatXAF } from "@/lib/utils";
 import { formaterPhoneGabon } from "@/lib/phone";
+import { DriverLocationTracker } from "@/components/delivery/DriverLocationTracker";
 import type { Livraison, Commande } from "@/lib/supabase/database.types";
 
 type LivraisonRiche = Livraison & {
   remuneration_versee: boolean;
   commande: Pick<Commande, "id" | "code_court" | "total" | "adresse"> | null;
+  latitude?: number;
+  longitude?: number;
+  livreur_latitude?: number;
+  livreur_longitude?: number;
+  client_address_full?: string;
 };
 
 type AdresseLiv = { nom_complet?: string; ville?: string; quartier?: string; details?: string; telephone?: string };
@@ -475,6 +481,19 @@ export default function LivreurPage() {
                       </Link>
                     )}
                   </div>
+
+                  {l.statut === "en_route" && l.latitude && l.longitude && (
+                    <DriverLocationTracker
+                      delivery={{
+                        livraisonId: l.id,
+                        clientLat: l.latitude,
+                        clientLng: l.longitude,
+                        clientAddress: adresse
+                          ? `${adresse.nom_complet ?? ""}, ${adresse.ville ?? ""} ${adresse.quartier ?? ""}`
+                          : "Adresse du client",
+                      }}
+                    />
+                  )}
 
                   {l.statut === "en_route" && (
                     <button
