@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { CommissionDisclosureModal } from "@/components/vendor/CommissionDisclosureModal";
 
 interface VendorStats {
   totalArticles: number;
@@ -42,8 +43,10 @@ export default function VendorDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-      <div className="max-w-7xl mx-auto">
+    <>
+      <CommissionDisclosureModal />
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
+        <div className="max-w-7xl mx-auto">
         {/* Hero */}
         <div className="mb-8">
           <h1 className="text-4xl font-black text-gray-800 mb-2">
@@ -63,7 +66,7 @@ export default function VendorDashboardPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-white rounded-xl shadow p-6 border-l-4 border-blue-600">
             <p className="text-gray-600 text-sm">📦 Articles</p>
             <p className="text-3xl font-black text-gray-800 mt-2">
@@ -80,12 +83,6 @@ export default function VendorDashboardPage() {
             <p className="text-gray-600 text-sm">💰 Gains</p>
             <p className="text-2xl font-black text-gray-800 mt-2">
               {(stats?.totalGains || 0).toLocaleString()} XAF
-            </p>
-          </div>
-          <div className="bg-white rounded-xl shadow p-6 border-l-4 border-purple-600">
-            <p className="text-gray-600 text-sm">⚙️ Commission</p>
-            <p className="text-3xl font-black text-gray-800 mt-2">
-              {((stats?.commissionMoyenne || 0) * 100).toFixed(0)}%
             </p>
           </div>
         </div>
@@ -108,9 +105,9 @@ export default function VendorDashboardPage() {
             className="bg-purple-600 text-white rounded-xl p-8 shadow-lg hover:shadow-xl transition"
           >
             <span className="text-4xl">⚙️</span>
-            <h3 className="font-black text-lg mt-2 mb-2">Commission</h3>
+            <h3 className="font-black text-lg mt-2 mb-2">Configuration</h3>
             <p className="text-purple-100 text-sm">
-              Fixez votre commission (2-15%)
+              Gérez votre boutique
             </p>
           </Link>
 
@@ -126,43 +123,44 @@ export default function VendorDashboardPage() {
           </Link>
         </div>
 
-        {/* Why Brotega */}
+        {/* Quick Tips */}
         <div className="bg-white rounded-xl shadow p-8">
           <h3 className="text-2xl font-black text-gray-800 mb-4">
-            Pourquoi Brotega? 🤔
+            💡 Conseils pour réussir
           </h3>
           <div className="space-y-3">
             <div className="flex gap-3">
               <span>✓</span>
               <div>
-                <p className="font-semibold">Frais les plus bas</p>
-                <p className="text-sm text-gray-600">5% vs 15-20% ailleurs</p>
+                <p className="font-semibold">Photos de qualité</p>
+                <p className="text-sm text-gray-600">Utilisez de bonnes images pour vos produits</p>
               </div>
             </div>
             <div className="flex gap-3">
               <span>✓</span>
               <div>
-                <p className="font-semibold">Aucune limite</p>
-                <p className="text-sm text-gray-600">Publiez illimité!</p>
+                <p className="font-semibold">Descriptions claires</p>
+                <p className="text-sm text-gray-600">Détaillez bien vos articles</p>
               </div>
             </div>
             <div className="flex gap-3">
               <span>✓</span>
               <div>
-                <p className="font-semibold">Paiement garanti</p>
-                <p className="text-sm text-gray-600">Escrow sécurisé</p>
+                <p className="font-semibold">Prix compétitifs</p>
+                <p className="text-sm text-gray-600">Consultez les prix du marché</p>
               </div>
             </div>
             <div className="flex gap-3">
               <span>✓</span>
               <div>
-                <p className="font-semibold">Support local</p>
-                <p className="text-sm text-gray-600">Équipe 24/7</p>
+                <p className="font-semibold">Excellent service</p>
+                <p className="text-sm text-gray-600">Répondez vite aux clients</p>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+    </>
   );
 }

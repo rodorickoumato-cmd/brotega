@@ -35,7 +35,7 @@ const steps = [
 
 const avantages = [
   { icon: "🆓", title: "Gratuit", desc: "Création de boutique 100% gratuite, sans frais d'inscription ni abonnement mensuel." },
-  { icon: "💸", title: "Commission réduite", desc: "Seulement 5% de commission par vente. Gardez 95% de vos revenus." },
+  { icon: "💰", title: "Revenus immédiats", desc: "Encaissez vos ventes directement en Airtel Money ou Moov Money sans intermédiaire." },
   { icon: "📊", title: "Dashboard puissant", desc: "Gérez vos produits, commandes et analyses depuis un tableau de bord intuitif." },
   { icon: "📱", title: "Paiement Mobile Money", desc: "Recevez vos paiements sur Airtel Money ou Moov Money automatiquement." },
   { icon: "🚚", title: "Livraison facilitée", desc: "Accès à notre réseau de livraison dans 12 villes gabonaises." },
