@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { formatXAF } from "@/lib/utils";
 import { formaterPhoneGabon } from "@/lib/phone";
 import { DriverLocationTracker } from "@/components/delivery/DriverLocationTracker";
+import { DeliveryPhotoCapture } from "@/components/delivery/DeliveryPhotoCapture";
 import type { Livraison, Commande } from "@/lib/supabase/database.types";
 
 type LivraisonRiche = Livraison & {
@@ -481,6 +482,34 @@ export default function LivreurPage() {
                       </Link>
                     )}
                   </div>
+
+                  {l.statut === "en_route" && (
+                    <DeliveryPhotoCapture
+                      livraisonId={l.id}
+                      onPhotoUpload={async () => {
+                        const supabase = createClient();
+                        const { data: updated } = await supabase
+                          .from("livraisons")
+                          .select("*")
+                          .eq("id", l.id)
+                          .single();
+
+                        if (updated) {
+                          setLivraisons((prev) =>
+                            prev.map((liv) =>
+                              liv.id === l.id
+                                ? {
+                                    ...liv,
+                                    proof_photo_url: (updated as any).proof_photo_url,
+                                    proof_photo_taken_at: (updated as any).proof_photo_taken_at,
+                                  }
+                                : liv
+                            )
+                          );
+                        }
+                      }}
+                    />
+                  )}
 
                   {l.statut === "en_route" && l.latitude && l.longitude && (
                     <DriverLocationTracker
