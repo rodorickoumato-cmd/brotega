@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
         action: "support_ticket_created",
         success: true,
         recovery_method_used: "support",
-        ip_address: req.ip,
+        ip_address: (req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || "unknown"),
         user_agent: req.headers.get("user-agent"),
       })) as any;
 

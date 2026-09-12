@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
         .insert({
           action: `recover_${recovery_method}`,
           success: false,
-          ip_address: req.ip,
+          ip_address: (req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || "unknown"),
           user_agent: req.headers.get("user-agent"),
         })) as any;
 
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
         action: `recover_${recovery_method}`,
         success: isValid,
         recovery_method_used: recovery_method,
-        ip_address: req.ip,
+        ip_address: (req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || "unknown"),
         user_agent: req.headers.get("user-agent"),
       })) as any;
 

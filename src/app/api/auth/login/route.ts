@@ -67,7 +67,12 @@ export async function POST(req: NextRequest) {
     // 4. Générer JWT
     const token = generateJWT(user.id);
 
-    // 5. Enregistrer session
+    // 5. Récupérer l'IP
+    const ipAddress = req.headers.get("x-forwarded-for")?.split(",")[0] ||
+                      req.headers.get("x-real-ip") ||
+                      "unknown";
+
+    // 6. Enregistrer session
     const deviceId = req.headers.get("user-agent")?.substring(0, 255) || "unknown";
     await (admin
       .from("user_sessions" as any)
@@ -75,18 +80,18 @@ export async function POST(req: NextRequest) {
         user_id: user.id,
         token_hash: crypto.createHash("sha256").update(token).digest("hex"),
         device_id: deviceId,
-        ip_address: req.ip || "unknown",
+        ip_address: ipAddress,
         user_agent: req.headers.get("user-agent"),
       })) as any;
 
-    // 6. Logger la tentative réussie
+    // 7. Logger la tentative réussie
     await (admin
       .from("recovery_attempts" as any)
       .insert({
         user_id: user.id,
         action: "login",
         success: true,
-        ip_address: req.ip,
+        ip_address: ipAddress,
         user_agent: req.headers.get("user-agent"),
       })) as any;
 
