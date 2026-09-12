@@ -63,9 +63,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Hash le nouveau PIN
+    // 4. Hash le nouveau PIN (SHA256 simple, comme register et login)
     const newPinHash = crypto
-      .createHmac("sha256", "brotega_salt_2026")
+      .createHash("sha256")
       .update(new_pin)
       .digest("hex");
 

@@ -10,8 +10,6 @@ export default function RegisterPage() {
   const [recoveryMethod, setRecoveryMethod] = useState("code");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [recoveryCode, setRecoveryCode] = useState("");
 
   const handleRegister = async () => {
     setError("");
@@ -40,41 +38,17 @@ export default function RegisterPage() {
         return;
       }
 
-      // ✅ SUCCESS
-      setSuccess(true);
-      setRecoveryCode(data.recovery_code);
+      // ✅ SUCCESS - Rediriger vers verify-registration
+      const code = data.recovery_code || "NO_CODE";
+      router.push(
+        `/auth/verify-registration?code=${encodeURIComponent(code)}&method=${encodeURIComponent(recoveryMethod)}`
+      );
     } catch (err) {
       setError("Erreur serveur. Vérifiez que Supabase est configuré.");
     } finally {
       setLoading(false);
     }
   };
-
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl p-8 max-w-md w-full text-center shadow-xl">
-          <h1 className="text-3xl font-black text-emerald-600 mb-4">✅ Inscription réussie!</h1>
-          <p className="text-gray-600 mb-4">Bienvenue {pseudo}! 🎉</p>
-          
-          {recoveryCode && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-              <p className="text-xs text-amber-800 font-bold mb-2">⚠️ SAUVEGARDEZ CE CODE:</p>
-              <p className="font-mono text-lg font-black text-amber-900 break-all">{recoveryCode}</p>
-              <p className="text-xs text-amber-700 mt-2">À afficher une seule fois!</p>
-            </div>
-          )}
-
-          <button
-            onClick={() => router.push("/auth/login")}
-            className="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700"
-          >
-            → Aller à la connexion
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-emerald-100 p-4">
