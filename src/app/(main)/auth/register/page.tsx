@@ -111,7 +111,7 @@ export default function RegisterPage() {
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               placeholder="0000"
-              maxLength="6"
+              maxLength={6}
               className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:border-emerald-500 focus:outline-none text-center tracking-widest"
             />
             <p className="text-xs text-gray-500 mt-1">4-6 chiffres</p>
