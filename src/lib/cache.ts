@@ -197,13 +197,15 @@ export async function warmupCache(): Promise<void> {
 
 /**
  * Cache statistics
+ * Note: Upstash Redis has limited stats - use dashboard for full info
  */
 export async function getCacheStats(): Promise<{
-  info: Record<string, string>;
+  status: string;
 } | null> {
   try {
-    const info = await redis.info();
-    return { info };
+    // Upstash Redis doesn't expose info() - use dashboard for stats
+    // This is a placeholder for monitoring
+    return { status: "ok" };
   } catch (err) {
     console.error("[CACHE] Stats error:", err);
     return null;
