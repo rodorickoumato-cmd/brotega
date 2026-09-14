@@ -4,55 +4,63 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { maskDeliveryData } from "@/lib/data-masking";
 import { logAuditEvent } from "@/lib/audit-logger";
 import { getClientIP } from "@/lib/validation";
+import { verifyJWT } from "@/lib/jwt-secure";
 
 export async function GET(req: NextRequest) {
   const ip = getClientIP(Object.fromEntries(req.headers));
 
   try {
-    // ✅ Get authenticated user
-    const supabase = createClient();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ erreur: "Non authentifié" }, { status: 401 });
+    // ✅ Get authenticated user from JWT cookie
+    const token = req.cookies.get("auth_token")?.value;
+    if (!token) {
+      return NextResponse.json(
+        { erreur: "Non authentifié" },
+        { status: 401 }
+      );
     }
 
-    // ✅ Get user role
-    const { data: userRecord } = await (supabase
-      .from("utilisateurs_auth_v2" as any)
-      .select("role")
-      .eq("id", user.id)
-      .single()) as any;
+    // ✅ Verify JWT signature
+    const payload = verifyJWT(token);
+    if (!payload) {
+      return NextResponse.json(
+        { erreur: "Token invalide" },
+        { status: 401 }
+      );
+    }
 
-    const userRole = userRecord?.role || "customer";
+    const userId = payload.user_id;
+    const userRole = payload.role || "customer";
 
-    // ✅ BUILD QUERY based on role
-    let query = supabase.from("livraisons" as any).select("*");
+    // ✅ Build query based on role
+    const admin = createAdminClient();
+    let query = admin.from("livraisons" as any).select("*");
 
     // Filter by role
     if (userRole === "customer") {
       // ✅ Customers see only their own deliveries
-      query = query.eq("client_id", user.id);
+      query = query.eq("client_id", userId);
     } else if (userRole === "livreur") {
       // ✅ Drivers see assigned deliveries
-      query = query.eq("driver_id", user.id);
+      query = query.eq("driver_id", userId);
     } else if (userRole === "vendor") {
       // ✅ Vendors see their store's deliveries
-      const { data: vendorStore } = await (supabase
+      const { data: vendorStore } = await (admin
         .from("vendeurs" as any)
         .select("id")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .single()) as any;
 
       if (vendorStore) {
         query = query.eq("vendor_id", vendorStore.id);
+      } else {
+        return NextResponse.json(
+          { erreur: "Vendor store not found" },
+          { status: 404 }
+        );
       }
     } else if (userRole === "admin") {
       // ✅ Admins see all (no filter)
@@ -83,7 +91,7 @@ export async function GET(req: NextRequest) {
 
     // ✅ LOG ACCESS
     await logAuditEvent({
-      user_id: user.id,
+      user_id: userId,
       action: "data_export",
       resource_type: "delivery",
       status: "success",
