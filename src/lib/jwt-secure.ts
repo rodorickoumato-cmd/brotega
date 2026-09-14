@@ -7,21 +7,26 @@
 
 import crypto from "crypto";
 
-// ✅ STRICT: Throw if JWT_SECRET missing
-const jwtSecretEnv = process.env.JWT_SECRET;
-if (!jwtSecretEnv) {
-  throw new Error(
-    "FATAL: JWT_SECRET environment variable must be set. " +
-    "Generate with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
-  );
-}
-const JWT_SECRET: string = jwtSecretEnv;
-
 interface JWTPayload {
   user_id: string;
   role: "customer" | "vendor" | "livreur" | "admin";
   iat: number;
   exp: number;
+}
+
+/**
+ * Get JWT_SECRET from environment - Throw if missing at runtime
+ * (Check at runtime, not module load, so build-time can proceed)
+ */
+function getJWTSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error(
+      "FATAL: JWT_SECRET environment variable must be set. " +
+      "Generate with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
+    );
+  }
+  return secret;
 }
 
 /**
@@ -50,7 +55,7 @@ export function generateJWT(
 
   // ✅ HMAC-SHA256 signature
   const signature = crypto
-    .createHmac("sha256", JWT_SECRET)
+    .createHmac("sha256", getJWTSecret())
     .update(`${headerB64}.${payloadB64}`)
     .digest("base64url");
 
@@ -70,7 +75,7 @@ export function verifyJWT(token: string): JWTPayload | null {
 
     // ✅ Verify signature before decoding payload
     const expectedSignature = crypto
-      .createHmac("sha256", JWT_SECRET)
+      .createHmac("sha256", getJWTSecret())
       .update(`${headerB64}.${payloadB64}`)
       .digest("base64url");
 
