@@ -7,11 +7,25 @@
 
 import { Redis } from "@upstash/redis";
 
-// Initialize Redis
-const redis = new Redis({
-  url: process.env.REDIS_URL || "redis://localhost:6379",
-  token: process.env.REDIS_TOKEN,
-});
+// Lazy-load Redis client (don't initialize at module load time)
+let redis: Redis | null = null;
+
+function getRedisClient(): Redis {
+  if (!redis) {
+    const url = process.env.REDIS_URL;
+    const token = process.env.REDIS_TOKEN;
+
+    // Only throw if actually trying to use Redis (at runtime)
+    if (!url || !token) {
+      throw new Error(
+        "REDIS_URL and REDIS_TOKEN environment variables must be set"
+      );
+    }
+
+    redis = new Redis({ url, token });
+  }
+  return redis;
+}
 
 /**
  * Cache TTL (Time To Live) in seconds
@@ -61,7 +75,7 @@ export function getCacheKey(
  */
 export async function getCached<T>(key: string): Promise<T | null> {
   try {
-    const data = await redis.get<T>(key);
+    const data = await getRedisClient().get<T>(key);
     if (data) {
       console.log(`[CACHE] HIT: ${key}`);
       return data;
@@ -82,7 +96,7 @@ export async function setCached<T>(
   ttl: number = CACHE_TTL.PRODUCT
 ): Promise<void> {
   try {
-    await redis.setex(key, ttl, JSON.stringify(data));
+    await getRedisClient().setex(key, ttl, JSON.stringify(data));
     console.log(`[CACHE] SET: ${key} (TTL: ${ttl}s)`);
   } catch (err) {
     console.error(`[CACHE] Set error for ${key}:`, err);
@@ -95,7 +109,7 @@ export async function setCached<T>(
  */
 export async function deleteCached(key: string): Promise<void> {
   try {
-    await redis.del(key);
+    await getRedisClient().del(key);
     console.log(`[CACHE] DELETE: ${key}`);
   } catch (err) {
     console.error(`[CACHE] Delete error for ${key}:`, err);
@@ -109,9 +123,9 @@ export async function deleteCachedPattern(pattern: string): Promise<void> {
   try {
     // Note: Upstash Redis has limited pattern matching
     // For production, use dedicated cache invalidation system
-    const keys = await redis.keys(`${pattern}*`);
+    const keys = await getRedisClient().keys(`${pattern}*`);
     if (keys.length > 0) {
-      await redis.del(...keys);
+      await getRedisClient().del(...keys);
       console.log(`[CACHE] DELETE PATTERN: ${pattern}* (${keys.length} keys)`);
     }
   } catch (err) {

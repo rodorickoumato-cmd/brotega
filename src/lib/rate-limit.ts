@@ -7,11 +7,25 @@
 
 import { Redis } from "@upstash/redis";
 
-// ✅ Initialize Redis (Upstash or local)
-const redis = new Redis({
-  url: process.env.REDIS_URL || "redis://localhost:6379",
-  token: process.env.REDIS_TOKEN,
-});
+// Lazy-load Redis client (don't initialize at module load time)
+let redis: Redis | null = null;
+
+function getRedisClient(): Redis {
+  if (!redis) {
+    const url = process.env.REDIS_URL;
+    const token = process.env.REDIS_TOKEN;
+
+    // Only throw if actually trying to use Redis (at runtime)
+    if (!url || !token) {
+      throw new Error(
+        "REDIS_URL and REDIS_TOKEN environment variables must be set"
+      );
+    }
+
+    redis = new Redis({ url, token });
+  }
+  return redis;
+}
 
 interface RateLimitConfig {
   maxAttempts: number;
@@ -35,15 +49,15 @@ export async function checkRateLimit(
 
   try {
     // ✅ Atomic increment
-    const current = await redis.incr(key);
+    const current = await getRedisClient().incr(key);
 
     // ✅ Set expiration on first request
     if (current === 1) {
-      await redis.expire(key, config.windowSeconds);
+      await getRedisClient().expire(key, config.windowSeconds);
     }
 
     // ✅ Get TTL for reset time
-    const ttl = await redis.ttl(key);
+    const ttl = await getRedisClient().ttl(key);
     const resetAt = new Date(Date.now() + ttl * 1000);
 
     const allowed = current <= config.maxAttempts;
@@ -75,8 +89,8 @@ export async function getRateLimitStatus(
   const key = `ratelimit:${config.action}:${ip}`;
 
   try {
-    const current = await redis.get<number>(key) || 0;
-    const ttl = await redis.ttl(key);
+    const current = await getRedisClient().get<number>(key) || 0;
+    const ttl = await getRedisClient().ttl(key);
     const resetAt = new Date(Date.now() + Math.max(0, ttl) * 1000);
 
     return {
@@ -104,7 +118,7 @@ export async function resetRateLimit(
   const key = `ratelimit:${config.action}:${ip}`;
 
   try {
-    await redis.del(key);
+    await getRedisClient().del(key);
   } catch (err) {
     console.error(`[RateLimit] Reset failed:`, err);
   }
