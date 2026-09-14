@@ -26,6 +26,7 @@ export type AuditAction =
   | "data_export"
   | "role_change"
   | "permission_change"
+  | "user_migration"
   | "suspicious_activity";
 
 export interface AuditEntry {
