@@ -8,13 +8,14 @@
 import crypto from "crypto";
 
 // ✅ STRICT: Throw if JWT_SECRET missing
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
+const jwtSecretEnv = process.env.JWT_SECRET;
+if (!jwtSecretEnv) {
   throw new Error(
     "FATAL: JWT_SECRET environment variable must be set. " +
     "Generate with: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\""
   );
 }
+const JWT_SECRET: string = jwtSecretEnv;
 
 interface JWTPayload {
   user_id: string;
