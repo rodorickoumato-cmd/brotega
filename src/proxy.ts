@@ -1,27 +1,37 @@
-import { NextResponse, type NextRequest } from "next/server";
+/**
+ * MIDDLEWARE - JWT Signature Verification
+ * ✅ Production-grade security:
+ * - Verify JWT signature before accepting token
+ * - Role-based access control
+ * - Token expiration checking
+ */
 
-// Routes nécessitant une authentification
+import { NextResponse, type NextRequest } from "next/server";
+import { verifyJWT } from "@/lib/jwt-secure";
+
+// Routes requiring authentication
 const ROUTES_AUTH = ["/compte", "/checkout", "/vendor", "/messages", "/reclamation"];
-// Routes avec contrôle de rôle strict
+
+// Routes with strict role control
 const ROUTES_ROLES: Record<string, string[]> = {
   "/admin":   ["admin"],
   "/livreur": ["livreur", "admin"],
 };
 
-// Décoder le JWT payload sans vérifier la signature (OK en middleware)
-function decodeJWTPayload(token: string): any {
+/**
+ * ✅ CRITICAL: Verify JWT signature
+ * Rejects tampered tokens and expired tokens
+ */
+function verifyAuthToken(token: string): any {
   try {
-    const parts = token.split(".");
-    if (parts.length !== 3) return null;
-    const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
-
-    // Vérifier l'expiration
-    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-      return null; // Token expiré
+    const payload = verifyJWT(token);
+    if (!payload) {
+      console.warn("[MIDDLEWARE] JWT verification failed");
+      return null;
     }
-
     return payload;
-  } catch {
+  } catch (err) {
+    console.error("[MIDDLEWARE] JWT verification error:", err);
     return null;
   }
 }
@@ -29,10 +39,12 @@ function decodeJWTPayload(token: string): any {
 export default async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
-  // ── Vérifier le token JWT custom (Pseudo+PIN auth) ────────────
+  // ✅ GET TOKEN FROM COOKIE
   const token = request.cookies.get("auth_token")?.value;
-  const isAuthenticated = !!token;
-  const jwtPayload = token ? decodeJWTPayload(token) : null;
+
+  // ✅ VERIFY TOKEN SIGNATURE (CRITICAL)
+  const jwtPayload = token ? verifyAuthToken(token) : null;
+  const isAuthenticated = !!jwtPayload;
   const userRole = jwtPayload?.role || "customer";
 
   const loginUrl = () => {
@@ -42,27 +54,32 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   };
 
-  // ── Couche 1 : authentification requise ───────────────────────
-  const estProtegee = ROUTES_AUTH.some((r) => pathname.startsWith(r));
-  if (estProtegee && !isAuthenticated) return loginUrl();
+  // ── LAYER 1: Authentication required ───────────────────────
+  const isProtected = ROUTES_AUTH.some((r) => pathname.startsWith(r));
+  if (isProtected && !isAuthenticated) {
+    console.warn(`[MIDDLEWARE] Unauthenticated access attempt to ${pathname}`);
+    return loginUrl();
+  }
 
-  // ── Couche 2 : contrôle de rôle ──────────────────────────────
-  const entreeRole = Object.entries(ROUTES_ROLES).find(([prefix]) =>
+  // ── LAYER 2: Role-based access control ────────────────────
+  const roleEntry = Object.entries(ROUTES_ROLES).find(([prefix]) =>
     pathname.startsWith(prefix)
   );
-  if (entreeRole) {
-    if (!isAuthenticated) return loginUrl();
+  if (roleEntry) {
+    if (!isAuthenticated) {
+      console.warn(`[MIDDLEWARE] Unauthenticated access attempt to ${pathname}`);
+      return loginUrl();
+    }
 
-    const [, requiredRoles] = entreeRole;
+    const [, requiredRoles] = roleEntry;
     if (!requiredRoles.includes(userRole)) {
-      // Accès refusé - rediriger vers page d'erreur ou home
+      console.warn(`[MIDDLEWARE] Access denied: user role ${userRole} not in ${requiredRoles.join(",")} for ${pathname}`);
       return NextResponse.redirect(new URL("/", request.url));
     }
   }
 
-  // ── Redirige utilisateur connecté hors des pages auth ─────────
+  // ── LAYER 3: Redirect authenticated users away from auth pages
   if (isAuthenticated && (pathname === "/auth/login" || pathname === "/auth/register")) {
-    // Rediriger vers le dashboard approprié selon le rôle
     if (userRole === "vendor") return NextResponse.redirect(new URL("/vendor/dashboard", request.url));
     if (userRole === "livreur") return NextResponse.redirect(new URL("/livreur", request.url));
     return NextResponse.redirect(new URL("/", request.url));

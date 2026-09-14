@@ -1,30 +1,48 @@
-// API: Réinitialiser PIN après récupération
+/**
+ * API: Réinitialiser PIN après récupération
+ * ✅ Production-grade security:
+ * - Bcrypt PIN hashing (12 rounds)
+ * - Token expiration checking
+ */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import crypto from "crypto";
+import { hashPIN } from "@/lib/pin-secure";
+import { validatePseudo, validatePIN, getClientIP } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
+  const ip = getClientIP(Object.fromEntries(req.headers));
+
   try {
     const body = await req.json();
-    const { pseudo, reset_token, new_pin } = body;
+    const { pseudo: rawPseudo, reset_token, new_pin: rawNewPin } = body;
 
-    // 1. Validation
-    if (!pseudo || !reset_token || !new_pin) {
+    // 1. ✅ VALIDATE INPUTS
+    const pseudo = validatePseudo(rawPseudo);
+    if (!pseudo) {
       return NextResponse.json(
-        { erreur: "Paramètres requis manquants" },
+        { erreur: "Pseudo invalide" },
         { status: 400 }
       );
     }
 
-    if (!/^\d{4,6}$/.test(new_pin)) {
+    const newPin = validatePIN(rawNewPin);
+    if (!newPin) {
       return NextResponse.json(
-        { erreur: "PIN: 4-6 chiffres" },
+        { erreur: "PIN invalide (4-6 chiffres)" },
         { status: 400 }
       );
     }
 
-    // 2. Récupérer l'utilisateur
+    if (!reset_token) {
+      return NextResponse.json(
+        { erreur: "Token de réinitialisation requis" },
+        { status: 400 }
+      );
+    }
+
+    // 2. ✅ FETCH USER
     const admin = createAdminClient();
     const { data: user } = await (admin
       .from("utilisateurs_auth_v2" as any)
@@ -39,7 +57,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Vérifier le reset_token (doit être valide et non expiré)
+    // 3. ✅ VERIFY RESET TOKEN
     const resetTokenHash = crypto
       .createHash("sha256")
       .update(reset_token)
@@ -53,23 +71,27 @@ export async function POST(req: NextRequest) {
       .eq("device_id", "password_reset")
       .maybeSingle()) as any;
 
-    if (
-      !session ||
-      new Date(session.expires_at) < new Date()
-    ) {
+    if (!session || new Date(session.expires_at) < new Date()) {
+      console.warn(`[AUTH] Invalid or expired reset token for user ${user.id}`);
       return NextResponse.json(
         { erreur: "Token de réinitialisation expiré ou invalide" },
         { status: 401 }
       );
     }
 
-    // 4. Hash le nouveau PIN (SHA256 simple, comme register et login)
-    const newPinHash = crypto
-      .createHash("sha256")
-      .update(new_pin)
-      .digest("hex");
+    // 4. ✅ HASH NEW PIN WITH BCRYPT
+    let newPinHash: string;
+    try {
+      newPinHash = await hashPIN(newPin);
+    } catch (err) {
+      console.error("[AUTH] PIN hashing failed:", err);
+      return NextResponse.json(
+        { erreur: "Erreur lors du hash du PIN" },
+        { status: 500 }
+      );
+    }
 
-    // 5. Mettre à jour le PIN
+    // 5. ✅ UPDATE PIN
     const { error: updateError } = await (admin
       .from("utilisateurs_auth_v2" as any)
       .update({
@@ -79,26 +101,27 @@ export async function POST(req: NextRequest) {
       .eq("id", user.id)) as any;
 
     if (updateError) {
+      console.error("[AUTH] PIN update error:", updateError);
       return NextResponse.json(
         { erreur: "Erreur mise à jour PIN" },
         { status: 500 }
       );
     }
 
-    // 6. Supprimer la session de réinitialisation
+    // 6. ✅ DELETE RESET SESSION
     await (admin
       .from("user_sessions" as any)
       .delete()
       .eq("id", session.id)) as any;
 
-    // 7. Log action réussie
+    // 7. ✅ LOG SUCCESS
     await (admin
       .from("recovery_attempts" as any)
       .insert({
         user_id: user.id,
         action: "pin_reset",
         success: true,
-        ip_address: (req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || "unknown"),
+        ip_address: ip,
         user_agent: req.headers.get("user-agent"),
       })) as any;
 
