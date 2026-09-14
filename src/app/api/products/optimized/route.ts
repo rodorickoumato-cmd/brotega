@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
   normalizePagination,
   buildPaginatedResponse,
@@ -41,27 +41,20 @@ export async function GET(req: NextRequest) {
       async () => {
         // ✅ FETCH WITH PROFILING
         return profileQuery("fetch_products", async () => {
-          const supabase = createClient();
+          const supabase = createAdminClient();
 
           // ✅ Build query with indexes
-          let query = supabase
-            .from("products")
+          let query = (supabase
+            .from("products" as any)
             .select(
-              `
-              id,
-              name,
-              description,
-              price,
-              vendor_id,
-              category_id,
-              image_url,
-              stock,
-              created_at
-            `,
+              `id, name, description, price, vendor_id, category_id, image_url, stock, created_at`,
               { count: "exact" }
             )
             .order("created_at", { ascending: false })
-            .range(pagination.offset!, pagination.offset! + pagination.limit - 1);
+            .range(
+              pagination.offset!,
+              pagination.offset! + pagination.limit - 1
+            )) as any;
 
           // ✅ Apply filters (uses indexes)
           if (vendorId) {
@@ -103,7 +96,7 @@ export async function GET(req: NextRequest) {
     // ✅ ADD CACHE HEADERS
     return NextResponse.json(response, {
       headers: {
-        "Cache-Control": "public, max-age=300, s-maxage=600", // 5min client, 10min CDN
+        "Cache-Control": "public, max-age=300, s-maxage=600",
         "X-Cache-Key": cacheKey,
         "X-Cache-TTL": String(CACHE_TTL.PRODUCT_SEARCH),
       },
