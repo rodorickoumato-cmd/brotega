@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     const admin = createAdminClient();
 
-    // ✅ CHECK IF USER MIGRATED (in new system)
+    // ✅ CHECK 1: User already migrated (in new system)
     const { data: migratedUser } = await (admin
       .from("utilisateurs_auth_v2" as any)
       .select("id, pseudo, role, email")
@@ -78,21 +78,26 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // ✅ LEGACY USER - Just verify email exists
-    // For old Supabase Auth users, we check the meta table
-    const { data: legacyUsers } = await (admin
-      .from("utilisateurs_auth_v2" as any)
-      .select("id")
-      .eq("email", validEmail)
-      .limit(1)) as any;
+    // ✅ CHECK 2: Legacy user in Supabase Auth
+    // Use Supabase Admin API to find user in auth.users
+    let legacyUser: any = null;
+    try {
+      const { data: user, error } = await (admin.auth.admin as any)
+        .getUserByEmail(validEmail);
+      
+      if (user && !error) {
+        legacyUser = user;
+      }
+    } catch (err) {
+      console.error("[LOGIN-EMAIL-ONLY] Auth lookup error:", err);
+    }
 
-    if (legacyUsers && legacyUsers.length > 0) {
-      // User record found
-      const userId = legacyUsers[0].id;
-      const token = generateJWT(userId, "customer");
+    if (legacyUser) {
+      // ✅ LEGACY USER FOUND in Supabase Auth
+      const token = generateJWT(legacyUser.id, "customer");
 
       await logAuditEvent({
-        user_id: userId,
+        user_id: legacyUser.id,
         action: "user_login",
         resource_type: "auth",
         status: "success",
@@ -104,7 +109,7 @@ export async function POST(req: NextRequest) {
         succes: true,
         token,
         user: {
-          id: userId,
+          id: legacyUser.id,
           email: validEmail,
           migration_status: "legacy",
           migration_required: true,
