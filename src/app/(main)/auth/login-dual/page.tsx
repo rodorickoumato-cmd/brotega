@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function LoginDualPage() {
   const router = useRouter();
@@ -163,9 +164,17 @@ export default function LoginDualPage() {
           <a href="/auth/register" className="block text-center text-sm text-blue-600 hover:underline">
             Pas de compte? S'inscrire
           </a>
-          <a href="/auth/recover" className="block text-center text-sm text-gray-600 hover:underline">
-            Mot de passe oublié?
-          </a>
+          
+          {method === 'email' ? (
+            <Link href="/auth/migrate-now" className="block text-center text-sm text-orange-600 hover:underline font-semibold">
+              ⚠️ Mot de passe oublié? Migrer →
+            </Link>
+          ) : (
+            <Link href="/auth/recover" className="block text-center text-sm text-gray-600 hover:underline">
+              Accès perdu? Récupération
+            </Link>
+          )}
+          
           <a href="/auth/migrate-now" className="block text-center text-sm text-orange-600 hover:underline font-semibold">
             🔄 Migrer vers Pseudo+PIN
           </a>
