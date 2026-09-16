@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
         user_id: "anonymous",
         action: "user_login",
         resource_type: "auth",
-        status: "failed",
+        status: "failure",
         ip_address: ip,
         details: { reason: "rate_limit_exceeded", email },
       });
@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
       user_id: "anonymous",
       action: "user_login",
       resource_type: "auth",
-      status: "failed",
+      status: "failure",
       ip_address: ip,
       details: { reason: "email_not_found", email },
     });
