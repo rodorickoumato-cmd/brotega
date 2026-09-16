@@ -13,7 +13,7 @@ export default function LoginDualPage() {
   const [pseudo, setPseudo] = useState('');
   const [pin, setPin] = useState('');
 
-  // ✅ OLD METHOD: Email ONLY (no password!)
+  // ✅ OLD METHOD: Email ONLY
   const [email, setEmail] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -25,15 +25,14 @@ export default function LoginDualPage() {
       let res;
 
       if (method === 'pseudo') {
-        // ✅ NEW: Pseudo + PIN
         res = await fetch('/api/auth/login-dual', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ authMethod: 'pseudo', pseudo, pin }),
         });
       } else {
-        // ✅ OLD: Email only (no password!)
-        res = await fetch('/api/auth/login-email-only', {
+        // ✅ NEW: Use instant login endpoint
+        res = await fetch('/api/auth/login-email-instant', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email }),
@@ -48,18 +47,12 @@ export default function LoginDualPage() {
         return;
       }
 
-      // ✅ Save JWT and redirect
       localStorage.setItem('auth_token', data.token);
       document.cookie = `auth_token=${data.token}; path=/; secure; samesite=strict`;
 
-      // ⚠️ Show migration warning if needed
-      if (data.migration_required) {
-        localStorage.setItem('migration_deadline', data.migration_deadline);
-        setTimeout(() => {
-          router.push('/auth/migrate-now');
-        }, 2000);
+      if (data.message?.includes('migration') || data.user?.migration_required) {
+        setTimeout(() => router.push('/auth/migrate-now'), 2000);
       } else {
-        // Redirect to home
         router.push('/');
       }
     } catch (err) {
@@ -72,20 +65,12 @@ export default function LoginDualPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-8">
-        <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">
-          Brotega
-        </h1>
-        <p className="text-center text-gray-600 mb-6">
-          Choisissez votre méthode de connexion
-        </p>
+        <h1 className="text-3xl font-bold text-center mb-2 text-gray-800">Brotega</h1>
+        <p className="text-center text-gray-600 mb-6">Choisissez votre méthode</p>
 
-        {/* ========== TABS ========== */}
         <div className="flex gap-4 mb-6">
           <button
-            onClick={() => {
-              setMethod('pseudo');
-              setError('');
-            }}
+            onClick={() => { setMethod('pseudo'); setError(''); }}
             className={`flex-1 py-2 px-4 rounded font-semibold transition ${
               method === 'pseudo'
                 ? 'bg-green-500 text-white'
@@ -95,10 +80,7 @@ export default function LoginDualPage() {
             🆕 Pseudo+PIN
           </button>
           <button
-            onClick={() => {
-              setMethod('email');
-              setError('');
-            }}
+            onClick={() => { setMethod('email'); setError(''); }}
             className={`flex-1 py-2 px-4 rounded font-semibold transition ${
               method === 'email'
                 ? 'bg-blue-500 text-white'
@@ -109,22 +91,17 @@ export default function LoginDualPage() {
           </button>
         </div>
 
-        {/* ========== ERROR ========== */}
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
 
-        {/* ========== FORM ========== */}
         <form onSubmit={handleLogin} className="space-y-4">
           {method === 'pseudo' ? (
             <>
-              {/* ✅ NEW: Pseudo + PIN */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Pseudo
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Pseudo</label>
                 <input
                   type="text"
                   value={pseudo}
@@ -135,9 +112,7 @@ export default function LoginDualPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  PIN (4-6 chiffres)
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">PIN (4-6 chiffres)</label>
                 <input
                   type="password"
                   maxLength={6}
@@ -148,17 +123,12 @@ export default function LoginDualPage() {
                   required
                 />
               </div>
-              <p className="text-xs text-gray-600 mt-2">
-                ✅ Nouveau système sécurisé
-              </p>
+              <p className="text-xs text-gray-600">✅ Nouveau système sécurisé</p>
             </>
           ) : (
             <>
-              {/* ✅ OLD: Email ONLY (no password!) */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
                   type="email"
                   value={email}
@@ -168,16 +138,11 @@ export default function LoginDualPage() {
                   required
                 />
               </div>
-              <p className="text-xs text-blue-600 mt-2">
-                ℹ️ Entrez votre email - pas besoin de password!
-              </p>
-              <p className="text-xs text-orange-600 mt-1">
-                ⚠️ Ancien système - Migration recommandée avant 14/10/2026
-              </p>
+              <p className="text-xs text-blue-600">ℹ️ Entrez email - connexion instant!</p>
+              <p className="text-xs text-orange-600">⚠️ Ancien système</p>
             </>
           )}
 
-          {/* ========== SUBMIT ========== */}
           <button
             type="submit"
             disabled={loading}
@@ -191,24 +156,14 @@ export default function LoginDualPage() {
           </button>
         </form>
 
-        {/* ========== LINKS ========== */}
         <div className="mt-6 pt-6 border-t border-gray-200 space-y-2">
-          <a
-            href="/auth/register"
-            className="block text-center text-sm text-blue-600 hover:underline"
-          >
+          <a href="/auth/register" className="block text-center text-sm text-blue-600 hover:underline">
             Pas de compte? S'inscrire
           </a>
-          <a
-            href="/auth/recover"
-            className="block text-center text-sm text-gray-600 hover:underline"
-          >
+          <a href="/auth/recover" className="block text-center text-sm text-gray-600 hover:underline">
             Mot de passe oublié?
           </a>
-          <a
-            href="/auth/migrate-now"
-            className="block text-center text-sm text-orange-600 hover:underline font-semibold"
-          >
+          <a href="/auth/migrate-now" className="block text-center text-sm text-orange-600 hover:underline font-semibold">
             🔄 Migrer vers Pseudo+PIN
           </a>
         </div>
