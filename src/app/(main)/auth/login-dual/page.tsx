@@ -13,9 +13,8 @@ export default function LoginDualPage() {
   const [pseudo, setPseudo] = useState('');
   const [pin, setPin] = useState('');
 
-  // ✅ OLD METHOD: Email + Password
+  // ✅ OLD METHOD: Email ONLY (no password!)
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,16 +22,23 @@ export default function LoginDualPage() {
     setError('');
 
     try {
-      const payload =
-        method === 'pseudo'
-          ? { authMethod: 'pseudo', pseudo, pin }
-          : { authMethod: 'email', email, password };
+      let res;
 
-      const res = await fetch('/api/auth/login-dual', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      if (method === 'pseudo') {
+        // ✅ NEW: Pseudo + PIN
+        res = await fetch('/api/auth/login-dual', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ authMethod: 'pseudo', pseudo, pin }),
+        });
+      } else {
+        // ✅ OLD: Email only (no password!)
+        res = await fetch('/api/auth/login-email-only', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+        });
+      }
 
       const data = await res.json();
 
@@ -53,7 +59,7 @@ export default function LoginDualPage() {
           router.push('/auth/migrate-now');
         }, 2000);
       } else {
-        // Redirect based on role (would need to decode JWT)
+        // Redirect to home
         router.push('/');
       }
     } catch (err) {
@@ -99,7 +105,7 @@ export default function LoginDualPage() {
                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
             }`}
           >
-            📧 Email (Ancien)
+            📧 Email
           </button>
         </div>
 
@@ -148,7 +154,7 @@ export default function LoginDualPage() {
             </>
           ) : (
             <>
-              {/* ❌ OLD: Email + Password */}
+              {/* ✅ OLD: Email ONLY (no password!) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Email
@@ -162,20 +168,10 @@ export default function LoginDualPage() {
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mot de passe
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  required
-                />
-              </div>
-              <p className="text-xs text-orange-600 mt-2">
+              <p className="text-xs text-blue-600 mt-2">
+                ℹ️ Entrez votre email - pas besoin de password!
+              </p>
+              <p className="text-xs text-orange-600 mt-1">
                 ⚠️ Ancien système - Migration recommandée avant 14/10/2026
               </p>
             </>
