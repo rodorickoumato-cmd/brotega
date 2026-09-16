@@ -78,26 +78,20 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // ✅ CHECK 2: Legacy user in Supabase Auth
-    // Use Supabase Admin API to find user in auth.users
-    let legacyUser: any = null;
-    try {
-      const { data: user, error } = await (admin.auth.admin as any)
-        .getUserByEmail(validEmail);
-      
-      if (user && !error) {
-        legacyUser = user;
-      }
-    } catch (err) {
-      console.error("[LOGIN-EMAIL-ONLY] Auth lookup error:", err);
-    }
+    // ✅ CHECK 2: Legacy user in Supabase Auth (auth.users table)
+    // Bypass RLS with service_role to search in auth.users
+    const { data: legacyUsers, error: authError } = await (admin
+      .from("auth.users" as any)
+      .select("id, email")
+      .eq("email", validEmail)
+      .maybeSingle()) as any;
 
-    if (legacyUser) {
+    if (legacyUsers && !authError) {
       // ✅ LEGACY USER FOUND in Supabase Auth
-      const token = generateJWT(legacyUser.id, "customer");
+      const token = generateJWT(legacyUsers.id, "customer");
 
       await logAuditEvent({
-        user_id: legacyUser.id,
+        user_id: legacyUsers.id,
         action: "user_login",
         resource_type: "auth",
         status: "success",
@@ -109,7 +103,7 @@ export async function POST(req: NextRequest) {
         succes: true,
         token,
         user: {
-          id: legacyUser.id,
+          id: legacyUsers.id,
           email: validEmail,
           migration_status: "legacy",
           migration_required: true,
@@ -118,14 +112,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // ✅ EMAIL NOT FOUND
+    // ✅ EMAIL NOT FOUND (anywhere)
     await logAuditEvent({
       user_id: "anonymous",
       action: "user_login",
       resource_type: "auth",
       status: "failure",
       ip_address: ip,
-      details: { reason: "email_not_found", email },
+      details: { reason: "email_not_found", email, auth_error: authError?.message },
     });
 
     return NextResponse.json(
