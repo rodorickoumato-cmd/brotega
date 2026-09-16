@@ -9,6 +9,7 @@ export default function LoginDualPage() {
   const [method, setMethod] = useState<'email' | 'pseudo'>('pseudo');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [recoveryOptions, setRecoveryOptions] = useState<any>(null);
 
   const [pseudo, setPseudo] = useState('');
   const [pin, setPin] = useState('');
@@ -19,6 +20,7 @@ export default function LoginDualPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setRecoveryOptions(null);
 
     try {
       let res;
@@ -40,7 +42,13 @@ export default function LoginDualPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.erreur || 'Erreur de connexion');
+        // ✅ Si password_reset=true, afficher options récupération
+        if (data.password_reset) {
+          setRecoveryOptions(data);
+          setError(data.erreur);
+        } else {
+          setError(data.erreur || 'Erreur de connexion');
+        }
         setLoading(false);
         return;
       }
@@ -86,8 +94,48 @@ export default function LoginDualPage() {
         </div>
 
         {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          <div className={`${recoveryOptions ? 'bg-orange-100 border-orange-400 text-orange-700' : 'bg-red-100 border-red-400 text-red-700'} border px-4 py-3 rounded mb-4`}>
             {error}
+          </div>
+        )}
+
+        {recoveryOptions && (
+          <div className="bg-blue-50 border border-blue-300 rounded-lg p-4 mb-4">
+            <h3 className="font-bold text-blue-900 mb-3">
+              🔑 Options de récupération disponibles:
+            </h3>
+            <div className="space-y-2">
+              {recoveryOptions.recovery_method === 'email' && (
+                <Link
+                  href={`/auth/recover?email=${encodeURIComponent(email)}&method=email`}
+                  className="block p-3 bg-white border border-blue-200 rounded hover:bg-blue-100 transition text-blue-700 font-semibold"
+                >
+                  📧 Récupération par Email
+                </Link>
+              )}
+              {recoveryOptions.recovery_method === 'phrase' && (
+                <Link
+                  href={`/auth/recover?email=${encodeURIComponent(email)}&method=phrase`}
+                  className="block p-3 bg-white border border-blue-200 rounded hover:bg-blue-100 transition text-blue-700 font-semibold"
+                >
+                  🔑 Récupération par Phrase Secrète
+                </Link>
+              )}
+              {recoveryOptions.recovery_method === 'code' && (
+                <Link
+                  href={`/auth/recover?email=${encodeURIComponent(email)}&method=code`}
+                  className="block p-3 bg-white border border-blue-200 rounded hover:bg-blue-100 transition text-blue-700 font-semibold"
+                >
+                  💾 Utiliser Code Récupération
+                </Link>
+              )}
+              <Link
+                href="/auth/migrate-now"
+                className="block p-3 bg-white border border-blue-200 rounded hover:bg-blue-100 transition text-blue-700 font-semibold"
+              >
+                🔄 Créer nouveau Pseudo+PIN
+              </Link>
+            </div>
           </div>
         )}
 
@@ -160,25 +208,29 @@ export default function LoginDualPage() {
           </button>
         </form>
 
-        <div className="mt-6 pt-6 border-t border-gray-200 space-y-2">
-          <a href="/auth/register" className="block text-center text-sm text-blue-600 hover:underline">
-            Pas de compte? S'inscrire
-          </a>
-          
-          {method === 'email' ? (
-            <Link href="/auth/migrate-now" className="block text-center text-sm text-orange-600 hover:underline font-semibold">
-              ⚠️ Mot de passe oublié? Migrer →
-            </Link>
-          ) : (
-            <Link href="/auth/recover" className="block text-center text-sm text-gray-600 hover:underline">
-              Accès perdu? Récupération
-            </Link>
-          )}
-          
-          <a href="/auth/migrate-now" className="block text-center text-sm text-orange-600 hover:underline font-semibold">
-            🔄 Migrer vers Pseudo+PIN
-          </a>
-        </div>
+        {!recoveryOptions && (
+          <div className="mt-6 pt-6 border-t border-gray-200 space-y-2">
+            <a href="/auth/register" className="block text-center text-sm text-blue-600 hover:underline">
+              Pas de compte? S'inscrire
+            </a>
+
+            {method === 'email' && (
+              <div className="text-center text-xs text-gray-600">
+                Mot de passe oublié? Essayez de vous connecter avec un mauvais mot de passe pour voir les options de récupération.
+              </div>
+            )}
+
+            {method === 'pseudo' && (
+              <Link href="/auth/recover" className="block text-center text-sm text-gray-600 hover:underline">
+                Accès perdu? Récupération
+              </Link>
+            )}
+
+            <a href="/auth/migrate-now" className="block text-center text-sm text-orange-600 hover:underline font-semibold">
+              🔄 Migrer vers Pseudo+PIN
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );

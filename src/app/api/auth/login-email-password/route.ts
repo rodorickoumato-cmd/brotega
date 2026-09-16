@@ -31,6 +31,39 @@ export async function POST(req: NextRequest) {
     });
 
     if (authError || !authData.user) {
+      // ✅ Si ancien user: proposer récupération via nouveau système
+      try {
+        const admin = createAdminClient();
+
+        // Check si user a account dans new system (migré)
+        const { data: migratedUser } = await (admin
+          .from("utilisateurs_auth_v2" as any)
+          .select("id, recovery_method, email")
+          .eq("email", validEmail)
+          .maybeSingle()) as any;
+
+        if (migratedUser) {
+          await logAuditEvent({
+            user_id: "anonymous",
+            action: "user_login",
+            resource_type: "auth",
+            status: "failure",
+            ip_address: ip,
+            details: { reason: "invalid_password", email, recovery_available: true },
+          });
+          return NextResponse.json({
+            erreur: "Mot de passe incorrect",
+            password_reset: true,
+            recovery_method: migratedUser.recovery_method || "email",
+            pseudo: migratedUser.email?.split("@")[0],
+            message: "Utilisez les options de récupération du nouveau système",
+          }, { status: 401 });
+        }
+      } catch (err) {
+        console.error("[LOGIN] Recovery check error:", err);
+      }
+
+      // Sinon: erreur simple
       await logAuditEvent({
         user_id: "anonymous",
         action: "user_login",
