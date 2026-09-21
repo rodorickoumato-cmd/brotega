@@ -32,6 +32,13 @@ export default function ComptePage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { router.push("/auth/login?redirect=/compte"); return; }
 
+        // ✅ Charger rôle depuis JWT (déjà dedans!)
+        let userRole = "customer";
+        if (user.user_metadata?.role) {
+          userRole = user.user_metadata.role;
+          console.log('[COMPTE] Role from JWT:', userRole);
+        }
+
         // ✅ Charger profil depuis utilisateurs
         let p = null;
         try {
@@ -49,18 +56,6 @@ export default function ComptePage() {
           c = data ?? [];
         } catch (err) {
           console.warn('[COMPTE] Commandes error');
-        }
-
-        // ✅ Charger rôle depuis utilisateurs_auth_v2
-        let userRole = "customer";
-        try {
-          const { data } = await supabase.from("utilisateurs_auth_v2").select("role").eq("id", user.id).single();
-          if (data?.role) {
-            userRole = data.role;
-            console.log('[COMPTE] Role from auth_v2:', userRole);
-          }
-        } catch (err) {
-          console.warn('[COMPTE] Role not found, using default');
         }
 
         setProfil(p);
