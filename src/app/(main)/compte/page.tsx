@@ -32,24 +32,40 @@ export default function ComptePage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { router.push("/auth/login?redirect=/compte"); return; }
 
-        // ✅ Charger profil + rôle depuis utilisateurs_auth_v2
-        const [{ data: p }, { data: c }, { data: authData }] = await Promise.all([
-          supabase.from("utilisateurs").select("*").eq("id", user.id).single().catch(() => ({ data: null })),
-          supabase.from("commandes").select("*").eq("utilisateur_id", user.id)
-            .order("created_at", { ascending: false }).limit(3),
-          supabase.from("utilisateurs_auth_v2").select("role").eq("id", user.id).single().catch(() => ({ data: null })),
-        ]);
+        // ✅ Charger profil depuis utilisateurs
+        let p = null;
+        try {
+          const { data } = await supabase.from("utilisateurs").select("*").eq("id", user.id).single();
+          p = data;
+        } catch (err) {
+          console.warn('[COMPTE] Profil not found');
+        }
+
+        // ✅ Charger commandes
+        let c: Commande[] = [];
+        try {
+          const { data } = await supabase.from("commandes").select("*").eq("utilisateur_id", user.id)
+            .order("created_at", { ascending: false }).limit(3);
+          c = data ?? [];
+        } catch (err) {
+          console.warn('[COMPTE] Commandes error');
+        }
+
+        // ✅ Charger rôle depuis utilisateurs_auth_v2
+        let userRole = "customer";
+        try {
+          const { data } = await supabase.from("utilisateurs_auth_v2").select("role").eq("id", user.id).single();
+          if (data?.role) {
+            userRole = data.role;
+            console.log('[COMPTE] Role from auth_v2:', userRole);
+          }
+        } catch (err) {
+          console.warn('[COMPTE] Role not found, using default');
+        }
 
         setProfil(p);
-        setCommandes(c ?? []);
-        
-        // ✅ Rôle depuis utilisateurs_auth_v2
-        if (authData?.role) {
-          console.log('[COMPTE] Admin role:', authData.role);
-          setRole(authData.role);
-        } else {
-          setRole("customer");
-        }
+        setCommandes(c);
+        setRole(userRole);
       } catch (err) {
         console.error('[COMPTE] Load error:', err);
       } finally {
@@ -73,7 +89,7 @@ export default function ComptePage() {
   const profilIncomplet = !profil?.email || !profil?.whatsapp;
   const isAdmin = role === "admin";
 
-  console.log('[COMPTE] Role:', role, 'Is Admin:', isAdmin);
+  console.log('[COMPTE] Final role:', role, 'Is admin:', isAdmin);
 
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
