@@ -110,6 +110,19 @@ export default function ComptePage() {
           </Link>
         )}
 
+        {/* ✅ ADMIN PANEL - Lien Administration */}
+        {profil?.role === "admin" && (
+          <Link href="/admin"
+            className="flex items-center gap-3 bg-red-50 border-2 border-red-300 rounded-2xl px-4 py-4 active:scale-95 transition-transform">
+            <span className="text-2xl">⚙️</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-black text-red-700">Administration</p>
+              <p className="text-xs text-red-600">Dashboard admin</p>
+            </div>
+            <span className="text-red-400 text-lg flex-shrink-0 font-black">→</span>
+          </Link>
+        )}
+
         {/* Menu principal */}
         <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
           {[
