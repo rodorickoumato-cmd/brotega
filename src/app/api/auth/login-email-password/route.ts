@@ -35,14 +35,16 @@ export async function POST(req: NextRequest) {
       try {
         const admin = createAdminClient();
 
-        // Check si user a account dans new system (migré)
-        const { data: migratedUser } = await (admin
-          .from("utilisateurs_auth_v2" as any)
-          .select("id, recovery_method, email")
-          .eq("email", validEmail)
-          .maybeSingle()) as any;
+        // Chercher l'utilisateur dans Supabase Auth (legacy)
+        const { data: legacyUsers, error: listError } = await (admin.auth.admin as any).listUsers({
+          pageSize: 1,
+        });
 
-        if (migratedUser) {
+        // Chercher cet email spécifique dans la liste
+        const legacyUser = legacyUsers?.find((u: any) => u.email === validEmail);
+
+        if (legacyUser) {
+          // Email existe dans Supabase Auth → vrai ancien user
           await logAuditEvent({
             user_id: "anonymous",
             action: "user_login",
@@ -54,16 +56,15 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({
             erreur: "Mot de passe incorrect",
             password_reset: true,
-            recovery_method: migratedUser.recovery_method || "email",
-            pseudo: migratedUser.email?.split("@")[0],
+            recovery_options: ["email", "phrase", "code"],
             message: "Utilisez les options de récupération du nouveau système",
           }, { status: 401 });
         }
       } catch (err) {
-        console.error("[LOGIN] Recovery check error:", err);
+        console.error("[LOGIN-EMAIL-PASSWORD] Recovery check error:", err);
       }
 
-      // Sinon: erreur simple
+      // Email n'existe pas ou erreur: retourner erreur générique
       await logAuditEvent({
         user_id: "anonymous",
         action: "user_login",

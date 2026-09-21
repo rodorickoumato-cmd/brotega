@@ -105,30 +105,24 @@ export default function LoginDualPage() {
               🔑 Options de récupération disponibles:
             </h3>
             <div className="space-y-2">
-              {recoveryOptions.recovery_method === 'email' && (
-                <Link
-                  href={`/auth/recover?email=${encodeURIComponent(email)}&method=email`}
-                  className="block p-3 bg-white border border-blue-200 rounded hover:bg-blue-100 transition text-blue-700 font-semibold"
-                >
-                  📧 Récupération par Email
-                </Link>
-              )}
-              {recoveryOptions.recovery_method === 'phrase' && (
-                <Link
-                  href={`/auth/recover?email=${encodeURIComponent(email)}&method=phrase`}
-                  className="block p-3 bg-white border border-blue-200 rounded hover:bg-blue-100 transition text-blue-700 font-semibold"
-                >
-                  🔑 Récupération par Phrase Secrète
-                </Link>
-              )}
-              {recoveryOptions.recovery_method === 'code' && (
-                <Link
-                  href={`/auth/recover?email=${encodeURIComponent(email)}&method=code`}
-                  className="block p-3 bg-white border border-blue-200 rounded hover:bg-blue-100 transition text-blue-700 font-semibold"
-                >
-                  💾 Utiliser Code Récupération
-                </Link>
-              )}
+              <Link
+                href={`/auth/recover?email=${encodeURIComponent(email)}&method=email`}
+                className="block p-3 bg-white border border-blue-200 rounded hover:bg-blue-100 transition text-blue-700 font-semibold"
+              >
+                📧 Récupération par Email
+              </Link>
+              <Link
+                href={`/auth/recover?email=${encodeURIComponent(email)}&method=phrase`}
+                className="block p-3 bg-white border border-blue-200 rounded hover:bg-blue-100 transition text-blue-700 font-semibold"
+              >
+                🔑 Récupération par Phrase Secrète
+              </Link>
+              <Link
+                href={`/auth/recover?email=${encodeURIComponent(email)}&method=code`}
+                className="block p-3 bg-white border border-blue-200 rounded hover:bg-blue-100 transition text-blue-700 font-semibold"
+              >
+                💾 Utiliser Code Récupération
+              </Link>
               <Link
                 href="/auth/migrate-now"
                 className="block p-3 bg-white border border-blue-200 rounded hover:bg-blue-100 transition text-blue-700 font-semibold"
