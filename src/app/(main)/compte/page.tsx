@@ -102,7 +102,7 @@ export default function ComptePage() {
             )}
             <span className={`mt-1.5 inline-block text-xs font-bold px-2.5 py-0.5 rounded-full ${
               role === "vendeur" ? "bg-yellow-400 text-yellow-900"
-              : role === "admin" ? "bg-red-400 text-white"
+              : role === "admin" ? "bg-blue-500 text-white"
               : "bg-white/20 text-white"
             }`}>
               {role === "vendeur" ? "Vendeur"
@@ -138,13 +138,13 @@ export default function ComptePage() {
         {/* ✅ ADMIN PANEL - Lien Administration */}
         {isAdmin && (
           <Link href="/admin"
-            className="flex items-center gap-3 bg-red-50 border-2 border-red-300 rounded-2xl px-4 py-4 active:scale-95 transition-transform">
+            className="flex items-center gap-3 bg-blue-50 border-2 border-blue-300 rounded-2xl px-4 py-4 active:scale-95 transition-transform">
             <span className="text-2xl">⚙️</span>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-black text-red-700">Administration</p>
-              <p className="text-xs text-red-600">Dashboard admin</p>
+              <p className="text-sm font-black text-blue-700">Administration</p>
+              <p className="text-xs text-blue-600">Dashboard admin</p>
             </div>
-            <span className="text-red-400 text-lg flex-shrink-0 font-black">→</span>
+            <span className="text-blue-400 text-lg flex-shrink-0 font-black">→</span>
           </Link>
         )}
 
