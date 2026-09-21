@@ -51,6 +51,14 @@ export default function LoginDualPage() {
         return;
       }
 
+      // ✅ Si setup_pseudo_pin_required, rediriger vers setup
+      if (data.setup_pseudo_pin_required) {
+        localStorage.setItem('auth_token', data.token);
+        router.push(`/auth/setup-pseudo-pin?email=${encodeURIComponent(email)}`);
+        return;
+      }
+
+      // ✅ Connexion normale
       localStorage.setItem('auth_token', data.token);
       document.cookie = `auth_token=${data.token}; path=/; secure; samesite=strict`;
 
