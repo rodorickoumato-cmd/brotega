@@ -31,39 +31,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (authError || !authData.user) {
-      // ✅ Si ancien user: proposer récupération via nouveau système
-      try {
-        const admin = createAdminClient();
-
-        // Check si user a account dans new system (migré)
-        const { data: migratedUser } = await (admin
-          .from("utilisateurs_auth_v2" as any)
-          .select("id, recovery_method, email")
-          .eq("email", validEmail)
-          .maybeSingle()) as any;
-
-        if (migratedUser) {
-          await logAuditEvent({
-            user_id: "anonymous",
-            action: "user_login",
-            resource_type: "auth",
-            status: "failure",
-            ip_address: ip,
-            details: { reason: "invalid_password", email, recovery_available: true },
-          });
-          return NextResponse.json({
-            erreur: "Mot de passe incorrect",
-            password_reset: true,
-            recovery_method: migratedUser.recovery_method || "email",
-            pseudo: migratedUser.email?.split("@")[0],
-            message: "Utilisez les options de récupération du nouveau système",
-          }, { status: 401 });
-        }
-      } catch (err) {
-        console.error("[LOGIN] Recovery check error:", err);
-      }
-
-      // Sinon: erreur simple
+      // Email/password incorrect
       await logAuditEvent({
         user_id: "anonymous",
         action: "user_login",
@@ -72,37 +40,82 @@ export async function POST(req: NextRequest) {
         ip_address: ip,
         details: { reason: "invalid_credentials", email },
       });
-      return NextResponse.json({ erreur: "Email ou password incorrect" }, { status: 401 });
+      return NextResponse.json({
+        erreur: "Email ou mot de passe incorrect",
+        password_reset_available: true,
+      }, { status: 401 });
     }
 
     const userId = authData.user.id;
     const admin = createAdminClient();
 
-    // Check si existe dans new system
+    // ✅ Vérifier si user a DÉJÀ Pseudo+PIN
     const { data: existingUser } = await (admin
       .from("utilisateurs_auth_v2" as any)
-      .select("id, pseudo, role")
+      .select("id, pseudo, pin_hash, role")
       .eq("id", userId)
       .maybeSingle()) as any;
 
-    let user = existingUser;
-    if (!user) {
-      const { data: newUser } = await (admin
-        .from("utilisateurs_auth_v2" as any)
-        .insert({
-          id: userId,
-          email: validEmail,
-          pseudo: validEmail.split("@")[0],
-          role: "customer",
-          actif: true,
-          migrated_from_supabase_id: userId,
-        })
-        .select("id, pseudo, role")
-        .single()) as any;
-      user = newUser;
+    // ✅ Si user n'existe pas encore OU n'a pas de Pseudo+PIN
+    if (!existingUser || !existingUser.pseudo) {
+      // Créer entrée vide (email seulement)
+      if (!existingUser) {
+        await (admin
+          .from("utilisateurs_auth_v2" as any)
+          .insert({
+            id: userId,
+            email: validEmail,
+            role: "customer",
+            actif: true,
+            migrated_from_supabase_id: userId,
+            has_dual_auth: false,
+          })) as any;
+      }
+
+      // ✅ IMPORTANT: Mettre le rôle dans user_metadata Supabase Auth
+      try {
+        await (admin.auth.admin as any).updateUserById(userId, {
+          user_metadata: { role: "customer" },
+        });
+      } catch (err) {
+        console.warn(`[LOGIN-EMAIL-PASSWORD] Failed to update user_metadata:`, err);
+      }
+
+      // Générer JWT temporaire
+      const tempToken = generateJWT(userId, "customer");
+
+      await logAuditEvent({
+        user_id: userId,
+        action: "user_login",
+        resource_type: "auth",
+        status: "success",
+        ip_address: ip,
+        details: { method: "email_password", email, setup_required: true },
+      });
+
+      // Proposer création Pseudo+PIN
+      return NextResponse.json({
+        succes: true,
+        token: tempToken,
+        user: { id: userId, email: validEmail },
+        setup_pseudo_pin_required: true,
+        message: "Créez un Pseudo+PIN pour plus de sécurité",
+      });
     }
 
-    const token = generateJWT(userId, user?.role || "customer");
+    // ✅ User a déjà Pseudo+PIN → connexion normale
+    const userRole = existingUser.role || "customer";
+
+    // ✅ IMPORTANT: Mettre le rôle à jour dans user_metadata Supabase Auth
+    try {
+      await (admin.auth.admin as any).updateUserById(userId, {
+        user_metadata: { role: userRole },
+      });
+    } catch (err) {
+      console.warn(`[LOGIN-EMAIL-PASSWORD] Failed to update user_metadata:`, err);
+    }
+
+    const token = generateJWT(userId, userRole);
 
     await logAuditEvent({
       user_id: userId,
@@ -110,13 +123,13 @@ export async function POST(req: NextRequest) {
       resource_type: "auth",
       status: "success",
       ip_address: ip,
-      details: { method: "email_password", email },
+      details: { method: "email_password", email, role: userRole },
     });
 
     return NextResponse.json({
       succes: true,
       token,
-      user: { id: userId, email: validEmail, pseudo: user?.pseudo },
+      user: { id: userId, email: validEmail, pseudo: existingUser.pseudo, role: existingUser.role },
     });
   } catch (err: any) {
     return NextResponse.json({ erreur: err.message }, { status: 500 });

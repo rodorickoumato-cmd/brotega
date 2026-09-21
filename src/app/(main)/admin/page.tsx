@@ -1,239 +1,221 @@
-"use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { getStatsAdmin, getDashboardEnrichi } from "@/app/actions/admin";
-import { formatXAF } from "@/lib/utils";
-import Link from "next/link";
+'use client';
 
-type Stats = {
-  totalCommandes: number;
-  commandesLivrees: number;
-  commandesEnCours: number;
-  totalVendeurs: number;
-  vendeursVerifies: number;
-  vendeursEnAttente: number;
-  chiffreAffaires: number;
-  paiementsReussis: number;
-};
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
-type DashboardEnrichi = {
-  aujourdhui: { caJour: number; commandesJour: number; clientsJour: number; vendeursJour: number };
-  aTraiter: {
-    commandesEnAttente: number; commandesAExpedier: number; commandesLitige: number;
-    vendeursEnAttente: number; stockFaible: number; reclamationsOuvertes: number;
-    signalementsProduits: number; retraitsAPayer: number;
-  };
-  alertes: {
-    echecsAirtel30min: number; echecsMoov30min: number;
-    escrowEnRetard: number;
-  };
-};
+interface UserInfo {
+  id: string;
+  email: string;
+  role: string;
+  pseudo?: string;
+}
 
-type LigneATraiter = { label: string; valeur: number; href?: string };
-type LigneAlerte = { label: string; ok: boolean; detail: string };
-
-export default function AdminPage() {
+export default function AdminDashboard() {
   const router = useRouter();
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [dashboard, setDashboard] = useState<DashboardEnrichi | null>(null);
-  const [chargement, setChargement] = useState(true);
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    const supabase = createClient();
-    (async () => {
+    const verifyAdmin = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { router.push("/auth/login"); return; }
-        const { data: profil } = await supabase
-          .from("utilisateurs").select("role").eq("id", user.id).single();
-        if (profil?.role !== "admin") { router.push("/"); return; }
+        const token = localStorage.getItem('auth_token');
 
-        const [resStats, resDashboard] = await Promise.all([getStatsAdmin(), getDashboardEnrichi()]);
-        if (resStats.stats) setStats(resStats.stats);
-        if (resDashboard.data) setDashboard(resDashboard.data as DashboardEnrichi);
-      } catch {
-        // Erreur réseau silencieuse — affiche stats vides
+        if (!token) {
+          setError('Non authentifié');
+          setTimeout(() => router.push('/auth/login-dual'), 1500);
+          return;
+        }
+
+        // ✅ Décoder JWT pour obtenir user info
+        try {
+          const parts = token.split('.');
+          if (parts.length !== 3) throw new Error('Token invalide');
+
+          const decoded = JSON.parse(
+            Buffer.from(parts[1], 'base64').toString('utf-8')
+          );
+
+          // ✅ Vérifier rôle admin
+          if (decoded.role !== 'admin') {
+            setError(`Accès refusé. Rôle: ${decoded.role}`);
+            setTimeout(() => router.push('/'), 2000);
+            return;
+          }
+
+          setUser(decoded);
+        } catch (err) {
+          setError('Token invalide');
+          localStorage.removeItem('auth_token');
+          setTimeout(() => router.push('/auth/login-dual'), 1500);
+        }
       } finally {
-        setChargement(false);
+        setLoading(false);
       }
-    })();
+    };
+
+    verifyAdmin();
   }, [router]);
 
-  const cartes = stats ? [
-    { label: "Commandes totales", valeur: stats.totalCommandes, sub: `${stats.commandesEnCours} en cours`, couleur: "blue", icon: "📦" },
-    { label: "Chiffre d'affaires", valeur: formatXAF(stats.chiffreAffaires), sub: `${stats.paiementsReussis} paiements réussis`, couleur: "green", icon: "💰" },
-    { label: "Vendeurs", valeur: stats.totalVendeurs, sub: `${stats.vendeursEnAttente} en attente`, couleur: stats.vendeursEnAttente > 0 ? "orange" : "gray", icon: "🏪" },
-    { label: "Livraisons", valeur: stats.commandesLivrees, sub: "commandes livrées", couleur: "purple", icon: "🚚" },
-  ] : [];
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-5xl mb-4">⏳</div>
+          <p className="text-gray-600 font-semibold">Vérification des droits...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const lignesATraiter: LigneATraiter[] = dashboard ? [
-    { label: "Commandes en attente de paiement", valeur: dashboard.aTraiter.commandesEnAttente, href: "/admin/commandes" },
-    { label: "Commandes à expédier",              valeur: dashboard.aTraiter.commandesAExpedier, href: "/admin/commandes" },
-    { label: "Commandes en litige",                valeur: dashboard.aTraiter.commandesLitige,    href: "/admin/commandes" },
-    { label: "Vendeurs en attente de validation",  valeur: dashboard.aTraiter.vendeursEnAttente,  href: "/admin/vendeurs" },
-    { label: "Retraits vendeurs à payer",           valeur: dashboard.aTraiter.retraitsAPayer,     href: "/admin/retraits" },
-    { label: "Réclamations ouvertes",              valeur: dashboard.aTraiter.reclamationsOuvertes, href: "/admin/reclamations" },
-    { label: "Produits signalés",                   valeur: dashboard.aTraiter.signalementsProduits, href: "/admin/produits" },
-    { label: `Produits en stock faible (< ${5})`,  valeur: dashboard.aTraiter.stockFaible }, // pas de page dédiée — nécessiterait une vue catalogue complète, hors scope Phase 2
-  ] : [];
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-8 text-center">
+          <div className="text-5xl mb-4">⛔</div>
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Accès refusé</h1>
+          <p className="text-gray-700 mb-6">{error}</p>
+          <Link
+            href="/"
+            className="inline-block px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition"
+          >
+            ← Retour à l'accueil
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
-  const lignesAlertes: LigneAlerte[] = dashboard ? [
-    {
-      label: "Singpay — Airtel Money",
-      ok: dashboard.alertes.echecsAirtel30min === 0,
-      detail: dashboard.alertes.echecsAirtel30min > 0
-        ? `${dashboard.alertes.echecsAirtel30min} échec(s) sur les 30 dernières minutes`
-        : "Aucun échec récent",
-    },
-    {
-      label: "Singpay — Moov Money",
-      ok: dashboard.alertes.echecsMoov30min === 0,
-      detail: dashboard.alertes.echecsMoov30min > 0
-        ? `${dashboard.alertes.echecsMoov30min} échec(s) sur les 30 dernières minutes`
-        : "Aucun échec récent",
-    },
-    {
-      label: "Libération automatique escrow",
-      ok: dashboard.alertes.escrowEnRetard === 0,
-      detail: dashboard.alertes.escrowEnRetard > 0
-        ? `${dashboard.alertes.escrowEnRetard} commande(s) en retard — le cron a peut-être échoué`
-        : "À jour",
-    },
-  ] : [];
-
-  const sections = [
-    { href: "/admin/vendeurs",     icon: "🏪", titre: "Boutiques",       desc: "Valider, suspendre, supprimer des boutiques" },
-    { href: "/admin/utilisateurs", icon: "👥", titre: "Utilisateurs",    desc: "Changer rôle, bannir, gérer les comptes" },
-    { href: "/admin/livreurs",     icon: "🛵", titre: "Livreurs",        desc: "Stats, gains, suspendre des livreurs" },
-    { href: "/admin/commandes",    icon: "📦", titre: "Commandes",       desc: "Modifier statut, rembourser, libérer escrow" },
-    { href: "/admin/paiements",    icon: "💳", titre: "Paiements",       desc: "Historique Singpay — Airtel Money & Moov Money" },
-    { href: "/admin/livraisons",   icon: "🚚", titre: "Livraisons",      desc: "Assigner les livreurs aux commandes" },
-    { href: "/admin/reclamations",     icon: "⚠️",  titre: "Réclamations",        desc: "Résoudre les litiges" },
-    { href: "/admin/configuration",    icon: "⚙️",  titre: "Configuration",       desc: "Tarifs, paiements, maintenance, bannière" },
-    { href: "/admin/categories",       icon: "🏷️",  titre: "Catégories",          desc: "Ajouter, modifier, réorganiser les catégories" },
-    { href: "/admin/tarifs-livraison", icon: "🗺️",  titre: "Tarifs Livraison",    desc: "Modifier les prix inter-provinces et villes" },
-    { href: "/admin/candidatures",     icon: "🏍️",  titre: "Candidatures Livreur", desc: "Approuver les demandes de nouveaux livreurs" },
-    { href: "/admin/coupons",          icon: "🏷️",  titre: "Coupons",             desc: "Créer et gérer les codes de réduction" },
-    { href: "/admin/produits",         icon: "📦",  titre: "Produits signalés",   desc: "Traiter les signalements, désactiver un produit" },
-    { href: "/admin/retraits",         icon: "💸",  titre: "Retraits vendeurs",   desc: "Payer ou rejeter les demandes de retrait" },
-    { href: "/admin/audit",            icon: "📜",  titre: "Journal d'audit",     desc: "Qui a modifié quoi, et quand" },
-  ];
-
-  const couleurMap: Record<string, string> = {
-    blue: "bg-blue-50 border-blue-200 text-blue-700",
-    green: "bg-green-50 border-green-200 text-green-700",
-    orange: "bg-orange-50 border-orange-200 text-orange-700",
-    gray: "bg-gray-50 border-gray-200 text-gray-700",
-    purple: "bg-purple-50 border-purple-200 text-purple-700",
-  };
+  if (!user) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen bg-[#F7F8FA]">
-      <div className="bg-[#E63946] px-5 pt-5 pb-6">
-        <p className="text-white/70 text-sm">J'adore la Famille</p>
-        <h1 className="text-2xl font-black text-white">Dashboard Admin</h1>
-        <p className="text-white/70 text-sm mt-1">Vue d'ensemble de la plateforme</p>
-      </div>
-
-      <div className="px-4 py-5 space-y-5">
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-3">
-          {chargement
-            ? Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl p-4 animate-pulse h-24" />
-              ))
-            : cartes.map((c) => (
-                <div key={c.label} className={`bg-white rounded-2xl p-4 border ${couleurMap[c.couleur]}`}>
-                  <div className="text-2xl mb-1">{c.icon}</div>
-                  <div className="text-xl font-black">{c.valeur}</div>
-                  <div className="text-xs font-semibold mt-0.5">{c.label}</div>
-                  <div className="text-xs opacity-70 mt-0.5">{c.sub}</div>
-                </div>
-              ))}
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-4xl font-bold text-gray-800 mb-2">
+                👨‍💼 Dashboard Administrateur
+              </h1>
+              <p className="text-gray-600">Bienvenue {user.pseudo || user.email}</p>
+            </div>
+            <div className="bg-green-100 border border-green-300 rounded-lg p-4 text-center">
+              <p className="text-sm text-gray-600">Statut</p>
+              <p className="text-xl font-bold text-green-600">✅ ADMIN</p>
+            </div>
+          </div>
         </div>
 
-        {/* Aujourd'hui */}
-        {!chargement && dashboard && (
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100">
-              <h2 className="font-bold text-gray-800">Aujourd&apos;hui</h2>
-            </div>
-            <div className="grid grid-cols-4 divide-x divide-gray-100">
-              {[
-                { label: "CA",      valeur: formatXAF(dashboard.aujourdhui.caJour) },
-                { label: "Commandes", valeur: dashboard.aujourdhui.commandesJour },
-                { label: "Clients",   valeur: dashboard.aujourdhui.clientsJour },
-                { label: "Vendeurs",  valeur: dashboard.aujourdhui.vendeursJour },
-              ].map((s) => (
-                <div key={s.label} className="px-2 py-3 text-center">
-                  <div className="text-sm font-black text-gray-800">{s.valeur}</div>
-                  <div className="text-[10px] text-gray-400 mt-0.5">{s.label}</div>
-                </div>
-              ))}
-            </div>
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow p-6">
+            <p className="text-gray-600 text-sm mb-2">👥 Utilisateurs</p>
+            <p className="text-3xl font-bold text-blue-600">---</p>
+            <p className="text-xs text-gray-500 mt-2">À développer</p>
           </div>
-        )}
-
-        {/* À traiter */}
-        {!chargement && dashboard && (
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100">
-              <h2 className="font-bold text-gray-800">À traiter</h2>
-            </div>
-            <div className="divide-y divide-gray-50">
-              {lignesATraiter.map((l) => {
-                const contenu = (
-                  <div className="px-4 py-3 flex items-center justify-between">
-                    <span className="text-sm text-gray-600">{l.label}</span>
-                    <span className={`text-sm font-bold px-2 py-0.5 rounded-full ${l.valeur > 0 ? "bg-orange-50 text-orange-600" : "bg-gray-50 text-gray-400"}`}>
-                      {l.valeur}
-                    </span>
-                  </div>
-                );
-                return l.href
-                  ? <Link key={l.label} href={l.href} className="block hover:bg-gray-50 transition-colors">{contenu}</Link>
-                  : <div key={l.label}>{contenu}</div>;
-              })}
-            </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <p className="text-gray-600 text-sm mb-2">🛍️ Commandes</p>
+            <p className="text-3xl font-bold text-green-600">---</p>
+            <p className="text-xs text-gray-500 mt-2">À développer</p>
           </div>
-        )}
-
-        {/* Alertes / Santé */}
-        {!chargement && dashboard && (
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100">
-              <h2 className="font-bold text-gray-800">Santé de la plateforme</h2>
-            </div>
-            <div className="divide-y divide-gray-50">
-              {lignesAlertes.map((l) => (
-                <div key={l.label} className="px-4 py-3 flex items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm text-gray-700">{l.label}</p>
-                    <p className={`text-xs mt-0.5 ${l.ok ? "text-gray-400" : "text-red-600 font-semibold"}`}>{l.detail}</p>
-                  </div>
-                  <span className={`text-lg flex-shrink-0 ${l.ok ? "" : "animate-pulse"}`}>{l.ok ? "🟢" : "🔴"}</span>
-                </div>
-              ))}
-            </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <p className="text-gray-600 text-sm mb-2">💰 Revenus</p>
+            <p className="text-3xl font-bold text-purple-600">---</p>
+            <p className="text-xs text-gray-500 mt-2">À développer</p>
           </div>
-        )}
+          <div className="bg-white rounded-lg shadow p-6">
+            <p className="text-gray-600 text-sm mb-2">📊 Vendeurs</p>
+            <p className="text-3xl font-bold text-orange-600">---</p>
+            <p className="text-xs text-gray-500 mt-2">À développer</p>
+          </div>
+        </div>
 
-        {/* Navigation */}
-        <div className="space-y-2">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider px-1">Gestion</p>
-          {sections.map((s) => (
-            <Link key={s.href} href={s.href}>
-              <div className="bg-white rounded-2xl px-4 py-4 flex items-center gap-4 hover:shadow-sm transition-all border border-gray-100 active:scale-[0.98]">
-                <span className="text-2xl">{s.icon}</span>
-                <div className="flex-1">
-                  <p className="font-bold text-gray-800">{s.titre}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
-                </div>
-                <span className="text-gray-400 text-lg">›</span>
-              </div>
-            </Link>
-          ))}
+        {/* Menu Admin */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Link
+            href="/admin/users"
+            className="bg-white rounded-lg shadow hover:shadow-lg transition p-6 cursor-pointer"
+          >
+            <p className="text-3xl mb-2">👥</p>
+            <h3 className="text-lg font-bold text-gray-800 mb-1">Utilisateurs</h3>
+            <p className="text-sm text-gray-600">Gérer les utilisateurs</p>
+          </Link>
+
+          <Link
+            href="/admin/orders"
+            className="bg-white rounded-lg shadow hover:shadow-lg transition p-6 cursor-pointer"
+          >
+            <p className="text-3xl mb-2">📦</p>
+            <h3 className="text-lg font-bold text-gray-800 mb-1">Commandes</h3>
+            <p className="text-sm text-gray-600">Voir toutes les commandes</p>
+          </Link>
+
+          <Link
+            href="/admin/vendors"
+            className="bg-white rounded-lg shadow hover:shadow-lg transition p-6 cursor-pointer"
+          >
+            <p className="text-3xl mb-2">🏪</p>
+            <h3 className="text-lg font-bold text-gray-800 mb-1">Vendeurs</h3>
+            <p className="text-sm text-gray-600">Approuver/gérer vendeurs</p>
+          </Link>
+
+          <Link
+            href="/admin/settings"
+            className="bg-white rounded-lg shadow hover:shadow-lg transition p-6 cursor-pointer"
+          >
+            <p className="text-3xl mb-2">⚙️</p>
+            <h3 className="text-lg font-bold text-gray-800 mb-1">Configuration</h3>
+            <p className="text-sm text-gray-600">Paramètres système</p>
+          </Link>
+
+          <Link
+            href="/admin/logs"
+            className="bg-white rounded-lg shadow hover:shadow-lg transition p-6 cursor-pointer"
+          >
+            <p className="text-3xl mb-2">📋</p>
+            <h3 className="text-lg font-bold text-gray-800 mb-1">Logs</h3>
+            <p className="text-sm text-gray-600">Historique d'audit</p>
+          </Link>
+
+          <Link
+            href="/admin/migration-stats"
+            className="bg-white rounded-lg shadow hover:shadow-lg transition p-6 cursor-pointer"
+          >
+            <p className="text-3xl mb-2">📊</p>
+            <h3 className="text-lg font-bold text-gray-800 mb-1">Migration</h3>
+            <p className="text-sm text-gray-600">Stats de migration</p>
+          </Link>
+        </div>
+
+        {/* Info Box */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+          <h3 className="font-bold text-blue-900 mb-2">ℹ️ Information</h3>
+          <p className="text-sm text-blue-800">
+            Vous êtes connecté en tant qu'administrateur. Tous les accès admin vous sont disponibles.
+            À la prochaine connexion, vous pourrez utiliser Pseudo+PIN OU Email+Password.
+          </p>
+        </div>
+
+        {/* User Info */}
+        <div className="bg-white rounded-lg shadow p-6 text-center">
+          <p className="text-sm text-gray-600 mb-2">ID Utilisateur</p>
+          <p className="font-mono text-xs text-gray-500 break-all">{user.id}</p>
+          <p className="text-sm text-gray-600 mt-4 mb-2">Email</p>
+          <p className="text-sm text-gray-800">{user.email}</p>
+          <button
+            onClick={() => {
+              localStorage.removeItem('auth_token');
+              document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
+              router.push('/auth/login-dual');
+            }}
+            className="mt-6 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-semibold transition"
+          >
+            🚪 Déconnexion
+          </button>
         </div>
       </div>
     </div>

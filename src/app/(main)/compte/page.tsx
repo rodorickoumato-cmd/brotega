@@ -21,6 +21,7 @@ const STATUT_STYLE: Record<string, { label: string; cls: string }> = {
 export default function ComptePage() {
   const router = useRouter();
   const [profil, setProfil] = useState<Utilisateur | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [commandes, setCommandes] = useState<Commande[]>([]);
   const [chargement, setChargement] = useState(true);
 
@@ -31,16 +32,37 @@ export default function ComptePage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { router.push("/auth/login?redirect=/compte"); return; }
 
-        const [{ data: p }, { data: c }] = await Promise.all([
-          supabase.from("utilisateurs").select("*").eq("id", user.id).single(),
-          supabase.from("commandes").select("*").eq("utilisateur_id", user.id)
-            .order("created_at", { ascending: false }).limit(3),
-        ]);
+        // ✅ Charger rôle depuis JWT (déjà dedans!)
+        let userRole = "customer";
+        if (user.user_metadata?.role) {
+          userRole = user.user_metadata.role;
+          console.log('[COMPTE] Role from JWT:', userRole);
+        }
+
+        // ✅ Charger profil depuis utilisateurs
+        let p = null;
+        try {
+          const { data } = await supabase.from("utilisateurs").select("*").eq("id", user.id).single();
+          p = data;
+        } catch (err) {
+          console.warn('[COMPTE] Profil not found');
+        }
+
+        // ✅ Charger commandes
+        let c: Commande[] = [];
+        try {
+          const { data } = await supabase.from("commandes").select("*").eq("utilisateur_id", user.id)
+            .order("created_at", { ascending: false }).limit(3);
+          c = data ?? [];
+        } catch (err) {
+          console.warn('[COMPTE] Commandes error');
+        }
 
         setProfil(p);
-        setCommandes(c ?? []);
-      } catch {
-        // En cas d'erreur réseau, on affiche quand même la page (vide)
+        setCommandes(c);
+        setRole(userRole);
+      } catch (err) {
+        console.error('[COMPTE] Load error:', err);
       } finally {
         setChargement(false);
       }
@@ -60,6 +82,9 @@ export default function ComptePage() {
   }
 
   const profilIncomplet = !profil?.email || !profil?.whatsapp;
+  const isAdmin = role === "admin";
+
+  console.log('[COMPTE] Final role:', role, 'Is admin:', isAdmin);
 
   return (
     <div className="min-h-screen bg-[#F7F8FA]">
@@ -76,14 +101,14 @@ export default function ComptePage() {
               <p className="text-white/60 text-xs truncate">{profil.email}</p>
             )}
             <span className={`mt-1.5 inline-block text-xs font-bold px-2.5 py-0.5 rounded-full ${
-              profil?.role === "vendeur" ? "bg-yellow-400 text-yellow-900"
-              : profil?.role === "admin" ? "bg-red-400 text-white"
+              role === "vendeur" ? "bg-yellow-400 text-yellow-900"
+              : role === "admin" ? "bg-red-400 text-white"
               : "bg-white/20 text-white"
             }`}>
-              {profil?.role === "acheteur" ? "Acheteur"
-               : profil?.role === "vendeur" ? "Vendeur"
-               : profil?.role === "livreur" ? "Livreur"
-               : "Admin"}
+              {role === "vendeur" ? "Vendeur"
+               : role === "livreur" ? "Livreur"
+               : role === "admin" ? "Admin"
+               : "Acheteur"}
             </span>
           </div>
         </div>
@@ -110,6 +135,19 @@ export default function ComptePage() {
           </Link>
         )}
 
+        {/* ✅ ADMIN PANEL - Lien Administration */}
+        {isAdmin && (
+          <Link href="/admin"
+            className="flex items-center gap-3 bg-red-50 border-2 border-red-300 rounded-2xl px-4 py-4 active:scale-95 transition-transform">
+            <span className="text-2xl">⚙️</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-black text-red-700">Administration</p>
+              <p className="text-xs text-red-600">Dashboard admin</p>
+            </div>
+            <span className="text-red-400 text-lg flex-shrink-0 font-black">→</span>
+          </Link>
+        )}
+
         {/* Menu principal */}
         <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
           {[
@@ -118,10 +156,10 @@ export default function ComptePage() {
             { icon: "❤️", label: "Mes favoris", href: "/compte/favoris" },
             { icon: "📍", label: "Mes adresses", href: "/compte/adresses" },
             { icon: "🔒", label: "Sécurité", href: "/compte/securite" },
-            ...(profil?.role === "vendeur"
+            ...(role === "vendeur"
               ? [{ icon: "🏪", label: "Dashboard vendeur", href: "/vendor/dashboard" }]
               : [{ icon: "🏪", label: "Devenir vendeur", href: "/vendor/register" }]),
-            ...(profil?.role === "livreur"
+            ...(role === "livreur"
               ? [{ icon: "🏍️", label: "Dashboard livreur", href: "/livreur" }]
               : [{ icon: "🏍️", label: "Devenir livreur", href: "/devenir-livreur" }]),
           ].map((item, i, arr) => (
