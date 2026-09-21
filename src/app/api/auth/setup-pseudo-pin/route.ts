@@ -89,8 +89,19 @@ export async function POST(req: NextRequest) {
       updatedUser = data;
     }
 
+    // ✅ IMPORTANT: Mettre le rôle dans user_metadata Supabase Auth
+    const userRole = updatedUser?.role || "customer";
+    try {
+      await (admin.auth.admin as any).updateUserById(userId, {
+        user_metadata: { role: userRole },
+      });
+      console.log(`[SETUP-PSEUDO-PIN] Updated user_metadata role=${userRole}`);
+    } catch (err) {
+      console.warn(`[SETUP-PSEUDO-PIN] Failed to update user_metadata:`, err);
+    }
+
     // ✅ Générer JWT
-    const token = generateJWT(userId, updatedUser?.role || "customer");
+    const token = generateJWT(userId, userRole);
 
     // ✅ Log
     await logAuditEvent({
@@ -99,7 +110,7 @@ export async function POST(req: NextRequest) {
       resource_type: "auth",
       status: "success",
       ip_address: ip,
-      details: { method: "setup_pseudo_pin", pseudo: validPseudo },
+      details: { method: "setup_pseudo_pin", pseudo: validPseudo, role: userRole },
     });
 
     return NextResponse.json({

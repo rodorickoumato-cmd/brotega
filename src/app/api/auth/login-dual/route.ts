@@ -87,7 +87,18 @@ export async function POST(req: NextRequest) {
 
       if (migratedUser) {
         // ✅ User already migrated - use new JWT
-        const token = generateJWT(migratedUser.id, migratedUser.role);
+        const userRole = migratedUser.role || "customer";
+
+        // ✅ IMPORTANT: Mettre à jour user_metadata Supabase Auth
+        try {
+          await (admin.auth.admin as any).updateUserById(migratedUser.id, {
+            user_metadata: { role: userRole },
+          });
+        } catch (err) {
+          console.warn(`[LOGIN-DUAL] Failed to update user_metadata:`, err);
+        }
+
+        const token = generateJWT(migratedUser.id, userRole);
 
         await logAuditEvent({
           user_id: migratedUser.id,
@@ -95,7 +106,7 @@ export async function POST(req: NextRequest) {
           resource_type: "user",
           status: "success",
           ip_address: ip,
-          details: { method: "email_legacy" },
+          details: { method: "email_legacy", role: userRole },
         });
 
         await resetRateLimit(ip, RATE_LIMITS.LOGIN);
@@ -109,6 +120,15 @@ export async function POST(req: NextRequest) {
       }
 
       // ✅ User hasn't migrated yet - generate JWT from Supabase user
+      // ✅ IMPORTANT: Mettre à jour user_metadata Supabase Auth
+      try {
+        await (admin.auth.admin as any).updateUserById(supabaseUserId, {
+          user_metadata: { role: "customer" },
+        });
+      } catch (err) {
+        console.warn(`[LOGIN-DUAL] Failed to update user_metadata:`, err);
+      }
+
       const token = generateJWT(supabaseUserId, "customer");
 
       await logAuditEvent({
@@ -186,8 +206,18 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      // ✅ IMPORTANT: Mettre à jour user_metadata Supabase Auth
+      const userRole = user.role || "customer";
+      try {
+        await (admin.auth.admin as any).updateUserById(user.id, {
+          user_metadata: { role: userRole },
+        });
+      } catch (err) {
+        console.warn(`[LOGIN-DUAL] Failed to update user_metadata:`, err);
+      }
+
       // ✅ Generate JWT
-      const token = generateJWT(user.id, user.role);
+      const token = generateJWT(user.id, userRole);
 
       await logAuditEvent({
         user_id: user.id,
@@ -195,7 +225,7 @@ export async function POST(req: NextRequest) {
         resource_type: "user",
         status: "success",
         ip_address: ip,
-        details: { method: "pseudo" },
+        details: { method: "pseudo", role: userRole },
       });
 
       await resetRateLimit(ip, RATE_LIMITS.LOGIN);

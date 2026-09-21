@@ -72,6 +72,15 @@ export async function POST(req: NextRequest) {
           })) as any;
       }
 
+      // ✅ IMPORTANT: Mettre le rôle dans user_metadata Supabase Auth
+      try {
+        await (admin.auth.admin as any).updateUserById(userId, {
+          user_metadata: { role: "customer" },
+        });
+      } catch (err) {
+        console.warn(`[LOGIN-EMAIL-PASSWORD] Failed to update user_metadata:`, err);
+      }
+
       // Générer JWT temporaire
       const tempToken = generateJWT(userId, "customer");
 
@@ -95,7 +104,18 @@ export async function POST(req: NextRequest) {
     }
 
     // ✅ User a déjà Pseudo+PIN → connexion normale
-    const token = generateJWT(userId, existingUser.role || "customer");
+    const userRole = existingUser.role || "customer";
+
+    // ✅ IMPORTANT: Mettre le rôle à jour dans user_metadata Supabase Auth
+    try {
+      await (admin.auth.admin as any).updateUserById(userId, {
+        user_metadata: { role: userRole },
+      });
+    } catch (err) {
+      console.warn(`[LOGIN-EMAIL-PASSWORD] Failed to update user_metadata:`, err);
+    }
+
+    const token = generateJWT(userId, userRole);
 
     await logAuditEvent({
       user_id: userId,
@@ -103,7 +123,7 @@ export async function POST(req: NextRequest) {
       resource_type: "auth",
       status: "success",
       ip_address: ip,
-      details: { method: "email_password", email },
+      details: { method: "email_password", email, role: userRole },
     });
 
     return NextResponse.json({
