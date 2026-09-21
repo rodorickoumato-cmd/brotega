@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (authError || !authData.user) {
-      // ✅ Email/password incorrect - proposer récupération simple
+      // Email/password incorrect
       await logAuditEvent({
         user_id: "anonymous",
         action: "user_login",
@@ -49,31 +49,53 @@ export async function POST(req: NextRequest) {
     const userId = authData.user.id;
     const admin = createAdminClient();
 
-    // Check si existe dans new system
+    // ✅ Vérifier si user a DÉJÀ Pseudo+PIN
     const { data: existingUser } = await (admin
       .from("utilisateurs_auth_v2" as any)
-      .select("id, pseudo, role")
+      .select("id, pseudo, pin_hash, role")
       .eq("id", userId)
       .maybeSingle()) as any;
 
-    let user = existingUser;
-    if (!user) {
-      const { data: newUser } = await (admin
-        .from("utilisateurs_auth_v2" as any)
-        .insert({
-          id: userId,
-          email: validEmail,
-          pseudo: validEmail.split("@")[0],
-          role: "customer",
-          actif: true,
-          migrated_from_supabase_id: userId,
-        })
-        .select("id, pseudo, role")
-        .single()) as any;
-      user = newUser;
+    // ✅ Si user n'existe pas encore OU n'a pas de Pseudo+PIN
+    if (!existingUser || !existingUser.pseudo) {
+      // Créer entrée vide (email seulement)
+      if (!existingUser) {
+        await (admin
+          .from("utilisateurs_auth_v2" as any)
+          .insert({
+            id: userId,
+            email: validEmail,
+            role: "customer",
+            actif: true,
+            migrated_from_supabase_id: userId,
+            has_dual_auth: false,
+          })) as any;
+      }
+
+      // Générer JWT temporaire
+      const tempToken = generateJWT(userId, "customer");
+
+      await logAuditEvent({
+        user_id: userId,
+        action: "user_login",
+        resource_type: "auth",
+        status: "success",
+        ip_address: ip,
+        details: { method: "email_password", email, setup_required: true },
+      });
+
+      // Proposer création Pseudo+PIN
+      return NextResponse.json({
+        succes: true,
+        token: tempToken,
+        user: { id: userId, email: validEmail },
+        setup_pseudo_pin_required: true,
+        message: "Créez un Pseudo+PIN pour plus de sécurité",
+      });
     }
 
-    const token = generateJWT(userId, user?.role || "customer");
+    // ✅ User a déjà Pseudo+PIN → connexion normale
+    const token = generateJWT(userId, existingUser.role || "customer");
 
     await logAuditEvent({
       user_id: userId,
@@ -87,7 +109,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       succes: true,
       token,
-      user: { id: userId, email: validEmail, pseudo: user?.pseudo },
+      user: { id: userId, email: validEmail, pseudo: existingUser.pseudo, role: existingUser.role },
     });
   } catch (err: any) {
     return NextResponse.json({ erreur: err.message }, { status: 500 });
