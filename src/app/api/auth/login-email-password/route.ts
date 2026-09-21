@@ -31,40 +31,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (authError || !authData.user) {
-      // ✅ Si ancien user: proposer récupération via nouveau système
-      try {
-        const admin = createAdminClient();
-
-        // Chercher l'utilisateur dans Supabase Auth (legacy)
-        const { data: legacyUsers, error: listError } = await (admin.auth.admin as any).listUsers({
-          pageSize: 1,
-        });
-
-        // Chercher cet email spécifique dans la liste
-        const legacyUser = legacyUsers?.find((u: any) => u.email === validEmail);
-
-        if (legacyUser) {
-          // Email existe dans Supabase Auth → vrai ancien user
-          await logAuditEvent({
-            user_id: "anonymous",
-            action: "user_login",
-            resource_type: "auth",
-            status: "failure",
-            ip_address: ip,
-            details: { reason: "invalid_password", email, recovery_available: true },
-          });
-          return NextResponse.json({
-            erreur: "Mot de passe incorrect",
-            password_reset: true,
-            recovery_options: ["email", "phrase", "code"],
-            message: "Utilisez les options de récupération du nouveau système",
-          }, { status: 401 });
-        }
-      } catch (err) {
-        console.error("[LOGIN-EMAIL-PASSWORD] Recovery check error:", err);
-      }
-
-      // Email n'existe pas ou erreur: retourner erreur générique
+      // ✅ Email/password incorrect - proposer récupération simple
       await logAuditEvent({
         user_id: "anonymous",
         action: "user_login",
@@ -73,7 +40,10 @@ export async function POST(req: NextRequest) {
         ip_address: ip,
         details: { reason: "invalid_credentials", email },
       });
-      return NextResponse.json({ erreur: "Email ou password incorrect" }, { status: 401 });
+      return NextResponse.json({
+        erreur: "Email ou mot de passe incorrect",
+        password_reset_available: true,
+      }, { status: 401 });
     }
 
     const userId = authData.user.id;
