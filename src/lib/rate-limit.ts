@@ -129,6 +129,4 @@ export const RATE_LIMITS = {
   LOGIN: { maxAttempts: 5, windowSeconds: 900, action: "login" }, // 5 tries per 15 min
   REGISTER: { maxAttempts: 3, windowSeconds: 3600, action: "register" }, // 3 tries per hour
   RECOVER: { maxAttempts: 3, windowSeconds: 3600, action: "recover" }, // 3 tries per hour
-  QR_SCAN: { maxAttempts: 10, windowSeconds: 3600, action: "qr_scan" }, // 10 codes per hour
-  QR_NOM: { maxAttempts: 10, windowSeconds: 3600, action: "qr_nom" }, // 10 tries per hour
 } as const;
