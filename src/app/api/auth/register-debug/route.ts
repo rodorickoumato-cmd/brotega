@@ -3,14 +3,18 @@
  */
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { exigerAdmin } from "@/lib/admin-guard";
 import { hashPIN } from "@/lib/pin-secure";
 
 export async function POST(req: NextRequest) {
+  const refus = exigerAdmin(req);
+  if (refus) return refus;
+
   try {
     const body = await req.json();
     const { pseudo, pin } = body;
 
-    console.log('[REGISTER-DEBUG] Reçu:', { pseudo, pin });
+    console.log('[REGISTER-DEBUG] Reçu:', { pseudo });
 
     if (!pseudo || !pin) {
       return NextResponse.json({ erreur: "pseudo et pin requis" }, { status: 400 });
@@ -33,7 +37,7 @@ export async function POST(req: NextRequest) {
       actif: true,
     };
 
-    console.log('[REGISTER-DEBUG] Insertion data:', userData);
+    console.log('[REGISTER-DEBUG] Insertion pseudo:', userData.pseudo);
 
     const { data: newUser, error: insertError } = await (admin
       .from("utilisateurs_auth_v2" as any)

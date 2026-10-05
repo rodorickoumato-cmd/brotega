@@ -4,9 +4,13 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { exigerAdmin } from "@/lib/admin-guard";
 import { validateEmail } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
+  const refus = exigerAdmin(req);
+  if (refus) return refus;
+
   try {
     const body = await req.json();
     const { email } = body;
