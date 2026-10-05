@@ -146,15 +146,6 @@ export default function AdminDashboard() {
           </Link>
 
           <Link
-            href="/admin/qr-scans"
-            className="bg-white rounded-lg shadow hover:shadow-lg transition p-6 cursor-pointer"
-          >
-            <p className="text-3xl mb-2">📱</p>
-            <h3 className="text-lg font-bold text-gray-800 mb-1">Scans QR</h3>
-            <p className="text-sm text-gray-600">Codes générés et noms collectés</p>
-          </Link>
-
-          <Link
             href="/admin/orders"
             className="bg-white rounded-lg shadow hover:shadow-lg transition p-6 cursor-pointer"
           >
