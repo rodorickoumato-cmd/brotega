@@ -17,3 +17,18 @@ export function genererCodeCommande(): string {
 export function validerCodeCommande(code: string): boolean {
   return /^BR-[0-9A-HJ-NP-TV-Z]{5}$/.test(code.toUpperCase());
 }
+
+// Code scan QR : QR-XXXXXX (6 chars Crockford base32, ~1 milliard de combinaisons)
+export function genererCodeScan(): string {
+  const bytes = new Uint8Array(6);
+  crypto.getRandomValues(bytes);
+  let code = "QR-";
+  for (let i = 0; i < 6; i++) {
+    code += ALPHABET[bytes[i] % 32];
+  }
+  return code;
+}
+
+export function validerCodeScan(code: string): boolean {
+  return /^QR-[0-9A-HJ-NP-TV-Z]{6}$/.test(code.toUpperCase());
+}
